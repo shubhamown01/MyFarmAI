@@ -1,0 +1,19 @@
+services:
+
+  voice:
+    build:
+      context: ./ai/voice
+    container_name: myfarmai-voice
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    container_name: myfarmai-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - voice
+    restart: unless-stopped
