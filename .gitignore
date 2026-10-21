@@ -28,6 +28,17 @@ models/
 # Data
 data/*
 !data/.gitkeep
+backend/data/*
+!backend/data/.gitkeep
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Model caches
+**/.cache/huggingface/
+**/models/
 
 # Logs
 logs/
@@ -51,3 +62,11 @@ Thumbs.db
 # Testing
 .coverage
 htmlcov/
+
+# Local MCP persistent memory
+.local/mcp-memory/
+
+# Graphify generated artifacts (large files)
+graphify-out/*.html
+graphify-out/graph.json
+graphify-out/graph.html
