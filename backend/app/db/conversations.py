@@ -1,5 +1,9 @@
+"""Conversation database operations."""
+
 import uuid
 from typing import Any
+
+from fastapi import Request
 
 from app.db.connection import get_db_connection
 
@@ -9,9 +13,10 @@ async def create_conversation(
     crop: str | None = None,
     location: str | None = None,
     db_path: str | None = None,
+    request: Request | None = None,
 ) -> str:
     conversation_id = str(uuid.uuid4())
-    conn = await get_db_connection(db_path)
+    conn = await get_db_connection(db_path, request)
     try:
         await conn.execute(
             """
@@ -29,8 +34,9 @@ async def create_conversation(
 async def get_conversation(
     conversation_id: str,
     db_path: str | None = None,
+    request: Request | None = None,
 ) -> dict[str, Any] | None:
-    conn = await get_db_connection(db_path)
+    conn = await get_db_connection(db_path, request)
     try:
         cursor = await conn.execute("SELECT * FROM conversations WHERE id = ?", (conversation_id,))
         row = await cursor.fetchone()
@@ -46,8 +52,9 @@ async def add_message(
     role: str,
     content: str,
     db_path: str | None = None,
+    request: Request | None = None,
 ) -> int:
-    conn = await get_db_connection(db_path)
+    conn = await get_db_connection(db_path, request)
     try:
         cursor = await conn.execute(
             """
@@ -77,10 +84,11 @@ async def get_recent_messages(
     conversation_id: str,
     limit: int = 10,
     db_path: str | None = None,
+    request: Request | None = None,
 ) -> list[dict[str, Any]]:
     if limit < 1 or limit > 50:
         limit = 10
-    conn = await get_db_connection(db_path)
+    conn = await get_db_connection(db_path, request)
     try:
         cursor = await conn.execute(
             """

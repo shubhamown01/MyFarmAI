@@ -2,3 +2,11 @@ fastapi
 uvicorn[standard]
 httpx
 python-multipart
+pydantic-settings
+aiosqlite
+
+# Test dependencies
+pytest
+pytest-asyncio
+pytest-cov
+httpx

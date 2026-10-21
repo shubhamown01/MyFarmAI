@@ -113,6 +113,20 @@ class Settings(BaseSettings):
         ge=1024,
     )
 
+    # Database pool settings (PostgreSQL)
+    db_pool_size: int = Field(
+        default=5,
+        description="Database connection pool size",
+        ge=1,
+        le=20,
+    )
+    db_max_overflow: int = Field(
+        default=10,
+        description="Database connection pool max overflow",
+        ge=0,
+        le=50,
+    )
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
