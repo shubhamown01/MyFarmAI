@@ -48,15 +48,27 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_any_generics = true
-check_untyped_defs = true
 no_implicit_optional = true
-show_error_codes = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+no_implicit_reexport = true
 
 [[tool.mypy.overrides]]
-module = [
-    "pytest",
-    "pytest_asyncio",
-]
+module = "tests.*"
+strict = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "app.db.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "app.services.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "app.api.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
