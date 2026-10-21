@@ -1,9 +1,11 @@
 # Phase 2 Implementation Plan — Database Architecture & Migration Readiness
 
-**Phase:** 2  
-**Status:** IN_PROGRESS  
-**Prerequisites:** Phase 1 complete (56/56 tests, quality gates passing)  
-**Related:** [`Phase_02_Database_Architecture.md`](../phases/Phase_02_Database_Architecture.md), [`ARCHITECTURE_DECISIONS.md`](ARCHITECTURE_DECISIONS.md) ADR-003/004/005, [`GAP_ANALYSIS.md`](GAP_ANALYSIS.md) GAP-016/024/025
+**Phase:** 2 — proposed, not fully executed  
+**Date:** 2026-10-21  
+**Status:** Core schema and migration infrastructure complete; migration rehearsal and data preservation pending  
+**Prerequisites:** Phase 1 complete (quality gates passing, 56/56 tests, ADR-003/004/005 approved)  
+**Roadmap:** [`../MyFarmAI_Backend_Roadmap.md`](../MyFarmAI_Backend_Roadmap.md) §5, Phase 2  
+**Related:** [`ARCHITECTURE_DECISIONS.md`](ARCHITECTURE_DECISIONS.md) ADR-003/004/005, [`GAP_ANALYSIS.md`](GAP_ANALYSIS.md) GAP-016/024/025, [`PHASE_01_IMPLEMENTATION_PLAN.md`](PHASE_01_IMPLEMENTATION_PLAN.md)
 
 ---
 
@@ -30,7 +32,7 @@ Per the roadmap and ADRs:
 
 ### 2.1 Dependencies & Configuration
 - [x] **P2-01** Add SQLAlchemy 2, asyncpg, alembic, psycopg to `pyproject.toml` and `uv.lock`
-- [ ] **P2-02** Configure async database session management (engine, sessionmaker)
+- [x] **P2-02** Configure async database session management (engine, sessionmaker)
 - [ ] **P2-03** Add PostgreSQL to `docker-compose.yml` (dev profile, internal network)
 
 ### 2.2 Domain Models (SQLAlchemy 2)
@@ -78,39 +80,38 @@ Per the roadmap and ADRs:
 
 | Task | Status | Verified | Notes |
 |------|--------|----------|-------|
-| P2-01 | TODO | | |
-| P2-02 | TODO | | |
-| P2-03 | TODO | | |
-| P2-04 | TODO | | |
-| P2-05 | TODO | | |
-| P2-06 | TODO | | |
-| P2-07 | TODO | | |
-| P2-07 | TODO | | |
-| P2-08 | TODO | | |
-| P2-09 | TODO | | |
-| P2-10 | TODO | | |
-| P2-11 | TODO | | |
-| P2-12 | TODO | | |
-| P2-13 | TODO | | |
-| P2-14 | TODO | | |
-| P2-15 | TODO | | |
-| P2-16 | TODO | | |
-| P2-17 | TODO | | |
-| P2-18 | TODO | | |
-| P2-19 | TODO | | |
-| P2-20 | TODO | | |
-| P2-21 | TODO | | |
-| P2-21b | TODO | | |
-| P2-22 | TODO | | |
-| P2-23 | TODO | | |
-| P2-24 | TODO | | |
-| P2-25 | TODO | | |
-| P2-26 | TODO | | |
-| P2-27 | TODO | | |
-| P2-28 | TODO | | |
-| P2-29 | TODO | | |
-| P2-30 | TODO | | |
-| P2-31 | TODO | | |
+| P2-01 | VERIFIED | ✅ | SQLAlchemy 2, asyncpg, alembic, psycopg added to pyproject.toml & uv.lock |
+| P2-02 | VERIFIED | ✅ | Async session management in `app/db/session.py` |
+| P2-03 | TODO | | PostgreSQL in docker-compose.yml (will add in next step) |
+| P2-04 | VERIFIED | ✅ | `Base`, `TimestampMixin`, `UUIDMixin` in `app/db/models/base.py` |
+| P2-05 | VERIFIED | ✅ | `User` model in `app/db/models/user.py` |
+| P2-06 | VERIFIED | ✅ | `Farm` model in `app/db/models/farm.py` |
+| P2-07 | VERIFIED | ✅ | `FarmMember` model in `app/db/models/farm.py` |
+| P2-08 | VERIFIED | ✅ | `Crop` model in `app/db/models/crop.py` |
+| P2-09 | VERIFIED | ✅ | `CropCycle` model in `app/db/models/crop.py` |
+| P2-10 | VERIFIED | ✅ | `Conversation` model in `app/db/models/conversation.py` |
+| P2-11 | VERIFIED | ✅ | `Message` model in `app/db/models/conversation.py` |
+| P2-12 | VERIFIED | ✅ | Research models in `app/db/models/research.py` |
+| P2-13 | VERIFIED | ✅ | `AuditEvent` model in `app/db/models/audit.py` |
+| P2-14 | VERIFIED | ✅ | `Session`/`RefreshToken` models in `app/db/models/session.py` |
+| P2-15 | VERIFIED | ✅ | Alembic async env in `alembic/env.py` |
+| P2-16 | VERIFIED | ✅ | Initial migration `6cd2bffd9881_initial_schema.py` |
+| P2-17 | VERIFIED | ✅ | Migration reviewed, all tables created |
+| P2-18 | VERIFIED | ✅ | `alembic upgrade head` tested on PostgreSQL |
+| P2-19 | VERIFIED | ✅ | `alembic downgrade base` tested |
+| P2-20 | VERIFIED | ✅ | Repositories in `app/db/repositories.py` |
+| P2-21 | VERIFIED | ✅ | `init_db` runs migrations in factory lifespan |
+| P2-21b | VERIFIED | ✅ | SQLite test path works with FKs via Alembic |
+| P2-22 | TODO | | Update services to use repositories |
+| P2-23 | TODO | | Export canonical SQLite to CSV/JSON |
+| P2-24 | TODO | | Transform timestamps, validate, legacy_import user |
+| P2-25 | TODO | | Load into PostgreSQL via COPY |
+| P2-26 | TODO | | Validate row counts, FK integrity |
+| P2-27 | TODO | | Test app read/write against PostgreSQL |
+| P2-28 | TODO | | Backup runbook: pg_dump, encryption, /data storage |
+| P2-29 | TODO | | Restore drill evidence |
+| P2-30 | TODO | | ER diagram + data dictionary |
+| P2-31 | TODO | | Cross-user/farm isolation tests |
 
 ---
 
