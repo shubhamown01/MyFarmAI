@@ -1,0 +1,126 @@
+{
+  "brand": "MyFarm AI",
+  "logo_status": "user-approved and locked",
+  "assets": [
+    {
+      "path": "01-brand-logo/original/MyFarmAI_Final_Logo_LOCKED.png",
+      "bytes": 152739
+    },
+    {
+      "path": "01-brand-logo/web/myfarm-ai-logo-1200px.png",
+      "bytes": 544733
+    },
+    {
+      "path": "01-brand-logo/web/myfarm-ai-logo-480px.png",
+      "bytes": 119740
+    },
+    {
+      "path": "01-brand-logo/web/myfarm-ai-logo-800px.png",
+      "bytes": 279275
+    },
+    {
+      "path": "01-brand-logo/web/myfarm-ai-logo.jpg",
+      "bytes": 180481
+    },
+    {
+      "path": "01-brand-logo/web/myfarm-ai-logo.webp",
+      "bytes": 78882
+    },
+    {
+      "path": "02-app-icon/MyFarmAI_AppIcon_Master_LOCKED.png",
+      "bytes": 1565534
+    },
+    {
+      "path": "02-app-icon/android/myfarm-ai-icon-144.png",
+      "bytes": 32342
+    },
+    {
+      "path": "02-app-icon/android/myfarm-ai-icon-192.png",
+      "bytes": 51533
+    },
+    {
+      "path": "02-app-icon/android/myfarm-ai-icon-256.png",
+      "bytes": 83111
+    },
+    {
+      "path": "02-app-icon/android/myfarm-ai-icon-384.png",
+      "bytes": 167978
+    },
+    {
+      "path": "02-app-icon/android/myfarm-ai-icon-48.png",
+      "bytes": 5255
+    },
+    {
+      "path": "02-app-icon/android/myfarm-ai-icon-512.png",
+      "bytes": 277789
+    },
+    {
+      "path": "02-app-icon/android/myfarm-ai-icon-72.png",
+      "bytes": 10349
+    },
+    {
+      "path": "02-app-icon/android/myfarm-ai-icon-96.png",
+      "bytes": 16710
+    },
+    {
+      "path": "02-app-icon/ios/myfarm-ai-icon-1024.png",
+      "bytes": 959712
+    },
+    {
+      "path": "02-app-icon/ios/myfarm-ai-icon-120.png",
+      "bytes": 24060
+    },
+    {
+      "path": "02-app-icon/ios/myfarm-ai-icon-180.png",
+      "bytes": 46530
+    },
+    {
+      "path": "02-app-icon/ios/myfarm-ai-icon-512.png",
+      "bytes": 277789
+    },
+    {
+      "path": "02-app-icon/ios/myfarm-ai-icon-60.png",
+      "bytes": 7773
+    },
+    {
+      "path": "03-favicon/favicon-16.png",
+      "bytes": 844
+    },
+    {
+      "path": "03-favicon/favicon-32.png",
+      "bytes": 2688
+    },
+    {
+      "path": "03-favicon/favicon-48.png",
+      "bytes": 5255
+    },
+    {
+      "path": "03-favicon/favicon-64.png",
+      "bytes": 8538
+    },
+    {
+      "path": "03-favicon/favicon.ico",
+      "bytes": 865
+    },
+    {
+      "path": "04-social-and-marketing/myfarm-ai-app-icon-preview-1024.png",
+      "bytes": 959712
+    },
+    {
+      "path": "04-social-and-marketing/myfarm-ai-logo-social-wide.png",
+      "bytes": 417135
+    },
+    {
+      "path": "04-social-and-marketing/og-image-1200x630.png",
+      "bytes": 339633
+    },
+    {
+      "path": "05-guidelines/README-Brand-Usage.md",
+      "bytes": 2042
+    },
+    {
+      "path": "README.md",
+      "bytes": 2042
+    }
+  ]
+}
