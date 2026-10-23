@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Thumbnail: crop guidance healthy growth">
+  <defs>
+    <radialGradient id="g" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#BBF7D0"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="#F8FAF5"/>
+  <circle cx="200" cy="150" r="90" fill="#E7F0E7"/>
+  <path d="M130,150 Q180,60 230,150 Q280,240 230,300 Q170,360 130,300 Q80,240 130,150" fill="url(#g)" stroke="#14532D" stroke-width="5"/>
+  <path d="M170,110 Q200,95 220,120 Q200,145 170,125 Z" fill="#86EFAC" opacity="0.7"/>
+  <path d="M190,130 Q220,120 240,150 Q210,170 190,150 Z" fill="#BBF7D0" opacity="0.7"/>
+  <circle cx="185" cy="190" r="5" fill="#E0F2FE"/><circle cx="215" cy="200" r="4" fill="#E0F2FE"/>
+  <circle cx="225" cy="170" r="4" fill="#E0F2FE"/><circle cx="170" cy="165" r="5" fill="#E0F2FE"/>
+</svg>

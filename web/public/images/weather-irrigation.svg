@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 750" role="img" aria-label="Weather and irrigation: farmland under realistic weather conditions with irrigation systems and water management">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#BFDBFE"/>
+      <stop offset="60%" stop-color="#E0F2FE"/>
+      <stop offset="100%" stop-color="#F8FAF5"/>
+    </linearGradient>
+    <linearGradient id="field" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#86EFAC"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="50%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1E40AF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="750" fill="url(#sky)"/>
+  <!-- Clouds -->
+  <g fill="#FFFFFF" opacity="0.85">
+    <circle cx="220" cy="150" r="45"/><circle cx="280" cy="140" r="55"/><circle cx="340" cy="155" r="40"/>
+    <circle cx="700" cy="180" r="50"/><circle cx="760" cy="170" r="60"/><circle cx="820" cy="185" r="45"/>
+    <circle cx="480" cy="220" r="40"/><circle cx="540" cy="210" r="50"/>
+  </g>
+  <!-- Sun -->
+  <circle cx="860" cy="100" r="42" fill="#FCD34D" opacity="0.9"/>
+  <circle cx="860" cy="100" r="60" fill="#FCD34D" opacity="0.15"/>
+  <!-- Rain -->
+  <g stroke="#93C5FD" stroke-width="2" stroke-linecap="round" opacity="0.7">
+    <line x1="120" y1="560" x2="130" y2="590"/><line x1="180" y1="570" x2="190" y2="600"/>
+    <line x1="240" y1="550" x2="250" y2="580"/><line x1="300" y1="580" x2="310" y2="610"/>
+    <line x1="360" y1="565" x2="370" y2="595"/><line x1="420" y1="575" x2="430" y2="605"/>
+  </g>
+  <!-- Farmland field -->
+  <path d="M0,620 Q200,580 500,600 Q800,640 1000,620 V750 H0 Z" fill="url(#field)"/>
+  <!-- Crop rows -->
+  <g stroke="#14532D" stroke-width="2" opacity="0.4">
+    <path d="M0,640 Q100,700 300,700 T700,700 T1000,700"/>
+    <path d="M0,680 Q100,730 300,730 T700,730 T1000,730"/>
+    <path d="M0,720 Q100,745 300,745 T700,745 T1000,745"/>
+  </g>
+  <!-- Irrigation canal -->
+  <path d="M60,630 Q200,650 400,630 Q600,610 780,630 Q940,650 960,640" stroke="#2563EB" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M60,630 Q200,650 400,630 Q600,610 780,630 Q940,650 960,640" stroke="#60A5FA" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <!-- water in canal -->
+  <path d="M70,624 Q200,644 400,624 Q600,604 780,624 Q940,644 960,634" fill="url(#water)" opacity="0.85"/>
+  <!-- Sprinkler -->
+  <g>
+    <circle cx="500" cy="560" r="16" fill="#475569"/>
+    <circle cx="500" cy="560" r="6" fill="#1E293B"/>
+    <rect x="495" y="545" width="10" height="22" fill="#64748B"/>
+    <!-- spray arcs -->
+    <path d="M490,560 Q460,540 430,560" stroke="#93C5FD" stroke-width="3" fill="none" opacity="0.7"/>
+    <path d="M510,560 Q540,540 570,560" stroke="#93C5FD" stroke-width="3" fill="none" opacity="0.7"/>
+    <path d="M500,570 Q500,595 500,620" stroke="#93C5FD" stroke-width="3" fill="none" opacity="0.7"/>
+  </g>
+  <!-- Drip emitter on soil -->
+  <circle cx="300" cy="700" r="5" fill="#DC2626"/>
+  <path d="M300,685 Q300,675 295,685 Q290,675 290,685" stroke="#60A5FA" stroke-width="2" fill="none" opacity="0.8"/>
+  <circle cx="700" cy="710" r="5" fill="#DC2626"/>
+  <path d="M700,695 Q700,685 695,695 Q690,685 690,695" stroke="#60A5FA" stroke-width="2" fill="none" opacity="0.8"/>
+  <!-- Foreground crop tufts -->
+  <g fill="#14532D" opacity="0.9">
+    <path d="M80,750 Q90,710 100,750 Z"/><path d="M140,745 Q150,705 160,745 Z"/>
+    <path d="M880,755 Q890,715 900,755 Z"/><path d="M940,748 Q950,708 960,748 Z"/>
+    <path d="M500,748 Q510,708 520,748 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,292 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin-variable.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   MyFarm AI — Semantic color tokens
+   Base values are tuned to the approved dashboard reference: a bright,
+   agricultural workspace with an emerald brand green and cool neutral chrome.
+   ============================================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --color-shell: #f8fafa;
+  --color-surface: #ffffff;
+  --color-surface-container: #f8fafa;
+  --color-surface-container-low: #f4f7f6;
+  --color-surface-container-high: #eff3f2;
+  --color-surface-container-highest: #e7edea;
+
+  /* Text */
+  --color-on-surface: #0b1b2b;
+  --color-on-surface-variant: #5b677b;
+  --color-on-surface-disabled: #8a94a3;
+
+  /* Brand */
+  --color-primary: #078447;
+  --color-primary-strong: #05633a;
+  --color-primary-hover: #06743e;
+  --color-primary-active: #055f33;
+  --color-primary-container: #e6f5eb;
+  --color-on-primary-container: #083b25;
+  --color-on-primary: #ffffff;
+
+  /* Secondary */
+  --color-secondary: #3f6b50;
+  --color-secondary-hover: #345a42;
+  --color-secondary-container: #eef3ef;
+  --color-on-secondary-container: #17211b;
+
+  /* Information */
+  --color-tertiary: #2563eb;
+  --color-tertiary-container: #eaf2fe;
+  --color-on-tertiary-container: #1e3a8a;
+
+  /* States */
+  --color-success: #067647;
+  --color-success-container: #dcfae6;
+  --color-on-success-container: #054f31;
+  --color-warning: #b54708;
+  --color-warning-container: #fef0c7;
+  --color-on-warning-container: #7a2e0e;
+  --color-error: #d92d20;
+  --color-error-container: #fef3f2;
+  --color-on-error-container: #912018;
+  --color-info: #2563eb;
+  --color-info-container: #eff8ff;
+  --color-on-info-container: #194185;
+
+  /* Lines */
+  --color-outline: #e6ebef;
+  --color-outline-variant: #edf1f4;
+  --color-outline-strong: #c7d0d8;
+
+  /* Agricultural category tints */
+  --color-tint-green: #f0f9f3;
+  --color-tint-blue: #f0f8fe;
+  --color-tint-orange: #fef7f2;
+  --color-tint-purple: #f6f2fe;
+  --color-tint-red: #fef3f2;
+  --color-tint-neutral: #f7f9fa;
+  --color-icon-green: #2f9e4f;
+  --color-icon-blue: #2f80ed;
+  --color-icon-orange: #f2994a;
+  --color-icon-purple: #7c4dff;
+  --color-icon-red: #d9433b;
+
+  /* Special purpose */
+  --color-scrim: rgba(11, 27, 43, 0.45);
+  --color-shadow: rgba(11, 27, 43, 0.08);
+  --color-backdrop: rgba(248, 250, 250, 0.82);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Motion */
+  --motion-instant: 0ms;
+  --motion-quick: 100ms;
+  --motion-fast: 150ms;
+  --motion-standard: 200ms;
+  --motion-medium: 250ms;
+  --motion-slow: 300ms;
+  --motion-slower: 400ms;
+
+  /* Spacing */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Radii */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Elevation */
+  --elev-0: none;
+  --elev-1: 0 1px 2px 0 rgba(11, 27, 43, 0.04);
+  --elev-2: 0 8px 24px -12px rgba(11, 27, 43, 0.16), 0 2px 6px -2px rgba(11, 27, 43, 0.05);
+  --elev-3: 0 16px 32px -16px rgba(11, 27, 43, 0.2), 0 4px 10px -4px rgba(11, 27, 43, 0.06);
+  --elev-4: 0 24px 48px -20px rgba(11, 27, 43, 0.24), 0 8px 16px -8px rgba(11, 27, 43, 0.08);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --color-shell: #141917;
+  --color-surface: #171d1a;
+  --color-surface-container: #1b2320;
+  --color-surface-container-low: #1a211e;
+  --color-surface-container-high: #232c28;
+  --color-surface-container-highest: #2b3631;
+
+  --color-on-surface: #e9efeb;
+  --color-on-surface-variant: #a5b1aa;
+  --color-on-surface-disabled: #78847d;
+
+  --color-primary: #6ee7a2;
+  --color-primary-strong: #a7f3c2;
+  --color-primary-hover: #86efac;
+  --color-primary-active: #4ade80;
+  --color-primary-container: #123620;
+  --color-on-primary-container: #d4f7e0;
+  --color-on-primary: #062514;
+
+  --color-secondary: #a5d6b1;
+  --color-secondary-hover: #86bd97;
+  --color-secondary-container: #24352b;
+  --color-on-secondary-container: #dfeadf;
+
+  --color-tertiary: #60a5fa;
+  --color-tertiary-container: #152b45;
+  --color-on-tertiary-container: #dbeafe;
+
+  --color-success: #4ade80;
+  --color-success-container: #12351f;
+  --color-on-success-container: #dcfce7;
+  --color-warning: #fbbf24;
+  --color-warning-container: #3b2a0c;
+  --color-on-warning-container: #fef3c7;
+  --color-error: #f97066;
+  --color-error-container: #3d1815;
+  --color-on-error-container: #fee4e2;
+  --color-info: #60a5fa;
+  --color-info-container: #162f4d;
+  --color-on-info-container: #d1e9ff;
+
+  --color-outline: #2d3833;
+  --color-outline-variant: #252f2b;
+  --color-outline-strong: #46544c;
+
+  --color-tint-green: #14261b;
+  --color-tint-blue: #142330;
+  --color-tint-orange: #2a2019;
+  --color-tint-purple: #221b33;
+  --color-tint-red: #2b1918;
+  --color-tint-neutral: #1c2320;
+  --color-icon-green: #6ee7a2;
+  --color-icon-blue: #7cb8ff;
+  --color-icon-orange: #f6b47a;
+  --color-icon-purple: #b49bff;
+  --color-icon-red: #ff8a80;
+
+  --color-scrim: rgba(0, 0, 0, 0.68);
+  --color-shadow: rgba(0, 0, 0, 0.35);
+  --color-backdrop: rgba(23, 29, 26, 0.82);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-outline);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-on-surface);
+    background-color: var(--color-shell);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-primary-container);
+    color: var(--color-primary-strong);
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-primary);
+    border-radius: inherit;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ===========================================================================
+   Legacy semantic utilities retained for existing components
+   =========================================================================== */
+
+.bg-surface { background-color: var(--color-surface); }
+.bg-surface-container { background-color: var(--color-surface-container); }
+.bg-surface-container-low { background-color: var(--color-surface-container-low); }
+.bg-surface-container-high { background-color: var(--color-surface-container-high); }
+.bg-surface-container-highest { background-color: var(--color-surface-container-highest); }
+
+.text-on-surface { color: var(--color-on-surface); }
+.text-on-surface-variant { color: var(--color-on-surface-variant); }
+.text-on-surface-disabled { color: var(--color-on-surface-disabled); }
+
+.text-primary { color: var(--color-primary); }
+.text-on-primary { color: var(--color-on-primary); }
+.text-on-primary-container { color: var(--color-on-primary-container); }
+
+.border-outline { border-color: var(--color-outline); }
+.border-outline-variant { border-color: var(--color-outline-variant); }
+.border-outline-strong { border-color: var(--color-outline-strong); }
+
+.ring-primary { --tw-ring-color: var(--color-primary); }
+.ring-primary-container { --tw-ring-color: var(--color-primary-container); }
+.ring-error { --tw-ring-color: var(--color-error); }
+.ring-warning { --tw-ring-color: var(--color-warning); }
+.ring-success { --tw-ring-color: var(--color-success); }
+
+.shadow-elev-1 { box-shadow: var(--elev-1); }
+.shadow-elev-2 { box-shadow: var(--elev-2); }
+.shadow-elev-3 { box-shadow: var(--elev-3); }
+.shadow-elev-4 { box-shadow: var(--elev-4); }
+
+.rounded-radius-sm { border-radius: var(--radius-sm); }
+.rounded-radius-md { border-radius: var(--radius-md); }
+.rounded-radius-lg { border-radius: var(--radius-lg); }
+.rounded-radius-xl { border-radius: var(--radius-xl); }
+.rounded-radius-full { border-radius: var(--radius-full); }

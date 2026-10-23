@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Hero: Indian farm landscape with healthy crops, a farmer inspecting plants, morning light and distant green fields">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF7ED"/>
+      <stop offset="55%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="earth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#713F12"/>
+      <stop offset="100%" stop-color="#451A03"/>
+    </linearGradient>
+    <linearGradient id="hillFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D1FAE5"/>
+      <stop offset="100%" stop-color="#A7F3D0"/>
+    </linearGradient>
+    <linearGradient id="hillNear" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#86EFAC"/>
+      <stop offset="100%" stop-color="#4ADE80"/>
+    </linearGradient>
+  </defs>
+  <!-- Sky -->
+  <rect width="1600" height="620" fill="url(#sky)"/>
+  <!-- Morning sun -->
+  <circle cx="260" cy="150" r="52" fill="#F59E0B" opacity="0.9"/>
+  <circle cx="260" cy="150" r="78" fill="#F59E0B" opacity="0.18"/>
+  <circle cx="260" cy="150" r="105" fill="#F59E0B" opacity="0.08"/>
+  <!-- Distant hills / far fields -->
+  <path d="M0,520 C400,480 700,540 1100,500 C1500,460 1600,560 1600,620 H0 Z" fill="url(#hillFar)" opacity="0.9"/>
+  <path d="M0,560 C300,520 650,590 1000,540 C1350,490 1600,600 1600,620 H0 Z" fill="url(#hillNear)" opacity="0.85"/>
+  <!-- Foreground earth -->
+  <rect x="0" y="620" width="1600" height="280" fill="url(#earth)"/>
+  <path d="M0,620 Q400,660 800,620 T1600,620 V900 H0 Z" fill="#5D4037" opacity="0.85"/>
+  <!-- Irrigation channel -->
+  <path d="M100,660 L1400,700 L1410,735 L110,700 Z" fill="#60A5FA" opacity="0.7"/>
+  <path d="M100,660 L1400,700" stroke="#3B82F6" stroke-width="2" opacity="0.6"/>
+  <!-- Distant crop rows (far field) -->
+  <g fill="#86EFAC" opacity="0.7">
+    <path d="M120,600 Q200,590 280,605 Q360,620 440,605 Q520,590 600,605"/>
+    <path d="M700,615 Q780,605 860,620 Q940,635 1020,620 Q1100,605 1180,620 Q1260,635 1340,620 Q1420,605 1500,620 Q1580,635 1580,620"/>
+  </g>
+  <!-- Foreground rice / wheat stalks -->
+  <g fill="#166534">
+    <path d="M220,880 Q230,790 240,700 Q245,690 235,880 Z"/>
+    <path d="M260,890 Q275,780 285,690 Q290,680 270,890 Z"/>
+    <path d="M300,870 Q315,760 325,700 Q330,690 310,870 Z"/>
+    <path d="M360,895 Q380,770 395,700 Q400,690 370,895 Z"/>
+    <path d="M420,860 Q440,740 455,700 Q460,690 435,860 Z"/>
+    <path d="M490,900 Q510,780 525,700 Q530,690 505,900 Z"/>
+    <path d="M560,880 Q580,760 595,700 Q600,690 575,880 Z"/>
+    <path d="M630,890 Q650,770 665,700 Q670,690 645,890 Z"/>
+  </g>
+  <g fill="#86EFAC">
+    <path d="M240,710 Q250,695 230,705 Q225,720 240,710 Z"/>
+    <path d="M285,700 Q295,685 275,695 Q270,710 285,700 Z"/>
+    <path d="M325,710 Q335,695 315,705 Q310,720 325,710 Z"/>
+    <path d="M395,710 Q405,695 385,705 Q380,720 395,710 Z"/>
+    <path d="M455,710 Q465,695 445,705 Q440,720 455,710 Z"/>
+    <path d="M525,710 Q535,695 515,705 Q510,720 525,710 Z"/>
+    <path d="M595,710 Q605,695 585,705 Q580,720 595,710 Z"/>
+    <path d="M665,710 Q675,695 655,705 Q650,720 665,710 Z"/>
+  </g>
+  <!-- Farmer figure inspecting plants -->
+  <g id="farmer">
+    <!-- hat -->
+    <path d="M690,690 Q690,675 710,670 Q730,665 730,675 Q730,690 710,695 Z" fill="#3E2723"/>
+    <circle cx="720" cy="685" r="16" fill="#D2A679"/>
+    <!-- body -->
+    <path d="M704,701 L704,760 L736,760 L736,701 Z" fill="#B08D57"/>
+    <!-- arm reaching to plant -->
+    <path d="M704,720 Q660,725 650,745 Q645,755 655,750 L690,745 Z" fill="#B08D57"/>
+    <path d="M736,720 Q770,725 780,745 Q785,755 775,750 L740,745 Z" fill="#B08D57"/>
+    <!-- legs -->
+    <rect x="710" y="760" width="12" height="40" fill="#5D4037"/>
+    <rect x="718" y="760" width="12" height="40" fill="#5D4037"/>
+    <!-- inspecting leaf in hand -->
+    <ellipse cx="650" cy="742" rx="14" ry="18" fill="#166534"/>
+    <path d="M644,730 Q650,736 656,730 Q650,748 644,742 Z" stroke="#2E7D32" stroke-width="3" fill="none"/>
+  </g>
+  <!-- Tree on right -->
+  <g id="tree">
+    <path d="M1430,820 L1450,820 L1455,650 L1445,650 Z" fill="#5D4037"/>
+    <circle cx="1440" cy="600" r="85" fill="#14532D"/>
+    <circle cx="1400" cy="615" r="55" fill="#166534"/>
+    <circle cx="1480" cy="625" r="50" fill="#166534"/>
+    <circle cx="1450" cy="580" r="45" fill="#4ADE80" opacity="0.85"/>
+  </g>
+  <!-- Foreground grass tufts -->
+  <g fill="#14532D" opacity="0.9">
+    <path d="M120,900 Q130,850 140,900 Z"/><path d="M180,890 Q190,840 200,890 Z"/>
+    <path d="M980,895 Q990,845 1000,895 Z"/><path d="M1040,885 Q1050,835 1060,885 Z"/>
+    <path d="M1420,900 Q1430,850 1440,900 Z"/><path d="M1520,880 Q1530,830 1540,880 Z"/>
+  </g>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Thumbnail: plant disease symptoms">
+  <defs>
+    <radialGradient id="g" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </radialGradient>
+    <radialGradient id="s" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#DC2626"/>
+      <stop offset="100%" stop-color="#451A03"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="#F8FAF5"/>
+  <circle cx="200" cy="150" r="90" fill="#E7F0E7"/>
+  <path d="M130,150 Q180,60 230,150 Q280,240 230,300 Q170,360 130,300 Q80,240 130,150" fill="url(#g)" stroke="#14532D" stroke-width="5"/>
+  <circle cx="175" cy="160" r="11" fill="url(#s)"/>
+  <circle cx="220" cy="140" r="9" fill="url(#s)"/>
+  <circle cx="190" cy="210" r="10" fill="url(#s)"/>
+  <circle cx="235" cy="190" r="8" fill="url(#s)"/>
+  <path d="M195,155 Q210,150 220,165 Q205,175 195,155 Z" fill="#F59E0B" opacity="0.85"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Thumbnail: smart farming farmer with smartphone">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF7ED"/>
+      <stop offset="60%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="p" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#sky)"/>
+  <circle cx="80" cy="50" r="20" fill="#F59E0B" opacity="0.9"/>
+  <path d="M0,230 Q130,200 260,230 Q390,260 400,230 V300 H0 Z" fill="#86EFAC"/>
+  <path d="M135,240 Q135,220 155,215 Q175,210 175,225 Q175,240 155,245 Z" fill="#3E2723"/>
+  <circle cx="165" cy="218" r="6" fill="#D2A679"/>
+  <path d="M150,230 L150,270 L180,270 L180,230 Z" fill="#B08D57"/>
+  <rect x="155" y="236" width="5" height="20" rx="2" fill="#92400E" opacity="0.6"/>
+  <rect x="170" y="236" width="5" height="20" rx="2" fill="#92400E" opacity="0.6"/>
+  <rect x="172" y="205" width="30" height="58" rx="6" fill="url(#p)" stroke="#374151" stroke-width="2"/>
+  <rect x="180" y="213" width="14" height="14" rx="3" fill="#F8FAF5"/>
+  <rect x="180" y="237" width="14" height="14" rx="3" fill="#F8FAF5"/>
+  <rect x="204" y="213" width="14" height="14" rx="3" fill="#F8FAF5"/>
+  <rect x="204" y="237" width="14" height="14" rx="3" fill="#F8FAF5"/>
+  <g fill="#86EFAC">
+    <path d="M215,250 Q220,242 225,250 Q230,242 235,250 Q230,258 225,250 Q220,258 215,250 Z"/>
+  </g>
+</svg>

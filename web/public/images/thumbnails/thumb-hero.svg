@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225" role="img" aria-label="Thumbnail: Indian farm landscape">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF7ED"/>
+      <stop offset="60%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="earth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#713F12"/>
+      <stop offset="100%" stop-color="#451A03"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="150" fill="url(#sky)"/>
+  <circle cx="65" cy="38" r="14" fill="#F59E0B" opacity="0.9"/>
+  <path d="M0,130 Q130,120 260,125 Q390,140 400,130 V150 H0 Z" fill="#86EFAC" opacity="0.9"/>
+  <rect x="0" y="150" width="400" height="75" fill="url(#earth)"/>
+  <g fill="#166534">
+    <path d="M55,150 Q60,135 65,125 Q70,135 75,150 Z"/><path d="M115,150 Q120,130 125,120 Q130,130 135,150 Z"/>
+    <path d="M175,150 Q180,135 185,125 Q190,135 195,150 Z"/><path d="M235,150 Q240,130 245,120 Q250,130 255,150 Z"/>
+    <path d="M295,150 Q300,135 305,125 Q310,135 315,150 Z"/><path d="M355,150 Q360,130 365,120 Q370,130 375,150 Z"/>
+  </g>
+  <path d="M330,125 L350,125 L355,100 L345,100 Z" fill="#5D4037"/>
+  <circle cx="340" cy="90" r="24" fill="#14532D"/>
+</svg>

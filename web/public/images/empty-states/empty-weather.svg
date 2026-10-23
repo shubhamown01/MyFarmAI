@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Empty state: no weather data available">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#BFDBFE"/>
+      <stop offset="100%" stop-color="#E0F2FE"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#sky)"/>
+  <circle cx="200" cy="130" r="70" fill="#FFFFFF" opacity="0.9"/>
+  <path d="M150,130 Q200,70 250,130 Q250,190 200,190 Q150,190 150,130 Z" fill="#3B82F6" opacity="0.9"/>
+  <path d="M190,160 Q200,150 210,160 Q200,170 190,160 Z" fill="#F59E0B"/>
+  <line x1="185" y1="165" x2="195" y2="175" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="205" y1="155" x2="215" y2="165" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+  <path d="M170,190 Q190,210 210,190 Q230,210 250,190" stroke="#3B82F6" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.8"/>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Empty state: no pest identification results">
+  <defs>
+    <linearGradient id="leafGrad" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#BBF7D0"/>
+      <stop offset="100%" stop-color="#4ADE80"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="#F8FAF5"/>
+  <circle cx="200" cy="130" r="70" fill="#E7F0E7"/>
+  <path d="M330,250 L340,220 L320,210 Q310,200 300,210 L290,240 Q280,250 280,260 L290,270 Q300,280 310,270 L320,240 Q330,230 340,240 L350,270 Q360,280 370,270 L380,240 Q390,230 390,240" fill="#B45309"/>
+  <path d="M200,130 Q200,60 250,130 Q300,200 250,260 Q200,320 150,260 Q100,200 150,130" fill="url(#leafGrad)" stroke="#14532D" stroke-width="4" opacity="0.85"/>
+</svg>

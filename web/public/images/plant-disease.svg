@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 750" role="img" aria-label="Plant disease identification: crop leaves showing clearly distinguishable disease symptoms">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8FAF5"/>
+      <stop offset="100%" stop-color="#E7F0E7"/>
+    </linearGradient>
+    <linearGradient id="leafHealthy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <radialGradient id="spot" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#DC2626"/>
+      <stop offset="60%" stop-color="#7F1D1D"/>
+      <stop offset="100%" stop-color="#451A03"/>
+    </radialGradient>
+    <radialGradient id="lesion" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="55%" stop-color="#B45309"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </radialGradient>
+  </defs>
+  <rect width="1000" height="750" fill="url(#bg)"/>
+  <circle cx="900" cy="100" r="80" fill="#FEE2E2" opacity="0.5"/>
+  <circle cx="100" cy="650" r="100" fill="#FEF3C7" opacity="0.45"/>
+  <!-- Healthy reference leaf (left) -->
+  <path d="M150,330 Q280,180 460,300 Q640,420 480,560 Q300,680 150,520 Q30,400 150,330" fill="url(#leafHealthy)" stroke="#14532D" stroke-width="4"/>
+  <path d="M280,280 Q460,260 500,440 Q300,500 280,280 Z" fill="#86EFAC" opacity="0.6"/>
+  <path d="M310,310 Q380,290 430,340 Q390,380 330,410" stroke="#14532D" stroke-width="3" fill="none" opacity="0.6"/>
+  <path d="M370,360 Q410,340 460,390 Q420,430 370,460" stroke="#14532D" stroke-width="3" fill="none" opacity="0.6"/>
+  <text x="180" y="700" fill="#14532D" font-family="Inter, sans-serif" font-size="18" font-weight="600">Healthy</text>
+  <text x="180" y="725" fill="#66736A" font-family="Inter, sans-serif" font-size="14">reference leaf</text>
+  <!-- Diseased leaf (right) with clear symptoms -->
+  <path d="M560,300 Q730,160 920,260 Q980,420 820,580 Q620,680 560,500 Q400,380 560,300" fill="#4ADE80" stroke="#14532D" stroke-width="4"/>
+  <path d="M680,240 Q800,220 840,400 Q720,440 680,240 Z" fill="#86EFAC" opacity="0.5"/>
+  <path d="M710,290 Q770,270 800,330 Q750,370 710,290 Z" fill="#D1FAE5" opacity="0.6"/>
+  <!-- brown necrotic spots -->
+  <circle cx="640" cy="390" r="22" fill="url(#spot)"/>
+  <circle cx="760" cy="340" r="18" fill="url(#spot)"/>
+  <circle cx="700" cy="490" r="20" fill="url(#spot)"/>
+  <circle cx="820" cy="460" r="16" fill="url(#spot)"/>
+  <circle cx="620" cy="540" r="15" fill="url(#spot)"/>
+  <circle cx="870" cy="380" r="14" fill="url(#spot)"/>
+  <!-- yellow lesions / chlorosis -->
+  <path d="M730,400 Q770,380 810,410 Q790,450 750,440 Q730,410 730,400 Z" fill="url(#lesion)" opacity="0.85"/>
+  <path d="M610,440 Q650,420 690,450 Q660,490 620,480 Q610,450 610,440 Z" fill="url(#lesion)" opacity="0.85"/>
+  <path d="M800,520 Q840,500 880,540 Q850,580 810,560 Q800,530 800,520 Z" fill="url(#lesion)" opacity="0.85"/>
+  <path d="M670,350 Q710,330 750,360 Q730,400 690,390 Q670,360 670,350 Z" fill="url(#lesion)" opacity="0.85"/>
+  <!-- vein darkening -->
+  <path d="M690,320 Q740,300 780,360 Q740,420 700,380" stroke="#7F1D1D" stroke-width="4" fill="none" opacity="0.8"/>
+  <path d="M630,420 Q670,400 710,440 Q670,520 630,480" stroke="#7F1D1D" stroke-width="4" fill="none" opacity="0.8"/>
+  <text x="590" y="700" fill="#14532D" font-family="Inter, sans-serif" font-size="18" font-weight="600">Diseased</text>
+  <text x="590" y="725" fill="#66736A" font-family="Inter, sans-serif" font-size="14">leaf with symptoms</text>
+  <!-- symptom callout dots -->
+  <g fill="#DC2626">
+    <circle cx="640" cy="390" r="4"/><circle cx="760" cy="340" r="4"/>
+    <circle cx="700" cy="490" r="4"/><circle cx="820" cy="460" r="4"/>
+  </g>
+</svg>

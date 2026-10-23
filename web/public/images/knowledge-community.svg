@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 750" role="img" aria-label="Knowledge and community: authentic Indian farming activities, farmer collaboration, and crop management">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF7ED"/>
+      <stop offset="55%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#FDE68A"/>
+    </linearGradient>
+    <linearGradient id="field" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#86EFAC"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="750" fill="url(#sky)"/>
+  <circle cx="160" cy="130" r="45" fill="#F59E0B" opacity="0.9"/>
+  <circle cx="160" cy="130" r="68" fill="#F59E0B" opacity="0.15"/>
+  <!-- Field -->
+  <path d="M0,610 Q250,570 600,610 Q950,670 1000,610 V750 H0 Z" fill="url(#field)"/>
+  <!-- Crop rows -->
+  <g stroke="#14532D" stroke-width="2" opacity="0.35">
+    <path d="M0,640 Q200,700 500,700 T900,700 T1000,700"/>
+    <path d="M0,680 Q200,740 500,740 T900,740 T1000,740"/>
+    <path d="M0,720 Q200,745 500,745 T900,745 T1000,745"/>
+  </g>
+  <!-- Farmer A (left) -->
+  <g id="farmerA">
+    <path d="M260,540 Q260,525 280,520 Q300,515 300,525 Q300,540 280,545 Z" fill="#3E2723"/>
+    <circle cx="290" cy="535" r="14" fill="#D2A679"/>
+    <path d="M274,550 L274,615 L306,615 L306,550 Z" fill="#B08D57"/>
+    <path d="M280,556 L280,595 L300,595 L300,556 Z" fill="#92400E" opacity="0.6"/>
+    <path d="M274,570 Q230,575 220,590 Q215,600 225,595 L260,590 Z" fill="#B08D57"/>
+    <path d="M306,570 Q350,575 360,590 Q365,600 355,595 L320,590 Z" fill="#B08D57"/>
+    <rect x="280" y="615" width="11" height="40" fill="#5D4037"/>
+    <rect x="298" y="615" width="11" height="40" fill="#5D4037"/>
+    <!-- gesturing hand -->
+    <path d="M350,592 Q370,595 380,610 Q375,620 365,615 L345,610 Z" fill="#B08D57"/>
+  </g>
+  <!-- Farmer B (right) -->
+  <g id="farmerB">
+    <path d="M660,530 Q660,515 680,510 Q700,505 700,515 Q700,530 680,535 Z" fill="#3E2723"/>
+    <circle cx="690" cy="525" r="14" fill="#C0A080"/>
+    <path d="M674,540 L674,605 L706,605 L706,540 Z" fill="#B08D57"/>
+    <path d="M680,546 L680,585 L700,585 L700,546 Z" fill="#92400E" opacity="0.6"/>
+    <path d="M674,560 Q630,565 620,580 Q615,590 625,585 L660,580 Z" fill="#B08D57"/>
+    <path d="M706,560 Q750,565 760,580 Q765,590 755,585 L720,580 Z" fill="#B08D57"/>
+    <rect x="680" y="605" width="11" height="40" fill="#5D4037"/>
+    <rect x="698" y="605" width="11" height="40" fill="#5D4037"/>
+  </g>
+  <!-- Shared plant between them -->
+  <path d="M440,480 Q480,360 560,420 Q640,480 500,620 Q380,560 440,500 Q340,440 440,480" fill="#4ADE80" stroke="#14532D" stroke-width="4"/>
+  <path d="M480,400 Q560,380 600,460 Q500,500 480,400 Z" fill="#86EFAC" opacity="0.6"/>
+  <path d="M510,430 Q560,410 600,450 Q560,490 510,430 Z" fill="#D1FAE5" opacity="0.6"/>
+  <path d="M500,460 Q540,440 580,470 Q540,510 500,460 Z" fill="#BBF7D0" opacity="0.7"/>
+  <path d="M510,460 Q540,440 570,470 Q530,500 510,460 Z" stroke="#14532D" stroke-width="3" fill="none" opacity="0.6"/>
+  <!-- discussion bubbles -->
+  <g fill="#FFFFFF" stroke="#14532D" stroke-width="2" opacity="0.95">
+    <path d="M310,490 Q330,460 370,470 Q410,480 420,510 Q410,540 370,530 Q330,520 310,490 Z"/>
+    <path d="M340,500 Q360,485 380,495 Q400,505 390,525 Q370,535 350,525 Q340,510 340,500 Z" fill="#F8FAF5"/>
+    <circle cx="370" cy="510" r="5" fill="#F59E0B"/>
+    <circle cx="390" cy="500" r="3" fill="#14532D"/>
+  </g>
+  <g fill="#FFFFFF" stroke="#14532D" stroke-width="2" opacity="0.9">
+    <path d="M740,480 Q760,450 800,460 Q840,470 850,500 Q840,530 800,520 Q760,510 740,480 Z"/>
+    <path d="M770,490 Q790,475 810,485 Q830,495 820,515 Q800,525 780,515 Q770,500 770,490 Z" fill="#F8FAF5"/>
+    <circle cx="800" cy="500" r="5" fill="#F59E0B"/>
+    <circle cx="820" cy="490" r="3" fill="#14532D"/>
+  </g>
+  <!-- foreground grass -->
+  <g fill="#14532D" opacity="0.9">
+    <path d="M40,750 Q50,710 60,750 Z"/><path d="M100,745 Q110,705 120,745 Z"/>
+    <path d="M940,755 Q950,715 960,755 Z"/><path d="M1000,748 Q1000,708 1000,748 Z"/>
+  </g>
+</svg>
