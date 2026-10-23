@@ -1,0 +1,319 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "gh-grep": {
+        "type": "remote",
+        "url": "https://mcp.grep.app"
+      },
+      "sentry": {
+        "type": "remote",
+        "url": "https://mcp.sentry.dev/mcp",
+        "oauth": {}
+      },
+      "atlassian": {
+        "type": "remote",
+        "url": "https://mcp.atlassian.com/v2/mcp"
+      },
+      "linear": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "mcp-linear"
+        ],
+        "environment": {
+          "LINEAR_API_KEY": "{env:LINEAR_API_KEY}"
+        },
+        "disabled": true
+      },
+      "redis": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@modelcontextprotocol/server-redis"
+        ],
+        "environment": {
+          "REDIS_URL": "{env:REDIS_URL}"
+        },
+        "disabled": true
+      },
+      "postgres": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@modelcontextprotocol/server-postgres",
+          "{env:DATABASE_URL}"
+        ],
+        "disabled": true
+      },
+      "kubernetes": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "mcp-server-kubernetes"
+        ],
+        "disabled": true
+      },
+      "puppeteer": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@modelcontextprotocol/server-puppeteer"
+        ],
+        "disabled": true
+      },
+      "aws": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@aws/mcp"
+        ],
+        "disabled": true
+      },
+      "axiom": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "@axiomhq/mcp-server-axiom"
+        ],
+        "environment": {
+          "AXIOM_TOKEN": "{env:AXIOM_TOKEN}"
+        },
+        "disabled": true
+      }
+    }
+  },
+  "agents": {
+    "azure-infra-engineer": {
+      "steps": 15
+    },
+    "cloud-architect": {
+      "steps": 15
+    },
+    "database-administrator": {
+      "steps": 15
+    },
+    "deployment-engineer": {
+      "steps": 15
+    },
+    "incident-responder": {
+      "steps": 15
+    },
+    "kubernetes-specialist": {
+      "steps": 15
+    },
+    "network-engineer": {
+      "steps": 12
+    },
+    "platform-engineer": {
+      "steps": 15
+    },
+    "security-engineer": {
+      "steps": 15
+    },
+    "sre-engineer": {
+      "steps": 15
+    },
+    "code-reviewer": {
+      "steps": 15
+    },
+    "performance-engineer": {
+      "steps": 15
+    },
+    "security-auditor": {
+      "steps": 15
+    },
+    "data-analyst": {
+      "steps": 12
+    },
+    "data-scientist": {
+      "steps": 15
+    },
+    "database-optimizer": {
+      "steps": 15
+    },
+    "postgres-pro": {
+      "steps": 15
+    },
+    "prompt-engineer": {
+      "steps": 10
+    },
+    "sql-pro": {
+      "steps": 15
+    },
+    "dependency-manager": {
+      "steps": 10
+    },
+    "docs-writer": {
+      "steps": 10
+    },
+    "git-workflow-manager": {
+      "steps": 8
+    },
+    "technical-writer": {
+      "steps": 10
+    },
+    "accessibility-tester": {
+      "steps": 10
+    },
+    "architect-reviewer": {
+      "steps": 15
+    },
+    "chaos-engineer": {
+      "steps": 10
+    },
+    "compliance-auditor": {
+      "steps": 15
+    },
+    "debugger": {
+      "steps": 20
+    },
+    "error-detective": {
+      "steps": 15
+    },
+    "penetration-tester": {
+      "steps": 15
+    },
+    "llm-architect": {
+      "steps": 15
+    },
+    "mlops-engineer": {
+      "steps": 15
+    },
+    "dx-optimizer": {
+      "steps": 10
+    },
+    "seo-specialist": {
+      "steps": 10
+    },
+    "business-analyst": {
+      "steps": 10
+    },
+    "content-marketer": {
+      "steps": 10
+    },
+    "legal-advisor": {
+      "steps": 10
+    },
+    "product-manager": {
+      "steps": 10
+    },
+    "project-manager": {
+      "steps": 8
+    },
+    "sales-engineer": {
+      "steps": 10
+    },
+    "scrum-master": {
+      "steps": 8
+    },
+    "ux-researcher": {
+      "steps": 10
+    },
+    "agent-organizer": {
+      "steps": 5
+    },
+    "context-manager": {
+      "steps": 5
+    },
+    "error-coordinator": {
+      "steps": 10
+    },
+    "knowledge-synthesizer": {
+      "steps": 8
+    },
+    "multi-agent-coordinator": {
+      "steps": 10
+    },
+    "task-distributor": {
+      "steps": 5
+    },
+    "workflow-orchestrator": {
+      "steps": 10
+    },
+    "competitive-analyst": {
+      "steps": 12
+    },
+    "data-researcher": {
+      "steps": 12
+    },
+    "market-researcher": {
+      "steps": 10
+    },
+    "research-analyst": {
+      "steps": 10
+    },
+    "scientific-literature-researcher": {
+      "steps": 12
+    },
+    "search-specialist": {
+      "steps": 8
+    },
+    "trend-analyst": {
+      "steps": 10
+    },
+    "myfarmai-orchestrator": {
+      "mode": "primary",
+      "steps": 20,
+      "permission": {
+        "task": {
+          "*": "deny",
+          "myfarmai-*": "allow",
+          "backend-engineer": "allow",
+          "frontend-engineer": "allow",
+          "android-engineer": "allow",
+          "ai-ml-engineer": "allow",
+          "research-engineer": "allow",
+          "security-engineer": "allow",
+          "qa-reviewer": "allow",
+          "release-coordinator": "allow",
+          "explore": "allow"
+        }
+      }
+    },
+    "backend-engineer": {
+      "mode": "subagent",
+      "steps": 15
+    },
+    "frontend-engineer": {
+      "mode": "subagent",
+      "steps": 15
+    },
+    "android-engineer": {
+      "mode": "subagent",
+      "steps": 15
+    },
+    "ai-ml-engineer": {
+      "mode": "subagent",
+      "steps": 15
+    },
+    "research-engineer": {
+      "mode": "subagent",
+      "steps": 15
+    },
+    "qa-reviewer": {
+      "mode": "subagent",
+      "steps": 15
+    },
+    "release-coordinator": {
+      "mode": "subagent",
+      "steps": 10
+    }
+  },
+  "default_agent": "myfarmai-orchestrator",
+  "subagent_depth": 2,
+  "compaction": {
+    "auto": true,
+    "prune": true
+  },
+  "plugin": [
+    "compound-engineering@git+https://github.com/EveryInc/compound-engineering-plugin.git"
+  ]
+}

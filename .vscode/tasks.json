@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend: full quality gate",
+      "type": "shell",
+      "command": "./scripts/check.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Web: check (type + lint + test)",
+      "type": "shell",
+      "command": "npm run typecheck && npm run lint && npm test -- --runInBand",
+      "options": { "cwd": "${workspaceFolder}/web" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: check (type + lint)",
+      "type": "shell",
+      "command": "npm run typecheck && npm run lint",
+      "options": { "cwd": "${workspaceFolder}/android" },
+      "problemMatcher": []
+    }
+  ]
+}

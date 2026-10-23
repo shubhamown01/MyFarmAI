@@ -7,6 +7,8 @@
 __pycache__/
 *.py[cod]
 *.so
+*.egg-info/
+*.tsbuildinfo
 .venv/
 venv/
 .pytest_cache/
@@ -48,8 +50,15 @@ logs/
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
+# IDE (project config committed; developer-local overrides not)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Generated TypeScript build info (root .json)
+
 .idea/
 
 # Temporary
@@ -65,6 +74,13 @@ htmlcov/
 
 # Local MCP persistent memory
 .local/mcp-memory/
+
+# Local tool state / agent workspace dirs (never commit)
+.setup-backups/
+.playwright-mcp/
+.omo/
+.local/
+.codegraph
 
 # Graphify generated artifacts (large files)
 graphify-out/*.html
