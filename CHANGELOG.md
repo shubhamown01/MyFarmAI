@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Phase 6 documentation set verified against code: `docs/project-overview.md`, `docs/architecture.md`, `docs/setup-guide.md`, `docs/api-documentation.md`, `docs/database-design.md`, `docs/demo-guide.md`
 - Root `Makefile` (backend-check/dev, web-check/build, android-check, docker up/down/logs, graph-update)
 - VS Code workspace config: `.vscode/{settings,tasks,launch,extensions}.json` (tracked via .gitignore exceptions)
+- Historical: `REPOSITORY_AUDIT.md` (2026-10-21 audit), `.agents/` project skills, `.opencode/` skills + agents config
+- Baseline commits: `ea9d109` (docs/governance/tooling), `c4aece2` (web: Next.js 15 dashboard), `1f543a9` (android: Expo 51 + brand assets)
 
 ### Changed
 - README: corrected voice-service containment status, Python 3.12 + uv tooling, `CORS_ALLOWED_ORIGINS`, backend uv commands, Apache-2.0 license reference
-- `.gitignore`: track selected `.vscode` files; ignore `*.egg-info/`, `*.tsbuildinfo`
+- `.gitignore`: track selected `.vscode` files; ignore `*.egg-info/`, `*.tsbuildinfo`, entire `graphify-out/` (rebuildable)
 
 ### Removed
 - Stray scratch files `web/test.ts`, `web/test.tsx`, `web/test-component.tsx`
