@@ -82,7 +82,5 @@ htmlcov/
 .local/
 .codegraph
 
-# Graphify generated artifacts (large files)
-graphify-out/*.html
-graphify-out/graph.json
-graphify-out/graph.html
+# Graphify generated artifacts (large, fully rebuildable via `graphify update .`)
+graphify-out/
