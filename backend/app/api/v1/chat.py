@@ -110,9 +110,12 @@ async def chat(
             model=settings.ollama_model,
         )
     except ValueError as e:
+        # ValueError here only means conversation-ownership lookup failed
+        # (services/chat.py). Don't echo str(e) — future ValueErrors from
+        # other internals must not leak to clients (SEC-P5-04).
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"detail": str(e), "error_code": "CONVERSATION_NOT_FOUND"},
+            detail={"detail": "conversation not found", "error_code": "CONVERSATION_NOT_FOUND"},
         ) from e
     except Exception as e:
         from app.ai.gateway import (

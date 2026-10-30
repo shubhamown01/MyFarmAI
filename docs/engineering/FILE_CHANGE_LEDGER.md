@@ -1118,6 +1118,21 @@
 
 ---
 
+### FCL-054 — Phase 5 Final Testing: Verdict PARTIAL; SEC Fixes + Live Smoke PASS
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-054 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 5 final testing master prompt |
+| **File Path** | `backend/app/ai/prompts.py` (SEC-P5-01: crop/location through `_sanitize_slot`); `backend/app/schemas/crop_cycle.py` (SEC-P5-02: le bounds on area/yield fields); `backend/app/api/v1/chat.py` (SEC-P5-04: no internal-error echo in 404 handler); `backend/tests/test_prompts_v2.py` (+1 injection regression test, 7 total); `docs/backend/PHASE_5_FINAL_TESTING_REPORT.md` (new) |
+| **Evidence** | Regression: check.sh **171 passed** (backend), web 19/19 jest + typecheck/lint/build ✓, android typecheck/lint ✓, compose config OK. Live smoke (fresh sqlite+aiosqlite DB): login 200, conversations 200 own-only, farm 201/200, preferences 200, unauth 401. Security: APPROVE-WITH-CONDITIONS → all 3 code conditions fixed; 0 Critical/High open |
+| **Gotcha** | Fresh sqlite live DBs need explicit `metadata.create_all` (server startup doesn't create schema for sqlite — same conftest gotcha, now hit live) |
+| **Verdict** | **PARTIAL** — 5A/5B/5G COMPLETE; 5C/5D/5E/5F/5I NOT IMPLEMENTED (owner decisions now granted, implementation pending); Phase 6 blocked until owner accepts report |
+| **Status** | COMPLETE — testing cycle done, report written, awaiting owner acceptance |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

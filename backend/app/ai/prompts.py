@@ -84,7 +84,7 @@ def build_system_prompt(
 ) -> str:
     return SYSTEM_PROMPT_TEMPLATE.format(
         language=language,
-        crop=crop or "not specified",
-        location=location or "not specified",
+        crop=_sanitize_slot(crop, 100) or "not specified",
+        location=_sanitize_slot(location, 200) or "not specified",
         __safety_rules=_SAFETY_RULES,
     ) + _format_farm_context(farm_context)

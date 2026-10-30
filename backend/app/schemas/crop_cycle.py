@@ -14,9 +14,9 @@ class CropCycleCreate(BaseModel):
     season_name: str | None = Field(None, max_length=100)
     planting_date: date | None = None
     expected_harvest_date: date | None = None
-    area_hectares: float | None = Field(None, ge=0)
+    area_hectares: float | None = Field(None, ge=0, le=100_000)
     area_acres: float | None = Field(None, ge=0)
-    expected_yield_kg: float | None = Field(None, ge=0)
+    expected_yield_kg: float | None = Field(None, ge=0, le=10_000_000)
     yield_unit: str = Field("kg/ha", max_length=20)
     notes: str | None = Field(None, max_length=5000)
 
@@ -26,11 +26,11 @@ class CropCycleUpdate(BaseModel):
     planting_date: date | None = None
     expected_harvest_date: date | None = None
     actual_harvest_date: date | None = None
-    area_hectares: float | None = Field(None, ge=0)
+    area_hectares: float | None = Field(None, ge=0, le=100_000)
     area_acres: float | None = Field(None, ge=0)
     status: CropCycleStatus | None = None
-    expected_yield_kg: float | None = Field(None, ge=0)
-    actual_yield_kg: float | None = Field(None, ge=0)
+    expected_yield_kg: float | None = Field(None, ge=0, le=10_000_000)
+    actual_yield_kg: float | None = Field(None, ge=0, le=10_000_000)
     yield_unit: str | None = Field(None, max_length=20)
     notes: str | None = Field(None, max_length=5000)
 
