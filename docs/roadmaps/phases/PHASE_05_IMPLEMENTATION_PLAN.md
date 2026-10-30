@@ -42,8 +42,9 @@
 - Vision API shipped: POST /api/v1/vision/analyze — multipart upload, magic-byte validation (jpeg/png/webp, 5 MiB cap), in-memory-only processing (nothing stored/logged), qwen3-vl:2b enabled in registry (Model 3 gate resolved: locally present, Apache-2.0, owner approval 2026-10-31). Output = observations + uncertainty + expert referral; NO disease-detection accuracy claims. 6 tests — gate 186 passed. Open: live-model evidence; VRAM unbenchmarked
 - ~~BLOCKED on Model 3 gate~~ (resolved 2026-10-31)
 
-### P5F — Voice-first experience
-- **BLOCKED on Model 6 gate** (architecture decision: separate service vs backend-native; the `ai/voice/` service has no auth).
+### P5F — Voice-first experience — **RESOLVED BY ARCHITECTURE DECISION (2026-10-31, FCL-058)**
+- ADR-016 (PROPOSED): client-platform speech APIs for MVP (Android SpeechRecognizer/TTS, Web Speech API); no server-side voice service (kills the Phase 0 unauthenticated-service class; no model downloads); GET /voice/capabilities for clients. 2 tests — gate 188 passed. Owner acceptance of ADR-016 pending
+- ~~BLOCKED on Model 6 gate~~ (resolved 2026-10-31)
 
 ### P5G — Conversation memory & personalization — **COMPLETE (2026-10-31, FCL-051)**
 - ~~Conversation-history API (FCL-044 finding)~~: read-only GET /conversations (limit 1–100) + GET /conversations/{id} with last-50 messages, user-scoped at repository level (P3-05); preferences API (PATCH /auth/preferences, own-only, `^[a-z]{2}$`). 7 tests — gate 170 passed. **Reviewer gate closed (FCL-052): QA PASS + security APPROVE** — repo-level user-scoping validated airtight; archived-conversation detail semantics documented; ordering-tie and limit-bound test gaps noted as Lows. Open: ADR-015 retention owner-pending

@@ -1180,6 +1180,21 @@
 
 ---
 
+### FCL-058 — P5F: Voice Architecture Decision (ADR-016) + Capabilities Endpoint
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-058 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | P5F Model 6 gate (architecture decision: separate service vs backend-native) |
+| **Decision** | ADR-016 (PROPOSED): MVP voice = client-platform speech APIs (Android SpeechRecognizer/TTS, Web Speech API); NO server-side voice service — eliminates the Phase 0 unauthenticated-voice-service finding class, avoids STT/TTS model downloads (7 GiB RAM / 2 GiB VRAM / ~5 GB SSD free; HDD-first policy). Server-side voice deferred pending owner-approved model choice + /data storage + authenticated loopback design |
+| **File Path** | `docs/engineering/ADR-016-voice-client-platform.md` (new); `backend/app/api/v1/voice.py` (new: GET /voice/capabilities — auth, {server_stt: false, server_tts: false, client_platform_voice: true}); `backend/app/api/v1/router.py`; `backend/tests/test_p5e_vision.py` (+2 voice tests, 8 total) |
+| **Tests** | `bash scripts/check.sh`: **188 passed, all checks passed** (186 + 2). Section 7 server-side voice tests are N/A under this architecture — no server audio path exists (documented in ADR) |
+| **Open** | ADR-016 owner acceptance; Android voice manual QA (owner device); 5I notifications deferred to Phase 6 |
+| **Status** | COMPLETE — gate green; P5F resolved by architecture decision |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

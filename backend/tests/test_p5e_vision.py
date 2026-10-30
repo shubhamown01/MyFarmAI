@@ -105,3 +105,18 @@ async def test_model_not_found_maps_503(async_client: AsyncClient, monkeypatch) 
     resp = await async_client.post("/api/v1/vision/analyze", files=_file(PNG_BYTES))
     assert resp.status_code == 503
     assert resp.json()["error_code"] == "VISION_MODEL_UNAVAILABLE"
+
+
+async def test_voice_capabilities_reports_no_server_voice(async_client: AsyncClient) -> None:
+    """ADR-016: server has no STT/TTS; clients use platform speech APIs."""
+    await _login(async_client, "p5f-a@verifytest.com")
+    resp = await async_client.get("/api/v1/voice/capabilities")
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["server_stt"] is False and body["server_tts"] is False
+    assert body["client_platform_voice"] is True
+
+
+async def test_voice_capabilities_requires_auth(async_client: AsyncClient) -> None:
+    resp = await async_client.get("/api/v1/voice/capabilities")
+    assert resp.status_code == 401

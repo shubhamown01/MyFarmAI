@@ -555,6 +555,25 @@ Note: message `id` is an integer (the `messages` table uses an Integer autoincre
 
 ---
 
+## Voice Capabilities (P5F / ADR-016)
+
+**GET** `/api/v1/voice/capabilities` — capability discovery. Requires authentication.
+
+```json
+{
+  "server_stt": false,
+  "server_tts": false,
+  "client_platform_voice": true,
+  "recommended_languages": ["en", "hi"],
+  "note": "MVP voice uses client-platform speech APIs (ADR-016). Send recognized text as an ordinary chat message; no audio is accepted or stored server-side.",
+  "environment": "development"
+}
+```
+
+MVP voice is client-platform (Android SpeechRecognizer/TextToSpeech, Web Speech API) — the backend never receives or stores audio. Server-side STT/TTS is deferred pending ADR-016 owner acceptance and an authenticated design.
+
+---
+
 ## Crop Image Assistance (P5E)
 
 **POST** `/api/v1/vision/analyze` — one-shot crop-photo analysis. Requires authentication. Multipart form: `file` (jpeg/png/webp by magic bytes, max 5 MiB — declared content-type headers are untrusted), optional `question` (≤500), `crop` (≤100), `language` (2-letter, default en).
