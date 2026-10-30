@@ -1209,6 +1209,20 @@
 
 ---
 
+### FCL-060 — Phase 6B Verification + Phase 6J CI Pipeline
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-060 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6B (verify) + 6J (implement) — no-infrastructure-decision items only |
+| **6B verification (PASS)** | Environment profiles + `validate_production_settings` enforce: explicit CORS in production, absolute DB path, non-localhost Ollama URL, no default secret; `.env` gitignored (checked); `.env.example` contains zero secrets; compose uses secrets-file DB password. Remaining 6B work (staging environment, domain endpoints) requires the 6A owner decisions |
+| **File Path (6J)** | `.github/workflows/ci.yml` (new) — backend (ruff format --check, ruff check, pytest), web (typecheck/jest/lint/build), android (typecheck/lint), compose validation. **No deploy jobs by design** — production deployment requires an explicit owner gate, never automated |
+| **Tests** | CI yaml validated syntactically; canonical gate re-run locally: **188 passed, all checks passed** |
+| **Status** | COMPLETE — 6B verified, 6J CI added; deploy automation intentionally absent pending owner infrastructure decisions |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

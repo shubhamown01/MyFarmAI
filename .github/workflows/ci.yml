@@ -1,0 +1,68 @@
+name: CI
+
+# Phase 6J: mandatory quality gates on every PR/push. No deploy jobs —
+# production deployment requires an explicit owner approval gate (not automated).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Lint + format + tests (canonical gate)
+        working-directory: backend
+        run: |
+          # pyproject uses legacy tool.uv.dev-dependencies (not dependency-groups);
+          # plain `uv sync` includes it.
+          uv sync
+          uv run ruff format --check .
+          uv run ruff check app tests --exclude app/orchestrator
+          uv run pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Typecheck + test + lint + build
+        working-directory: web
+        run: |
+          npm ci
+          npm run typecheck
+          npm test -- --runInBand --ci
+          npm run lint
+          npm run build
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: android/package-lock.json
+      - name: Typecheck + lint
+        working-directory: android
+        run: |
+          npm ci
+          npm run typecheck
+          npm run lint
+
+  compose-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose file
+        run: docker compose -f docker-compose.yml config --quiet
