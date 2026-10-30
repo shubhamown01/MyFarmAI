@@ -7,25 +7,28 @@ export function useSpeechSynthesis() {
   const speak = useCallback(
     (text: string, language = 'hi-IN') => {
       return new Promise<void>((resolve) => {
-        if (!Speech) {
-          console.warn('expo-speech not available');
-          return;
-        }
-
-        const utterance = {
-          text,
+        Speech.speak(text, {
           language,
           pitch: 1.0,
           rate: 0.9,
           onStart: () => setIsSpeaking(true),
-          onDone: () => setIsSpeaking(false),
-          onError: () => setIsSpeaking(false),
-        };
-
-        Speech.speak(utterance);
-        resolve();
+          onDone: () => {
+            setIsSpeaking(false);
+            resolve();
+          },
+          onStopped: () => {
+            setIsSpeaking(false);
+            resolve();
+          },
+          onError: () => {
+            setIsSpeaking(false);
+            resolve();
+          },
+        });
       });
-    }, []);
+    },
+    []
+  );
 
   const stop = useCallback(() => {
     Speech.stop();

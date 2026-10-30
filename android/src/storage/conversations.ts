@@ -4,13 +4,13 @@ const STORAGE_KEY = 'myfarmai_conversations';
 
 export interface StoredConversation {
   id: string;
-  messages: Array<{
+  messages: {
     id: string;
     role: 'user' | 'assistant';
     content: string;
     timestamp: string;
     conversationId: string;
-  }>;
+  }[];
   updatedAt: number;
 }
 

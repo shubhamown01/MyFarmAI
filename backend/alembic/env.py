@@ -1,6 +1,7 @@
 """Alembic async environment configuration."""
 
 import asyncio
+import os
 import sys
 from logging.config import fileConfig
 
@@ -16,6 +17,11 @@ sys.path.append(".")
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# DATABASE_URL (a full SQLAlchemy URL) overrides alembic.ini so migrations can
+# target any environment (e.g. the Compose PostgreSQL) without editing the file.
+if os.environ.get("DATABASE_URL"):
+    config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

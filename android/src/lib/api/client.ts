@@ -1,12 +1,9 @@
-import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
 import {
-  ChatRequest,
-  ChatResponse,
   WeatherResponse,
   ResourcesResponse,
   HealthResponse,
-  ApiError,
-} from '../types';
+} from '../../types';
 
 const REQUEST_TIMEOUT = 120000; // 120s for chat (Ollama can be slow)
 const WEATHER_TIMEOUT = 30000; // 30s for weather
@@ -96,7 +93,7 @@ class ApiClient {
       current: 'true',
       daily: currentOnly ? 'false' : 'true',
     });
-    return this.request(
+    return this.request<WeatherResponse>(
       `${API_ENDPOINTS.weather}?${params}`,
       {},
       WEATHER_TIMEOUT
@@ -104,7 +101,7 @@ class ApiClient {
   }
 
   async getCurrentWeather(latitude: number, longitude: number) {
-    return this.request(
+    return this.request<WeatherResponse>(
       `${API_ENDPOINTS.weatherCurrent}?latitude=${latitude}&longitude=${longitude}`,
       {},
       WEATHER_TIMEOUT
@@ -114,7 +111,7 @@ class ApiClient {
   // Resources
   async getResources(category?: string) {
     const params = category ? `?category=${category}` : '';
-    return this.request(
+    return this.request<ResourcesResponse>(
       `${API_ENDPOINTS.resources}${params}`,
       {},
       WEATHER_TIMEOUT
@@ -130,7 +127,7 @@ class ApiClient {
   }
 
   async getResourcesByCategory(category: string) {
-    return this.request(
+    return this.request<ResourcesResponse>(
       `${API_ENDPOINTS.resources}/${category}`,
       {},
       WEATHER_TIMEOUT
@@ -139,7 +136,7 @@ class ApiClient {
 
   // Health
   async checkHealth() {
-    return this.request(
+    return this.request<HealthResponse>(
       API_ENDPOINTS.health,
       {},
       WEATHER_TIMEOUT

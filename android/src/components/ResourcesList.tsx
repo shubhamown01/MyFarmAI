@@ -9,24 +9,28 @@ import {
   ScrollView,
   TextInput,
 } from 'react-native';
-import { useResources } from '../../hooks/useResources';
-import { AgriculturalResource } from '../../types/resources';
+import { useResources } from '../hooks/useResources';
 import { useTheme } from '../theme';
 import { Linking } from 'react-native';
-
-interface ResourcesListProps {}
 
 export const ResourcesList: React.FC = () => {
   const {
     resources,
     categories,
-    category,
+    selectedCategory: category,
     setCategory,
     isLoading,
     error,
+    fetchResources,
+    fetchCategories,
   } = useResources();
   const [searchQuery, setSearchQuery] = useState('');
   const { colors } = useTheme();
+
+  React.useEffect(() => {
+    fetchResources();
+    fetchCategories();
+  }, [fetchResources, fetchCategories]);
 
   const filteredResources = resources.filter((resource) => {
     const matchesCategory = !category || resource.category === category;
@@ -59,8 +63,9 @@ export const ResourcesList: React.FC = () => {
       </View>
 
       <TextInput
-        style={[styles.searchInput, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outline, color: colors.onSurface, placeholderTextColor: colors.onSurfaceDisabled }]}
+        style={[styles.searchInput, { backgroundColor: colors.surfaceContainerLow, borderColor: colors.outline, color: colors.onSurface }]}
         placeholder="Search resources..."
+        placeholderTextColor={colors.onSurfaceDisabled}
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
@@ -128,7 +133,6 @@ export const ResourcesList: React.FC = () => {
             </View>
           </TouchableOpacity>
         )}
-        keyExtractor={(item) => item.url}
         ListEmptyComponent={
           <View style={[styles.emptyContainer, { backgroundColor: colors.surfaceContainer }]}>
             <Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>No resources found</Text>
@@ -228,6 +232,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
+    fontSize: 14,
+  },
+  emptyContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
     fontSize: 14,
   },
 });

@@ -87,6 +87,16 @@
           "AXIOM_TOKEN": "{env:AXIOM_TOKEN}"
         },
         "disabled": true
+      },
+      "screen-mcp": {
+        "type": "local",
+        "command": [
+          "/data/screen-mcp/bin/screen-mcp"
+        ],
+        "environment": {
+          "MCP_SCREEN_GUARD": "1",
+          "MCP_SCREEN_AMBIENT": "1"
+        }
       }
     }
   },
@@ -314,6 +324,9 @@
     "prune": true
   },
   "plugin": [
-    "compound-engineering@git+https://github.com/EveryInc/compound-engineering-plugin.git"
-  ]
+    "compound-engineering@git+https://github.com/EveryInc/compound-engineering-plugin.git",
+    "@opencode-ai/browser-control"
+  ],
+  "model": "ollama/qwen2.5-coder:3b",
+  "small_model": "ollama/qwen3:0.6b"
 }

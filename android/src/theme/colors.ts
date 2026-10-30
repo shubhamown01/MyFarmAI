@@ -130,7 +130,7 @@ export const darkColors = {
   backdrop: 'rgba(30,30,30,0.8)',
 } as const;
 
-export type ColorTokens = typeof lightColors;
+export type ColorTokens = { [K in keyof typeof lightColors]: string };
 export type ThemeMode = 'light' | 'dark';
 
 // Spacing tokens (4px base unit)

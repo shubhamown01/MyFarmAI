@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { apiClient } from '../lib/api/client';
-import { WeatherResponse } from '../../types/weather';
+import { WeatherResponse } from '../types/weather';
 
 export function useWeather() {
   const [weather, setWeather] = useState<WeatherResponse | null>(null);
@@ -17,7 +17,7 @@ export function useWeather() {
           ? await apiClient.getCurrentWeather(latitude, longitude)
           : await apiClient.getWeather(latitude, longitude);
         setWeather(data);
-      } catch (error) {
+      } catch {
         setError('Failed to fetch weather');
       } finally {
         setIsLoading(false);
@@ -30,7 +30,7 @@ export function useWeather() {
     async (latitude: number, longitude: number) => {
       return fetchWeather(latitude, longitude, true);
     },
-    []
+    [fetchWeather]
   );
 
   return {

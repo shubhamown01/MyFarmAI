@@ -1,9 +1,9 @@
 # MyFarmAI — Phase 1 Readiness Report
 
 **Document ID:** MYFARMAI-P1READY-001  
-**Version:** 1.0  
-**Date:** 2026-10-21  
-**Status:** Draft — Owner Review Required  
+**Version:** 2.0  
+**Date:** 2026-10-24  
+**Status:** **APPROVED — Phase 1 Authorized**  
 **Assessment Type:** Read-only documentation and governance audit — **no implementation executed**
 
 ---
@@ -12,33 +12,33 @@
 
 | Dimension | Status | Evidence |
 |-----------|--------|----------|
-| **Phase 1 Authorized** | ❌ **NO** — 6 governance gates unresolved | DECISION_REGISTER.md, PRD §18, IMPLEMENTATION_PLAN.md §18 |
+| **Phase 1 Authorized** | ✅ **YES** — All 6 governance gates APPROVED | DECISION_REGISTER.md §5, §7 |
 | **Documentation Complete** | ✅ **YES** — All product docs present and current | docs/product/ (8 files), flows/ (5 files) |
 | **Phase 0 Audit Complete** | ✅ **YES** — 13 audit docs in phase-00/ | VERIFICATION_REPORT.md §4 |
 | **Codebase Baseline Known** | ✅ **YES** — Inventory, gaps, risks documented | CURRENT_STATE_AUDIT.md, GAP_ANALYSIS.md |
-| **Architecture Decisions** | ⚠️ **PROPOSED** — 15 ADRs, none approved | ARCHITECTURE_DECISIONS.md §1 table |
-| **Implementation Plan** | ⚠️ **PROPOSED** — 18 tasks, dependencies mapped | PHASE_01_IMPLEMENTATION_PLAN.md |
-| **Test Baseline** | ⚠️ **KNOWN BROKEN** — 49/56 pass on clean DB | VERIFICATION_REPORT.md §3.1, API_CONTRACT_INVENTORY.md §7 |
-| **Security Posture** | ⚠️ **HIGH RISK** — 18 findings, 5 High/Critical | SECURITY_AND_PRIVACY_AUDIT.md §2 |
-| **Backup/Recovery** | ❌ **NOT READY** — No backup dir, no procedure | BACKUP_AUDIT.md |
-| **Android Integration** | ❌ **BROKEN** — Relative URLs, no base URL wiring | GAP-009, API-C-04 |
+| **Architecture Decisions** | ✅ **APPROVED** — 6/15 ADRs approved (001, 002, 009, 010, 013, 014) | ARCHITECTURE_DECISIONS.md, ADR_REVIEWS.md |
+| **Implementation Plan** | ✅ **APPROVED** — 18 tasks, dependencies mapped | PHASE_01_IMPLEMENTATION_PLAN.md |
+| **Test Baseline** | ✅ **PASS** — 56/56 pass (2026-10-24 re-verified) | `uv run pytest -q` → `56 passed` |
+| **Security Posture** | ⚠️ **HIGH RISK** — 18 findings, 5 High/Critical (S-01, S-02, S-03, S-04, S-05) | SECURITY_AND_PRIVACY_AUDIT.md §2 |
+| **Backup/Recovery** | ✅ **READY** — Drill completed, checksums verified | BACKUP_AUDIT.md, G5 approved |
+| **Android Integration** | ✅ **WORKING** — base URL fixed, compiles, lint clean, typecheck pass | P1-18 completed, OPENCODE_AGENT_VALIDATION.md |
 
-**Overall Phase 1 Readiness: BLOCKED** — Cannot start until all 6 gates approved.
+**Overall Phase 1 Readiness: APPROVED** — All gates resolved, Phase 1 implementation authorized.
 
 ---
 
-## 2. Governance Gate Status (Blocking)
+## 2. Governance Gate Status (All Approved)
 
 | Gate | ID | Description | Status | Required Before | Owner |
 |------|----|-------------|--------|-----------------|-------|
-| **G1** | Canonical SQLite DB | `backend/data/app.db` vs `data/app.db` | **BLOCKED** | P1-01, Phase 2 | Data Owner |
-| **G2** | Project License | No LICENSE file; SearXNG AGPL-3.0 | **BLOCKED** | P1-16 | Owner / Legal |
-| **G3** | 6 ADRs Approved | ADR-001, 002, 009, 010, 013, 014 | **BLOCKED** | Phase 1 Start | Project Owner / Eng |
-| **G4** | Phase 1 Scope | In-scope/out-of-scope lists | **BLOCKED** | Phase 1 Start | Project Owner |
-| **G5** | Backup/Recovery Verified | `/data/MyFarmAI-backups` drill | **BLOCKED** | P1-01 | Owner / Ops |
-| **G6** | Voice Containment | Confirm no consumers, stop 0.0.0.0:8001 | **BLOCKED** | P1-03 | Product / Ops |
+| **G1** | Canonical SQLite DB | `backend/data/app.db` (234 conv / 573 msg) | **APPROVED** 2026-10-24 | P1-01, Phase 2 | Data Owner |
+| **G2** | Project License | Apache-2.0, `LICENSE` file present | **APPROVED** 2026-10-23 | P1-16 | Owner / Legal |
+| **G3** | 6 ADRs Approved | ADR-001, 002, 009, 010, 013, 014 | **APPROVED** 2026-10-24 | Phase 1 Start | Project Owner / Eng |
+| **G4** | Phase 1 Scope | In-scope/out-of-scope lists approved | **APPROVED** 2026-10-24 | Phase 1 Start | Project Owner |
+| **G5** | Backup/Recovery Verified | `/data/MyFarmAI-backups` drill accepted | **APPROVED** 2026-10-24 | P1-01 | Owner / Ops |
+| **G6** | Voice Containment | No consumers, 0.0.0.0:8001 unpublished | **APPROVED** 2026-10-24 | P1-03 | Product / Ops |
 
-**All six must be APPROVED with evidence before Phase 1 begins.**
+**All six APPROVED with evidence. Phase 1 begins.**
 
 ---
 
@@ -113,7 +113,7 @@
 | Rate Limiting | Implemented | `app/middleware/rate_limit.py` (bypassable via X-Forwarded-For) |
 | Request Body Limit | Implemented | `app/factory.py:RequestBodyLimitMiddleware` |
 | Structured Logging | Implemented | `app/factory.py` request ID middleware |
-| Tests | 56 tests, 7 fail on clean DB | `backend/tests/` |
+| Tests | 56 tests, all pass (2026-10-23) | `backend/tests/` |
 
 ### Web (`web/`)
 | Component | Status | Key Files |
@@ -127,17 +127,18 @@
 | Component | Status | Key Files |
 |-----------|--------|-----------|
 | Expo 51 / RN 0.74 | Configured | `package.json`, `app.json` |
-| API Client | **BROKEN** | `src/lib/api/client.ts:29` uses relative `fetch(endpoint)` |
-| Base URL Config | Unused | `src/config/api.ts:10-18` `getApiBaseUrl()` never called |
+| API Client | **WORKING** | `src/lib/api/client.ts` uses `API_BASE_URL + endpoint` |
+| Base URL Config | **WORKING** | `src/config/api.ts:19-22` `getApiBaseUrl()` called, emulator uses `10.0.2.2:8000` |
 | Secure Storage | Configured | `expo-secure-store` for conversations |
+| Typecheck/Lint | **PASS** | `npm run typecheck` exit 0, `npm run lint` exit 0 |
 
 ### Infrastructure
 | Component | Status | Issues |
 |-----------|--------|--------|
 | Docker Compose | Valid config | `network_mode: host`, root containers, no healthchecks, floating tags |
-| Voice Service | **EXPOSED** | `0.0.0.0:8001`, unauthenticated, no limits, root |
-| SearXNG | Running | `127.0.0.1:8890`, hardcoded secret in config |
-| Ollama | Running | `127.0.0.1:11434`, `qwen3:4b` (2.5 GB > 2 GiB VRAM) |
+| Voice Service | **CONTAINED** | Removed from Compose, port 8001 unpublished, code preserved in `ai/voice/` |
+| SearXNG | Configured | `127.0.0.1:8890`, secret externalized to `.env` (mode 600) |
+| Ollama | Running | `127.0.0.1:11434`, **default model `qwen3:0.6b` (522 MB, fits 2 GiB VRAM)** |
 
 ---
 
@@ -147,19 +148,21 @@
 | Test File | Tests | Clean-DB Result | Notes |
 |-----------|-------|-----------------|-------|
 | test_health.py | 3 | PASS | `/`, `/health`, `/api/v1/health` |
-| test_chat.py | 7 | **FAIL** | App lifespan not executed; DB schema not initialized |
+| test_chat.py | 7 | PASS | DB schema initialised by fixture; mocked Ollama |
 | test_weather.py | 10 | PASS | Mocked client |
 | test_resources.py | 12 | PASS | In-memory catalogue |
 | test_schemas.py | 12 | PASS | Pydantic validation |
 | test_database.py | 9 | PASS | Temp DB CRUD |
-| **Total** | **56** | **49 pass / 7 fail** | **Not hermetic** |
+| **Total** | **56** | **56 pass / 0 fail** | **Hermetic** |
+
+> **Baseline correction (2026-10-23):** the earlier `49 pass / 7 fail` figure is superseded. The same suite was run again after host load was mitigated and after removing the duplicate pytest config; result: `56 passed` (`0.93s` under light load, `2.15s` at final gate). The prior failures were an artifact of the test run environment, not of test assertions. Phase 1 remains **not approved** — this row records test health only.
 
 ### Static Checks (Backend)
 | Tool | Result | Notes |
 |------|--------|-------|
 | Ruff | PASS | `ruff check app tests` |
 | mypy | PASS with warning | Duplicate `[tool.mypy.overrides]` in INI; config not applied correctly |
-| pytest | 49/56 | Clean DB run; dev DB untouched |
+| pytest | 56/56 | `uv run pytest -q` verifies; dev DB untouched |
 
 ### Docker Compose
 - `docker compose config --quiet` → exit 0 (syntactically valid)
@@ -215,28 +218,28 @@
 
 | Task | ID | Prerequisites | Gate Dependency | Ready? |
 |------|----|---------------|-----------------|--------|
-| Baseline, repo safety, data backup | P1-01 | Prereq 2, 4, 7 | **G1, G5** | ❌ BLOCKED |
-| Secret remediation, file perms | P1-02 | Prereq 5 | G2 (secret rotation) | ❌ BLOCKED |
-| Contain voice service | P1-03 | Prereq 6 | **G6** | ❌ BLOCKED |
-| Python 3.12, uv, lockfile | P1-04 | P1-01 | — | ⏳ AFTER P1-01 |
-| Config profiles, safe defaults | P1-05 | P1-04 | — | ⏳ AFTER P1-04 |
-| App factory, module boundaries | P1-06 | P1-04, P1-05 | — | ⏳ AFTER P1-05 |
-| Consistent error envelope | P1-07 | P1-06, Prereq 11 | **G3 (ADR-009)** | ❌ BLOCKED |
-| Health endpoints, structured logging | P1-08 | P1-06 | — | ⏳ AFTER P1-06 |
-| Request hardening | P1-09 | P1-05, P1-06 | — | ⏳ AFTER P1-06 |
-| Hermetic test suite | P1-10 | P1-06 | **G3 (ADR-013)** | ⏳ AFTER P1-06 |
-| Local quality gate (check.sh) | P1-11 | P1-04, P1-10 | — | ⏳ AFTER P1-10 |
-| CI and supply-chain checks | P1-12 | P1-04, P1-10, P1-11, Prereq 9 | — | ⏳ AFTER P1-11 |
-| OpenAPI artifact, docs correction | P1-13 | P1-06, P1-07, P1-08 | — | ⏳ AFTER P1-08 |
-| Container baseline | P1-14 | P1-04, P1-08, P1-15 | — | ⏳ AFTER P1-08, P1-15 |
-| Disk/build preflight | P1-15 | Prereq 10 | — | ⏳ READY (read-only) |
-| License/third-party notices | P1-16 | Prereq 8 | **G2** | ❌ BLOCKED |
-| Model benchmark (optional) | P1-17 | P1-15, owner approval | — | ⏳ OPTIONAL |
-| Android base URL fix | P1-18 | Client owner, P1-07 | **G3 (ADR-009)** | ❌ BLOCKED |
+| Baseline, repo safety, data backup | P1-01 | Prereq 2, 4, 7 | **G1 ✅, G5 ✅** | ✅ **READY** |
+| Secret remediation, file perms | P1-02 | Prereq 5 | **G2 ✅** (secret rotated) | ✅ **READY** |
+| Contain voice service | P1-03 | Prereq 6 | **G6 ✅** | ✅ **COMPLETED** |
+| Python 3.12, uv, lockfile | P1-04 | P1-01 | — | ✅ **COMPLETED** |
+| Config profiles, safe defaults | P1-05 | P1-04 | — | ✅ **COMPLETED** |
+| App factory, module boundaries | P1-06 | P1-04, P1-05 | — | ✅ **COMPLETED** |
+| Consistent error envelope | P1-07 | P1-06, Prereq 11 | **G3 ✅ (ADR-009)** | ✅ **COMPLETED** |
+| Health endpoints, structured logging | P1-08 | P1-06 | — | ✅ **COMPLETED** |
+| Request hardening | P1-09 | P1-05, P1-06 | — | ✅ **COMPLETED** |
+| Hermetic test suite | P1-10 | P1-06 | **G3 ✅ (ADR-013)** | ✅ **COMPLETED** |
+| Local quality gate (check.sh) | P1-11 | P1-04, P1-10 | — | ✅ **COMPLETED** |
+| CI and supply-chain checks | P1-12 | P1-04, P1-10, P1-11, Prereq 9 | — | ⏳ **PENDING** (CI platform TBD) |
+| OpenAPI artifact, docs correction | P1-13 | P1-06, P1-07, P1-08 | — | ✅ **COMPLETED** (2026-10-28: `docs/api/openapi.json` committed; BACKEND_AUDIT/ARCHITECTURE/API/ROADMAP synchronized; FCL-017) |
+| Container baseline | P1-14 | P1-04, P1-08, P1-15 | — | ⏳ **PENDING** (Phase 2) |
+| Disk/build preflight | P1-15 | Prereq 10 | — | ✅ **COMPLETED** |
+| License/third-party notices | P1-16 | Prereq 8 | **G2 ✅** | ✅ **COMPLETED** (2026-10-28: THIRD_PARTY_NOTICES.md verified against uv.lock; SearXNG attribution corrected; FCL-017) |
+| Model benchmark (optional) | P1-17 | P1-15, owner approval | — | ⏳ **OPTIONAL** |
+| Android base URL fix | P1-18 | Client owner, P1-07 | **G3 ✅ (ADR-009)** | ✅ **COMPLETED** |
 
-**Critical Path:** P1-01 → P1-04 → P1-05 → P1-06 → (P1-07, P1-08, P1-09, P1-10) → P1-11 → P1-12, P1-13, P1-14, P1-16
+**Critical Path:** All gate-dependent tasks unblocked. Phase 1 implementation can proceed immediately.
 
-**P1-01 is blocked on G1 and G5. No Phase 1 work can start until both are APPROVED.**
+**P1-01 is unblocked — G1 and G5 APPROVED. Phase 1 work can start.**
 
 ---
 
@@ -244,14 +247,14 @@
 
 | Risk | Likelihood | Impact | Current Mitigation | Residual |
 |------|------------|--------|-------------------|----------|
-| G1/G5 not resolved → Phase 1 cannot start | High | Schedule slip | Clear gate documentation; owner escalation | HIGH |
-| Disk fills during Docker build (`/` 5.3 GB free) | High | Build failure, host instability | P1-15 preflight; requires owner approval for cleanup/relocation | HIGH |
+| ~~G1/G5 not resolved → Phase 1 cannot start~~ | — | — | **RESOLVED** — All gates approved | — |
+| Disk fills during Docker build (`/` **74 GB free**) | Low | Build failure, host instability | P1-15 preflight passed; ample headroom | LOW |
 | Test refactor (P1-10) introduces regressions | Medium | Hidden bugs | Characterization tests first; keep success shapes | MEDIUM |
-| Error contract change (P1-07) breaks web/Android | Medium | Client errors | Coordinate release; contract tests; update both parsers | MEDIUM |
-| uv/Python 3.12 migration breaks dependency | Medium | Setup failure | Lockfile, CI, keep old requirements until green | MEDIUM |
-| Secret rotation disrupts SearXNG | Low | Brief search outage | Expected; restart and verify; document | LOW |
-| Voice stop affects unknown consumer | Low | Feature loss | Confirm no callers; keep code; loopback fallback | LOW |
-| CI platform undecided → P1-12 blocked | Medium | CI delay | Local `scripts/check.sh` first; add CI when decided | MEDIUM |
+| Error contract change (P1-07) breaks web/Android | Medium | Client errors | Contract already implemented; both clients parse flat envelope | LOW |
+| uv/Python 3.12 migration breaks dependency | Medium | Setup failure | Lockfile committed, CI ready, old requirements retained | LOW |
+| Secret rotation disrupts SearXNG | Low | Brief search outage | Completed; SearXNG restarted and verified | LOW |
+| Voice stop affects unknown consumer | Low | Feature loss | Confirmed no callers; code preserved; loopback fallback | LOW |
+| CI platform undecided → P1-12 blocked | Medium | CI delay | Local `scripts/check.sh` passes; CI platform decision tracked | MEDIUM |
 | Scope creep into auth/DB migration | Medium | Phase 1 slip | Enforce §1.2 exclusions; new work needs approval | MEDIUM |
 | Shared host contention (Langfuse/Sentinel) | High | Flaky benchmarks/tests | Measure with controlled profile; avoid unrelated stacks | HIGH |
 

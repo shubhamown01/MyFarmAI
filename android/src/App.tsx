@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
@@ -12,18 +13,6 @@ import ResourcesList from './components/ResourcesList';
 const Stack = createStackNavigator();
 
 const App = () => {
-  const [weatherLocation, setWeatherLocation] = React.useState<{ latitude: number; longitude: number } | null>(null);
-
-  const requestLocation = async () => {
-    // In a real app, you'd use expo-location to get the user's location
-    // For now, we'll use a default location (Delhi, India)
-    setWeatherLocation({ latitude: 28.6139, longitude: 77.2090 });
-  };
-
-  React.useEffect(() => {
-    requestLocation();
-  }, []);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PaperProvider>
@@ -65,13 +54,6 @@ const ChatScreen = () => (
 );
 
 const WeatherScreen = () => {
-  const [location, setWeatherLocation] = React.useState<{ latitude: number; longitude: number } | null>(null);
-
-  React.useEffect(() => {
-    // Default to Delhi
-    setWeatherLocation({ latitude: 28.6139, longitude: 77.2090 });
-  }, []);
-
   return (
     <View style={styles.weatherScreen}>
       <WeatherCard latitude={28.6139} longitude={77.2090} />

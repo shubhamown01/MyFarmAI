@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { useWeather } from '../../hooks/useWeather';
-import { WEATHER_CODES } from '../../utils/weatherCodes';
+import { useWeather } from '../hooks/useWeather';
+import { WEATHER_CODES } from '../utils/weatherCodes';
 import { useTheme } from '../theme';
 
 interface WeatherCardProps {
@@ -13,10 +13,13 @@ export const WeatherCard: React.FC<WeatherCardProps> = ({
   latitude,
   longitude,
 }) => {
-  const { currentWeather, forecast, isLoading, error } = useWeather(
-    latitude,
-    longitude
-  );
+  const { weather, isLoading, error, fetchWeather } = useWeather();
+  React.useEffect(() => {
+    fetchWeather(latitude, longitude);
+  }, [fetchWeather, latitude, longitude]);
+
+  const currentWeather = weather?.current_weather;
+  const forecast = weather?.daily;
   const { colors } = useTheme();
 
   if (isLoading) {

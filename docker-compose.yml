@@ -1,11 +1,60 @@
 services:
+  postgres:
+    image: postgres:17
+    container_name: myfarmai-postgres
+    environment:
+      POSTGRES_DB: myfarmai
+      POSTGRES_USER: myfarmai
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+    secrets:
+      - pg_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - myfarmai-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myfarmai -d myfarmai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
     container_name: myfarmai-backend
-    network_mode: "host"
+    # Run as the host user that owns ./.env, ./backend/.pg_password and
+    # ./backend/data (bind mounts keep host ownership). Non-root (not 0).
+    user: "${MYFARMAI_UID:-1000}:${MYFARMAI_GID:-1000}"
+    environment:
+      DATABASE_PATH: postgresql://myfarmai@postgres:5432/myfarmai
+      DATABASE_PASSWORD_FILE: /run/secrets/pg_password
+      # Host Ollama binds 127.0.0.1 only; a socat forwarder on the docker-bridge
+      # gateway (172.22.0.1:11434 -> 127.0.0.1:11434) bridges container traffic.
+      # NOTE: the bridge gateway IP can change if the compose network is recreated.
+      OLLAMA_BASE_URL: http://172.22.0.1:11434
+    # Bridge to the host loopback so the container can reach host-run Ollama.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    secrets:
+      - pg_password
     volumes:
-      - ./data:/app/data
-      - ./.env:/app/.env:ro
+      - ./backend/data:/app/data
+    networks:
+      - myfarmai-internal
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+
+networks:
+  myfarmai-internal:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+
+secrets:
+  pg_password:
+    file: ./backend/.pg_password

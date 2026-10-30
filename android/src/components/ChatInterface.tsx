@@ -5,17 +5,15 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Alert,
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import { useChat } from '../../hooks/useChat';
-import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
-import { useSpeechSynthesis } from '../../hooks/useSpeechSynthesis';
-import { ChatMessage } from '../../types/chat';
+import { useChat } from '../hooks/useChat';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis';
+import { ChatMessage } from '../types/chat';
 import { useTheme } from '../theme';
 
 interface ChatInterfaceProps {
@@ -26,18 +24,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   weatherContext,
 }) => {
   const [input, setInput] = useState('');
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const {
     messages,
-    conversationId,
     isLoading,
     sendMessage,
     clearConversation,
   } = useChat();
   const { isListening, transcript, startListening, stopListening } =
     useSpeechRecognition('hi-IN');
-  const { speak, stop, isSpeaking } = useSpeechSynthesis();
+  const { speak } = useSpeechSynthesis();
   const { colors } = useTheme();
+
+  const lastMessage = messages[messages.length - 1];
+  React.useEffect(() => {
+    if (lastMessage?.role === 'assistant') {
+      speak(lastMessage.content, 'hi-IN');
+    }
+  }, [lastMessage, speak]);
 
   const handleSubmit = () => {
     if (input.trim()) {
@@ -85,28 +88,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     </View>
   );
 
-  if (messages.length === 0) {
-    return (
-      <View style={styles.welcomeContainer}>
-        <Text style={[styles.welcomeTitle, { color: colors.primary }]}>Welcome to MyFarm AI</Text>
-        <Text style={[styles.welcomeText, { color: colors.onSurfaceVariant }]}>
-          Ask me anything about farming — crops, weather, soil, pests, or government schemes.
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
         <Text style={styles.headerTitle}>MyFarm AI</Text>
         <TouchableOpacity onPress={() => Alert.alert('Clear conversation?', '', [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Clear', onPress: () => Alert.alert('Clear conversation?', '', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Clear', onPress: () => { /* clearConversation */ }, style: 'destructive' },
-          ])},
-          { style: 'cancel' },
+          { text: 'Clear', style: 'destructive', onPress: clearConversation },
         ])}>
           <Text style={styles.headerAction}>Clear</Text>
         </TouchableOpacity>
@@ -116,8 +104,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         data={messages}
         renderItem={renderMessage}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        inverted
+        contentContainerStyle={[styles.listContent, messages.length === 0 && styles.emptyListContent]}
+        inverted={messages.length > 0}
+        ListEmptyComponent={
+          <View style={styles.welcomeContainer}>
+            <Text style={[styles.welcomeTitle, { color: colors.primary }]}>Welcome to MyFarm AI</Text>
+            <Text style={[styles.welcomeText, { color: colors.onSurfaceVariant }]}>
+              Ask me anything about farming — crops, weather, soil, pests, or government schemes.
+            </Text>
+          </View>
+        }
       />
 
       {isLoading && (
@@ -139,12 +135,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               multiline
               maxLength={2000}
               onSubmitEditing={handleSubmit}
-              disabled={isLoading}
+              editable={!isLoading}
             />
             <TouchableOpacity
               style={[
                 styles.voiceButton,
-                isListening ? styles.voiceButtonActive : null,
                 { backgroundColor: isListening ? colors.primaryActive : colors.primaryContainer },
               ]}
               onPress={handleVoiceInput}
@@ -216,6 +211,9 @@ const styles = StyleSheet.create({
   listContent: {
     padding: 16,
     paddingBottom: 100,
+  },
+  emptyListContent: {
+    flexGrow: 1,
   },
   messageContainer: {
     marginBottom: 12,

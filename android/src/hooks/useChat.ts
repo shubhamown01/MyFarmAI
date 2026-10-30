@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { apiClient, ApiError } from '../lib/api/client';
-import { ChatMessage, ChatContext } from '../../types/chat';
+import { ChatMessage, ChatContext } from '../types/chat';
 
 export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);

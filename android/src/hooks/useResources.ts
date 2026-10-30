@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { apiClient } from '../lib/api/client';
-import { ResourcesResponse, AgriculturalResource } from '../../types/resources';
+import { AgriculturalResource } from '../types/resources';
 
 export function useResources() {
   const [resources, setResources] = useState<AgriculturalResource[]>([]);
@@ -19,7 +19,7 @@ export function useResources() {
         : await apiClient.getResources();
       setResources(response.resources);
       setCategories(response.categories);
-    } catch (error) {
+    } catch {
       setError('Failed to load resources');
     } finally {
       setIsLoading(false);
