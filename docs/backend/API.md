@@ -444,6 +444,129 @@ Same structure as `/api/v1/resources` but filtered.
 
 ---
 
+## Farms (P5A-01)
+
+Farm CRUD and membership management. All endpoints require authentication. Authorization is deny-by-default:
+
+- Non-members get `404 FARM_NOT_FOUND` (farm existence is not leaked).
+- Roles: `owner` (creator), `member` (read + update farm fields), `viewer` (read-only).
+- Member management (add/remove/role change) requires the `owner` role.
+- Farm ownership is fixed to the creator; the owner member cannot be removed or demoted.
+
+**POST** `/api/v1/farms`
+
+```json
+{
+  "name": "North Field",
+  "description": "optional",
+  "address": "optional, max 500 chars",
+  "latitude": 28.61,
+  "longitude": 77.20,
+  "timezone": "UTC"
+}
+```
+
+Latitude must be −90..90 and longitude −180..180 (422 otherwise). Creates the farm and an owner membership for the caller. Returns `201` with the farm object (`id`, `name`, `description`, `address`, `latitude`, `longitude`, `timezone`, `owner_id`, `is_active`, `created_at`).
+
+**GET** `/api/v1/farms` — farms the caller belongs to (newest first).
+
+**GET** `/api/v1/farms/{farm_id}` — one farm; `404 FARM_NOT_FOUND` for non-members.
+
+**PATCH** `/api/v1/farms/{farm_id}` — partial update of any creation field (+ `is_active`); requires `owner` or `member`. `403 FARM_FORBIDDEN` for viewers.
+
+**GET** `/api/v1/farms/{farm_id}/members` — member list (`id`, `user_id`, `role`, `joined_at`).
+
+**POST** `/api/v1/farms/{farm_id}/members` — owner only. Body: `{"user_id": "<uuid>", "role": "member" | "viewer"}`. `404 USER_NOT_FOUND` for unknown users; `403` if already a member; `422` for `role: "owner"`.
+
+**PATCH** `/api/v1/farms/{farm_id}/members/{user_id}` — owner only. Body: `{"role": "member" | "viewer"}`.
+
+**DELETE** `/api/v1/farms/{farm_id}/members/{user_id}` — owner only; `204`; `403` when targeting the farm owner.
+
+---
+
+## Crop Cycles (P5A-02)
+
+Crop-cycle records (a crop growing season on a farm). All endpoints require authentication; authorization is farm-membership-scoped (deny-by-default, `404 CROP_CYCLE_NOT_FOUND` for non-members). Create/update require `owner` or `member`; viewers read-only.
+
+**POST** `/api/v1/farms/{farm_id}/crop-cycles`
+
+```json
+{
+  "crop_id": "<uuid>",
+  "season_year": 2026,
+  "season_name": "kharif (optional)",
+  "planting_date": "2026-06-15 (optional)",
+  "expected_harvest_date": "2026-10-15 (optional)",
+  "area_hectares": 1.5,
+  "expected_yield_kg": 4200,
+  "notes": "optional"
+}
+```
+
+Returns `201` with the cycle (status starts at `planned`). Errors: `404 CROP_NOT_FOUND` (unknown crop), `409 CROP_CYCLE_CONFLICT` (a cycle for the same crop + season_year already exists on the farm), `422` validation.
+
+**GET** `/api/v1/farms/{farm_id}/crop-cycles?status=planted` — farm's cycles, newest season first, optional status filter.
+
+**GET** `/api/v1/crop-cycles/{cycle_id}` — one cycle; non-members get `404`.
+
+**PATCH** `/api/v1/crop-cycles/{cycle_id}` — partial update (fields, yields, dates, `status`). Status transitions are forward-only: `planned → planted → growing → harvested → archived`, any active state may become `failed` or `archived`, `archived` is terminal. Invalid transitions → `422 CROP_CYCLE_INVALID_TRANSITION`. Viewers → `403 FARM_FORBIDDEN`.
+
+---
+
+## Conversations (P5G)
+
+Read-only conversation-history API. All endpoints require authentication; retrieval is user-scoped at the repository level (deny-by-default — cross-user access returns `404 CONVERSATION_NOT_FOUND`, per ADR-008).
+
+**GET** `/api/v1/conversations?limit=20` — the authenticated user's non-archived conversations, newest first (`limit` 1–100, default 20).
+
+```json
+[
+  {
+    "id": "<uuid>",
+    "language": "en",
+    "crop": "tomato (or null)",
+    "location": "text (or null)",
+    "farm_id": "<uuid (or null)>",
+    "created_at": "2026-10-31T12:00:00Z",
+    "updated_at": "2026-10-31T12:05:00Z"
+  }
+]
+```
+
+**GET** `/api/v1/conversations/{conversation_id}` — one conversation with its messages (most recent 50, oldest-first). Non-owner or unknown id → `404 CONVERSATION_NOT_FOUND`. Malformed id → `422`.
+
+```json
+{
+  "id": "<uuid>",
+  "language": "en",
+  "crop": null,
+  "location": null,
+  "farm_id": null,
+  "created_at": "2026-10-31T12:00:00Z",
+  "updated_at": "2026-10-31T12:05:00Z",
+  "messages": [
+    { "id": 1, "role": "user", "content": "…", "created_at": "…" },
+    { "id": 2, "role": "assistant", "content": "…", "created_at": "…" }
+  ]
+}
+```
+
+Note: message `id` is an integer (the `messages` table uses an Integer autoincrement PK; only conversations are UUID-keyed). No create/update/delete endpoints — conversations and messages are written exclusively by the chat flow (P3-05); archival is via the chat service. Retention behavior is interim pending ADR-015.
+
+---
+
+## User Preferences (P5G)
+
+**PATCH** `/api/v1/auth/preferences` — update the authenticated user's own preferences. Requires a valid session; there is no user-id parameter (own-only by construction).
+
+```json
+{ "preferred_language": "hi" }
+```
+
+`preferred_language` must be a 2-letter lowercase code (`^[a-z]{2}$`). Returns `200` with the full user response (same shape as `/me`); the change is persisted. Errors: `401` unauthenticated, `422` invalid language.
+
+---
+
 ## Error Responses
 
 All errors return a consistent flat envelope (ADR-009):

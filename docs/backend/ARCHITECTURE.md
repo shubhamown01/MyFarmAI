@@ -83,6 +83,8 @@ MyFarm AI Backend is a FastAPI-based REST API serving agricultural AI assistance
 | `router.py` | Aggregates all v1 routes | Versioned API under `/api/v1` |
 | `health.py` | `GET /health`, `/health/live`, `/health/ready`, `/api/v1/health` | Liveness/readiness probes |
 | `chat.py` | `POST /chat` | Agricultural Q&A with Ollama, conversation persistence |
+| `farms.py` | `POST/GET/PATCH /farms`, `GET/PATCH/DELETE /farms/{id}/members(/{user_id})` | Farm CRUD + membership (P5A-01); service-level role authz (OWNER/MEMBER/VIEWER) |
+| `crop_cycles.py` | `POST/GET /farms/{id}/crop-cycles`, `GET/PATCH /crop-cycles/{id}` | Crop-cycle records (P5A-02); forward-only status transitions, (farm, crop, season) uniqueness → 409 |
 | `weather.py` | `GET /weather`, `/weather/current` | Open-Meteo integration, WMO codes |
 | `resources.py` | `GET /resources`, `/resources/categories`, `/resources/{category}` | Curated Indian agricultural resources |
 

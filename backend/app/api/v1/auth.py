@@ -14,6 +14,7 @@ from app.schemas.auth import (
     CreateUserRequest,
     LoginRequest,
     LoginResponse,
+    PreferencesUpdate,
     RefreshRequest,
     SessionUserResponse,
     UserResponse,
@@ -158,6 +159,27 @@ async def me(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"detail": "session invalid or expired", "error_code": "SESSION_INVALID"},
         ) from None
+    return _user_response(user)
+
+
+@router.patch("/preferences", response_model=UserResponse)
+async def update_preferences(
+    prefs: PreferencesUpdate,
+    request: Request,
+    svc: AuthService = Depends(get_auth_service),
+) -> UserResponse:
+    """P5G: update the authenticated user's preferences (own only)."""
+    presented = _presented_session_id(request)
+    if not presented:
+        raise _unauthenticated()
+    try:
+        user = await svc.validate_session(presented)
+    except SessionInvalidError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"detail": "session invalid or expired", "error_code": "SESSION_INVALID"},
+        ) from None
+    user = await svc.update_preferences(user, preferred_language=prefs.preferred_language)
     return _user_response(user)
 
 

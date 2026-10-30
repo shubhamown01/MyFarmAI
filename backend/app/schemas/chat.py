@@ -26,6 +26,22 @@ class ChatRequest(BaseModel):
             raise ValueError("Invalid conversation ID format") from e
         return v
 
+    farm_id: str | None = Field(
+        default=None,
+        description="Farm whose owner-provided context (P5A) grounds the answer",
+    )
+
+    @field_validator("farm_id")
+    @classmethod
+    def validate_farm_id(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        try:
+            uuid.UUID(v)
+        except ValueError as e:
+            raise ValueError("Invalid farm ID format") from e
+        return v
+
     language: str = Field(
         default="en",
         pattern="^[a-z]{2}$",

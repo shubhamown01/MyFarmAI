@@ -101,6 +101,15 @@ class AuthService:
         self._refresh = RefreshTokenRepository(session)
         self._audit = AuditRepository(session)
 
+    # -- preferences (P5G) --------------------------------------------------
+
+    async def update_preferences(self, user: User, *, preferred_language: str):
+        """Update the authenticated user's own preferences (caller passes the
+        session-validated user object)."""
+        user.preferred_language = preferred_language
+        await self._session.flush()
+        return user
+
     # -- login ------------------------------------------------------------
 
     async def login_password(

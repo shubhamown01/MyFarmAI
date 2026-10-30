@@ -50,3 +50,9 @@ class UserResponse(BaseModel):
     role: str
     preferred_language: str
     is_active: bool
+
+
+class PreferencesUpdate(BaseModel):
+    """User preferences (P5G). Only the authenticated user's own preferences."""
+
+    preferred_language: str = Field(..., pattern="^[a-z]{2}$")

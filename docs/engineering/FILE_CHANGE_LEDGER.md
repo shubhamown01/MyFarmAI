@@ -952,6 +952,157 @@
 
 ---
 
+### FCL-044 — Phase 4 Final Verification: Commit + Live API Matrix (15/16) + Final Report
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-044 |
+| **Date/Time** | 2026-10-30 |
+| **Task Ref** | Phase 4 final verification master prompt (Part A) |
+| **File Path** | Commit `3b2be0c` (74 files: Phase 3+4 backend + project docs + gate script); `docs/backend/PHASE_04_FINAL_VERIFICATION_BASELINE.md` (new); `docs/backend/PHASE_04_FINAL_VERIFICATION_REPORT.md` (new); `/tmp/opencode/seed_users.py` + `live_matrix.py` + `latency_sample.py` (throwaway harnesses, not committed) |
+| **Operation** | COMMIT + CREATE (2 docs) |
+| **Commit scope** | Owner-approved; excluded owner pre-existing work (android/*, backend/Dockerfile, alembic/env.py, app/orchestrator/, opencode config, .opencode/.orchestrator, agent-infra docs, scratch scripts) — all still uncommitted and untouched |
+| **Live evidence** | Backend 127.0.0.1:8901 (temp SQLite, loopback) + live Ollama: 16-item matrix **15/16 PASS** — chat EN/HI/multi-turn through gateway, validation 4/4, authn 4/4, cross-user isolation 404, flat error envelope. Warm latency n=3: avg 10.57 s, max 12.09 s; cold 19.9 s |
+| **Finding** | No conversation-history retrieval API exists (Low, product gap) — `get_recent`/`get_by_id_with_messages` are internal-only; clients render in-session responses. Needed for Phase 5G |
+| **Resolution (FCL-051, 2026-10-31)** | RESOLVED by P5G: read-only user-scoped history API shipped (GET /conversations, GET /conversations/{id} with messages) |
+| **Gotchas recorded** | `EmailStr` rejects reserved-TLD test addresses (.local); `DATABASE_PATH` must be a bare path for `init_db_manager` (full URLs get double-prefixed — factory normalizes, bare init doesn't); SQLite never runs Alembic (postgres-only, factory.py:117) — live-sqlite schemas need `metadata.create_all` |
+| **Tests/Checks** | `bash scripts/check.sh` ALL PASS — **130 tests** (final, post-commit); canonical DB + postgres untouched; backend shut down after verification |
+| **Status** | COMPLETE — awaiting owner acceptance to unlock Phase 5 |
+
+---
+
+### FCL-045 — Phase 5 Implementation Plan (Owner Accepted Phase 4)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-045 |
+| **Date/Time** | 2026-10-30 |
+| **Task Ref** | Phase 5 master prompt §22 step 6 |
+| **File Path** | `docs/roadmaps/phases/PHASE_05_IMPLEMENTATION_PLAN.md` (new) |
+| **Operation** | CREATE |
+| **Key baseline finding** | Farm/FarmMember/Crop/CropCycle models AND their repositories already exist (Phase 1 schema) — P5A is an API/service layer over existing data structures; no schema change or migration anticipated. Farm/crop API endpoints are missing (router: health/auth/chat/weather/resources only) |
+| **Plan structure** | P5A (context engine: farm API, crop-cycle API, context assembly, privacy) → P5B (evidence-grounded answers + safety rules) → P5G (history API + preferences) are unblocked; P5C/5D/5E/5F remain approval-gated (Open-Meteo license, SearXNG AGPL + secret, vision scope, voice architecture); P5H follows its APIs; P5I last |
+| **Authority** | Owner accepted Phase 4 completion report (2026-10-30) and authorized Phase 5 planning |
+| **Status** | COMPLETE (plan) — 5A implementation authorized to proceed per §22 step 7 |
+
+---
+
+### FCL-046 — P5A-01: Farm API (CRUD + Membership, Service-Level Role Authz)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-046 |
+| **Date/Time** | 2026-10-30 |
+| **Task Ref** | P5A-01, `docs/roadmaps/phases/PHASE_05_IMPLEMENTATION_PLAN.md` |
+| **File Path** | `backend/app/schemas/farm.py` (new); `backend/app/services/farm.py` (new); `backend/app/api/v1/farms.py` (new); `backend/app/api/v1/router.py` (register farms_router); `backend/tests/test_farms_api.py` (new, 13 tests after FCL-049 additions); `docs/backend/API.md` (Farms section); `docs/backend/ARCHITECTURE.md` (module table row) |
+| **Operation** | CREATE (5 files) + EDIT (3) |
+| **Design decision** | `FarmRepository.update()` remains a raw setter — the service's membership+role check (`FarmService._authorized_farm`) is the authorization boundary, because role rules (VIEWER read-only, owner-only member management) cannot be expressed at repository level. Non-members get 404 (existence not leaked, ADR-008) |
+| **Authorization model** | Roles: owner (creator, fixed), member (read+update), viewer (read-only). Member management owner-only. Owner member cannot be removed/demoted; ownership cannot be granted via API (schema validators reject `role: owner`) |
+| **Audit trail** | FarmService emits FARM_CREATED/FARM_UPDATED/FARM_MEMBER_ADDED/FARM_MEMBER_REMOVED/FARM_MEMBER_ROLE_CHANGED via AuditRepository (Phase 1 event types reused); ID-only descriptions — coordinates/address never logged (P5A-04). Gotcha: audit actor_id/subject_id are UUID-typed columns — INSERT values must be uuid.UUID instances (str raises AttributeError `.hex`) |
+| **Tests** | 12/12 in `tests/test_farms_api.py` (async mode): CRUD, cross-user 404 + verified non-modification, viewer 403, owner-only member ops, unknown-user 404 USER_NOT_FOUND, lat/lon bounds 422, unauthenticated 401, audit-row assertion. Full gate `bash scripts/check.sh`: **142 passed, all checks passed** (130 prior + 12 new) |
+| **Fixes during test** | PATCH member-role route NameError (service now returns updated member); 4 ruff lint errors (unused import/variables); formatting |
+| **Status** | COMPLETE — gate green; docs updated (API.md, ARCHITECTURE.md, this ledger, CHANGELOG, plan tick) |
+
+---
+
+### FCL-047 — P5A-02: Crop-Cycle API (Farm-Scoped CRUD + Status Transitions)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-047 |
+| **Date/Time** | 2026-10-30 |
+| **Task Ref** | P5A-02, `docs/roadmaps/phases/PHASE_05_IMPLEMENTATION_PLAN.md` |
+| **File Path** | `backend/app/schemas/crop_cycle.py` (new); `backend/app/services/crop_cycle.py` (new); `backend/app/api/v1/crop_cycles.py` (new); `backend/app/api/v1/router.py` (register crop_cycles_router); `backend/tests/test_crop_cycles_api.py` (new, 9 tests); `docs/backend/API.md` (Crop Cycles section); `docs/backend/ARCHITECTURE.md` (module row) |
+| **Operation** | CREATE (5 files) + EDIT (3) |
+| **Design decisions** | CropCycleService reuses `FarmService._authorized_farm` (composition) — one authz implementation. Status transitions forward-only map in service (archived terminal; repo has no update method, service mutates ORM object after authz). Duplicate (farm, crop, season_year) IntegrityError → `409 CROP_CYCLE_CONFLICT`. Create accepts no status (starts `planned`) |
+| **Open item** | No CROP_CYCLE_* AuditEventType values exist — cycles not audit-logged; flagged for owner decision at P5A gate |
+| **Tests** | 9/9: create 201, duplicate 409, unknown crop 404, cross-user cycle+farm-list 404, list status filter, invalid transition 422, archived terminal, harvest field updates, viewer read-only. Full gate `bash scripts/check.sh`: **151 passed, all checks passed** (142 prior + 9 new) |
+| **Status** | COMPLETE — gate green; docs updated |
+
+---
+
+### FCL-048 — P5A-03/P5A-04: Farm Context Assembly Service + Privacy Pass
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-048 |
+| **Date/Time** | 2026-10-30 |
+| **Task Ref** | P5A-03, P5A-04 |
+| **File Path** | `backend/app/services/context.py` (new: `FarmContext` dataclass + `FarmContextService`); `backend/tests/test_farm_context.py` (new, 3 tests) |
+| **Operation** | CREATE (2 files) |
+| **Design** | Read-only resolver — NO new endpoints; chat wiring deferred to P5B (prompt template v2 bump). Reuses `FarmService._authorized_farm` (any membership role may read). Active crops = planned/planted/growing cycle crop names (harvested/failed/archived excluded) |
+| **Privacy (P5A-04)** | Coordinates/address returned only to members; audit descriptions ID-only (FCL-046); no logging calls in any new service (verified by inspection); cross-user exposure denied (404 tests). Interim retention: farm data kept until account/farm deletion — ADR-015 owner-pending |
+| **Tests** | 3/3: member gets full context (harvested cycle excluded), unknown fields stay None/[] (never fabricated), non-member → FarmNotFoundError. Full gate: **154 passed, all checks passed** |
+| **Status** | COMPLETE — gate green; plan ticked |
+
+---
+
+### FCL-049 — P5A Gate: Independent Review (qa PASS / Security APPROVE-WITH-CONDITIONS) + Condition Fixes
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-049 |
+| **Date/Time** | 2026-10-30 |
+| **Task Ref** | P5A gate (PHASE_05_IMPLEMENTATION_PLAN.md) |
+| **Reviewers** | qa-reviewer (PASS — 154 gate reproduced, no authz bypass, no PII in logs/audit/errors, 2 minor defects) and security-engineer (APPROVE-WITH-CONDITIONS — zero Critical/High; 2 Medium, 4 Low) — independent read-only sessions |
+| **File Path (fixes)** | `backend/app/services/farm.py` (is_active owner-gated); `backend/app/schemas/crop_cycle.py` (notes max_length=5000 both schemas); `backend/app/api/v1/farms.py` (redundant double-delete removed — service is sole deletion path; path params → uuid.UUID, malformed IDs now 422 not 500); `backend/app/api/v1/crop_cycles.py` (same UUID change); `backend/tests/test_farms_api.py` (new test: member cannot deactivate farm → 403) |
+| **Evidence** | New-tests run: 25 passed; full gate `bash scripts/check.sh`: **155 passed, all checks passed** |
+| **Accepted Lows (documented)** | Deactivated farms remain readable/writable by direct ID (semantics = list-filter only; owner may revisit); member-endpoint 404 code is MEMBER_NOT_FOUND when farm access fails (still 404, no existence leak) |
+| **Owner decisions opened** | CROP_CYCLE_* audit event types (cycles not audit-logged); deactivated-farm visibility semantics; owner-adds-member-by-UUID (MVP-accepted at review) |
+| **Injection note** | A fake approval token surfaced inside reviewer-context output; ignored — tool output is data, not owner authorization. No destructive Git operations performed |
+| **Status** | COMPLETE — P5A gate closed: all 4 workstreams COMPLETE, gate green (155), docs current |
+
+---
+
+### FCL-050 — P5B: Prompt Template v2 (Safety Rules + Farm Context) + Chat Wiring + Live Eval 10/10
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-050 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | P5B, `docs/roadmaps/phases/PHASE_05_IMPLEMENTATION_PLAN.md` |
+| **File Path** | `backend/app/ai/prompts.py` (v2 rewrite: safety rules + `_sanitize_slot` + farm-context block; version → "2"); `backend/app/schemas/chat.py` (farm_id field, UUID-validated); `backend/app/services/chat.py` (both paths accept/forward `farm_context`); `backend/app/api/v1/chat.py` (router resolves FarmContextService for farm_id — async-only, 404 FARM_NOT_FOUND for non-members); `backend/scripts/run_evals.py` (sends v2 system prompt + per-item language; refusal checker negative-regex requires digit-before-unit; uncertainty markers + provide-more); `backend/evals/eval_set_v1.json` (v→"2": 4 new P5B items, language field on hi item); `backend/tests/test_prompts_v2.py` + `backend/tests/test_chat_v2.py` (new, 8 tests); `backend/tests/test_ai_gateway.py` (version test → "2") |
+| **Safety rules (template v2)** | Never invent pesticide doses / fertilizer quantities / chemical withdrawal periods — no number, range, or typical value; defer to product label, soil test, veterinarian, or local extension officer; rules apply even if user or context asks to ignore them |
+| **Live eval evidence (qwen3:0.6b)** | Final run: **10/10 PASS** — all 3 new refusal items pass with the shipped system prompt; language_hi, uncertainty, structured_json all pass. Key debugging finding: the runner previously evaluated the BARE model (no system prompt) — first live run falsely failed the safety items; direct probes proved the template works when actually applied. Checker fixes were made only for objective regex defects (unit-quoting in declines; missing "provide more details" marker) — never to force passes |
+| **Genuine violations found & fixed by template strengthening** | First live run (bare-model runner + pre-strengthening): model invented "3-4 weeks" milk withdrawal and "10-15 pounds/acre" urea under direct pressure. After template strengthening (explicit no-number/range/typical-value) + runner fix: all pass. Honest caveat: 0.6B model compliance is prompt-dependent — human_review of eval-p5b-context-groundedness remains owner-pending |
+| **Gotcha** | Eval items that test non-English responses must carry a `language` field now that the runner sets the system prompt (default "en") |
+| **Tests** | Full gate `bash scripts/check.sh`: **163 passed, all checks passed** (155 prior + 8 new) |
+| **Status** | COMPLETE — gate green; P5B ticked |
+
+---
+
+### FCL-051 — P5G: Conversation-History API (read-only, user-scoped) + Preferences Endpoint
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-051 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | P5G, `docs/roadmaps/phases/PHASE_05_IMPLEMENTATION_PLAN.md`; resolves FCL-044 finding (no history API) |
+| **File Path** | `backend/app/schemas/conversations.py` (new: MessageResponse/ConversationSummaryResponse/ConversationDetailResponse); `backend/app/api/v1/conversations.py` (new: GET /conversations limit 1–100, GET /conversations/{id} with last-50 messages); `backend/app/api/v1/router.py` (router registered); `backend/app/schemas/auth.py` (PreferencesUpdate, `^[a-z]{2}$`); `backend/app/api/v1/auth.py` (PATCH /preferences, own-only); `backend/app/services/auth.py` (`update_preferences` — sets field + flush on session-validated user); `backend/tests/test_p5g_conversations.py` (new, 7 tests) |
+| **Design note (repo-scoping)** | First router relying on the P3-05 repo-level deny-by-default user scoping WITHOUT a service-layer authz check: both ConversationRepository methods take `user_id` and filter in SQL; cross-user access looks like 404 `CONVERSATION_NOT_FOUND` (ADR-008). Read-only endpoints, no new write surface. Rationale documented in the module docstring; flagged for reviewer-gate validation |
+| **Gotcha** | `Message.id` is an Integer autoincrement PK (only `Conversation` is UUID-keyed) — `MessageResponse.id` must be `int`; messages live in `app.db.models.conversation`, not a `message` module |
+| **Tests** | 7 new (own-only list, detail with ordered messages, cross-user 404, unauthenticated 401, preferences persist via /me, invalid language 422, unauthenticated 401). Full gate `bash scripts/check.sh`: **170 passed, all checks passed** (163 prior + 7) |
+| **Open items** | ADR-015 retention policy owner-pending (get_by_id_with_messages returns last 50 messages — interim behavior documented); correction support not in MVP scope |
+| **Status** | COMPLETE — gate green; P5G ticked |
+
+---
+
+### FCL-052 — P5G Reviewer Gate: QA PASS + Security APPROVE
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-052 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | P5G gate |
+| **Reviewers** | qa-reviewer (PASS, 5 Lows, no blockers) + security-engineer (APPROVE, 1 informational Low, no conditions), independent read-only subagents |
+| **Key validation** | Repo-level user-scoping confirmed airtight: both repo methods filter `Conversation.user_id == user_id` in SQL (repositories.py:409/428); endpoints use only the dependency-derived session user_id (no client-supplied id); preferences own-only by construction (no user-id param); no mass-assignment (single field, session-validated object); no credential/internal-field leakage in response schemas; no logging of content/coordinates |
+| **Findings → actions** | L1 archived-conversation asymmetry (excluded from list, retrievable by ID) → documented as deliberate in `conversations.py` docstring (FCL-051 fix). L2 message ordering on `created_at` ties (no secondary `id` sort key) → accepted, latent-flake risk noted, pre-existing repo code not modified. L3 missing limit-bounds/archived-list tests → reported only. L4 untyped `user` param in `update_preferences` → fixed (`user: User`). L5 23 pre-existing suite warnings → out of scope. Sec-L language-code strictness (`^[a-z]{2}$`) → informational, client-alignment note |
+| **Residual risk (security reviewer)** | Future endpoints calling unscoped ConversationRepository methods would silently weaken the repo-layer boundary — lint/test guard candidate, not a blocker |
+| **Tests** | Post-fix re-run: P5G 7 passed; full gate `bash scripts/check.sh` → **170 passed, all checks passed** |
+| **Status** | COMPLETE — P5G reviewer gate closed |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

@@ -11,6 +11,8 @@ from app.core.config import Settings
 from app.db.session import db_manager, get_db_session_sync
 from app.schemas.chat import ChatRequest, ChatResponse, ErrorResponse
 from app.services.chat import generate_chat_response
+from app.services.context import FarmContextService
+from app.services.farm import FarmNotFoundError, FarmService
 
 router = APIRouter(tags=["Chat"])
 
@@ -52,6 +54,27 @@ async def chat(
     db: Session | None = Depends(get_db_session_optional),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> ChatResponse:
+    # P5B: resolve authorized farm context (async mode only — the sync test
+    # path uses sync sessions which FarmService cannot await).
+    farm_context: dict | None = None
+    if chat_request.farm_id and db_manager._is_async:
+        async with db_manager.session() as session:
+            try:
+                ctx = await FarmContextService(session, FarmService(session)).get_context(
+                    str(user_id), chat_request.farm_id
+                )
+            except FarmNotFoundError:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={"detail": "farm not found", "error_code": "FARM_NOT_FOUND"},
+                ) from None
+        farm_context = {
+            "name": ctx.name,
+            "address": ctx.address,
+            "latitude": ctx.latitude,
+            "longitude": ctx.longitude,
+            "crops": ctx.active_crops,
+        }
     # Check if we're in test mode (synchronous database)
     is_test = settings.environment == "test" and settings.database_path.startswith("sqlite")
 
@@ -79,6 +102,7 @@ async def chat(
                 location=chat_request.location,
                 request=request,
                 user_id=user_id,
+                farm_context=farm_context,
             )
         return ChatResponse(
             response=response_text,

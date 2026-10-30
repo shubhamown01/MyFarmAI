@@ -46,6 +46,7 @@ def generate_chat_response_sync(
     request: Request | None = None,
     db: Session | None = None,
     user_id: uuid.UUID | None = None,
+    farm_context: dict | None = None,
 ) -> tuple[str, str]:
     """Generate a chat response and persist to database using synchronous SQLAlchemy (for tests)."""
     import concurrent.futures
@@ -107,7 +108,10 @@ def generate_chat_response_sync(
             )
 
             messages = [
-                {"role": "system", "content": build_system_prompt(language, crop, location)}
+                {
+                    "role": "system",
+                    "content": build_system_prompt(language, crop, location, farm_context),
+                }
             ]
             for msg in reversed(recent_messages):
                 messages.append({"role": msg.role.value, "content": msg.content})
@@ -197,6 +201,7 @@ async def generate_chat_response(
     location: str | None = None,
     request: Request | None = None,
     user_id: uuid.UUID | None = None,
+    farm_context: dict | None = None,
 ) -> tuple[str, str]:
     """Generate a chat response and persist to database using SQLAlchemy repositories (async)."""
     import logging
@@ -231,7 +236,10 @@ async def generate_chat_response(
 
             recent_messages = await msg_repo.get_recent(conv_id, limit=10)
             messages = [
-                {"role": "system", "content": build_system_prompt(language, crop, location)}
+                {
+                    "role": "system",
+                    "content": build_system_prompt(language, crop, location, farm_context),
+                }
             ]
             for msg in recent_messages:
                 messages.append({"role": msg.role.value, "content": msg.content})
