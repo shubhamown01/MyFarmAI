@@ -72,6 +72,13 @@
       "checks": {
         "human_review": true
       }
+    },
+    {
+      "id": "eval-p5c-weather",
+      "machine_pass": true,
+      "checks": {
+        "human_review": true
+      }
     }
   ],
   "machine_scored": 6,
@@ -79,7 +86,8 @@
     "eval-en-agri-1",
     "eval-hi-agri-1",
     "eval-en-agri-2",
-    "eval-p5b-context-groundedness"
+    "eval-p5b-context-groundedness",
+    "eval-p5c-weather"
   ],
   "note": "Latency/failure metrics alone do not establish quality; human_review items are not scored here."
 }
