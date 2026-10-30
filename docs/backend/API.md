@@ -1,17 +1,31 @@
 # MyFarm AI Backend — API Reference
 
+**Version:** 0.1.0 (aligned with `settings.app_version`)  
+**Date:** 2026-10-28  
+**Status:** Phase 1 Complete
+
+---
+
 ## Base URL
 
-- **Development**: `http://localhost:8000`
-- **Production**: `https://api.myfarmai.example.com`
+- **Development:** `http://localhost:8000`
+- **Production:** `https://api.myfarmai.example.com` (requires Caddy + Phase 8)
 
 All API routes are prefixed with `/api/v1`.
 
+---
+
 ## Authentication
 
-**Phase 0**: No authentication required (public prototype).
+**Implemented (Phase 3, ADR-008):** all chat endpoints require authentication; other v1 endpoints require auth per `docs/engineering/AUTHZ_MATRIX.md`.
 
-Future: JWT Bearer token in `Authorization` header.
+- **Web:** opaque session ID in `HttpOnly, Secure (production), SameSite=Lax` cookie; only the SHA-256 hash is stored server-side
+- **Android:** `Authorization: Bearer <session_id>` + single-use rotating refresh token with reuse detection (reuse revokes the whole chain and all user sessions)
+- Accounts are admin-created (`POST /api/v1/auth/admin/users`); no public registration (MVP per ADR-008)
+- Protections: per-IP rate limits (stricter on `/api/v1/auth/*`), trusted-proxy-aware client IP, per-account lockout (5 fails / 15 min → 429), Origin/Referer enforcement on cookie-carrying unsafe requests, Argon2id password hashing
+- See `docs/product/flows/AUTHENTICATION_FLOW.md` for the full flows
+
+---
 
 ## Endpoints
 
@@ -21,46 +35,97 @@ Future: JWT Bearer token in `Authorization` header.
 
 Returns basic project information.
 
-#### Response
+#### Response (200 OK)
 
 ```json
 {
   "project": "My Farm AI",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "status": "running"
 }
 ```
 
-**Status Codes**: 200 OK
-
 ---
 
-### 2. Health Check (Root)
+### 2. Health Check (Root — Liveness)
 
 **GET** `/health`
 
-Simple health check endpoint.
+Simple liveness probe — returns 200 if process is running.
 
-#### Response
+#### Response (200 OK)
 
 ```json
 {
   "status": "ok",
-  "service": "backend"
+  "service": "backend",
+  "check_type": "liveness"
 }
 ```
 
-**Status Codes**: 200 OK
+---
+
+### 3. Health Check (Liveness — Explicit)
+
+**GET** `/health/live`
+
+Explicit liveness probe — identical to `/health` for Kubernetes compatibility.
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "ok",
+  "service": "backend",
+  "check_type": "liveness"
+}
+```
 
 ---
 
-### 3. Health Check (Versioned)
+### 4. Health Check (Readiness)
+
+**GET** `/health/ready`
+
+Readiness probe — checks database and Ollama connectivity with short timeouts.
+
+#### Response (200 OK — All Deps Healthy)
+
+```json
+{
+  "status": "ok",
+  "service": "backend",
+  "check_type": "readiness",
+  "dependencies": {
+    "database": "ok",
+    "ollama": "ok"
+  }
+}
+```
+
+#### Response (503 Service Unavailable — Degraded)
+
+```json
+{
+  "status": "degraded",
+  "service": "backend",
+  "check_type": "readiness",
+  "dependencies": {
+    "database": "ok",
+    "ollama": "unreachable"
+  }
+}
+```
+
+---
+
+### 5. Health Check (Versioned)
 
 **GET** `/api/v1/health`
 
-Versioned health check endpoint.
+Versioned health check endpoint — same as root `/health`.
 
-#### Response
+#### Response (200 OK)
 
 ```json
 {
@@ -69,11 +134,9 @@ Versioned health check endpoint.
 }
 ```
 
-**Status Codes**: 200 OK
-
 ---
 
-### 4. Chat with AI Assistant
+### 6. Chat with AI Assistant
 
 **POST** `/api/v1/chat`
 
@@ -84,7 +147,7 @@ Send a message to the agricultural AI assistant and receive a response. Supports
 ```json
 {
   "message": "string (required, 1-2000 chars)",
-  "conversation_id": "string (optional, UUID)",
+  "conversation_id": "string (optional, UUID v4)",
   "language": "string (optional, ISO 639-1, default: 'en')",
   "crop": "string (optional, max 100 chars)",
   "location": "string (optional, max 200 chars)"
@@ -117,7 +180,7 @@ Send a message to the agricultural AI assistant and receive a response. Supports
 {
   "response": "For wheat in Punjab, the recommended fertilizer depends on soil type and local conditions. Generally: 1) Nitrogen: 120-150 kg/ha split in 3 doses... 2) Phosphorus: 60-80 kg/ha as basal... 3) Potassium: 40-60 kg/ha... Important: Get a soil test for precise recommendations. Consult your local Krishi Vigyan Kendra for region-specific advice.",
   "conversation_id": "550e8400-e29b-41d4-a716-446655440000",
-  "model": "qwen3:4b"
+  "model": "qwen3:0.6b"
 }
 ```
 
@@ -125,11 +188,11 @@ Send a message to the agricultural AI assistant and receive a response. Supports
 |-------|------|-------------|
 | `response` | string | AI assistant's response |
 | `conversation_id` | string | Conversation UUID (new or continued) |
-| `model` | string | Ollama model used (e.g., "qwen3:4b") |
+| `model` | string | Ollama model used (e.g., "qwen3:0.6b") |
 
 ---
 
-### 5. Weather Information
+### 7. Weather Information
 
 **GET** `/api/v1/weather`
 
@@ -167,11 +230,11 @@ GET /api/v1/weather?latitude=28.6139&longitude=77.2090&current=true&daily=true
     "winddirection": 333,
     "weathercode": 0,
     "weather_description": "Clear sky",
-    "time": "2026-10-18T16:15"
+    "time": "2026-10-28T16:15"
   },
   "daily": [
     {
-      "date": "2026-10-18",
+      "date": "2026-10-28",
       "temperature_2m_max": 28.8,
       "temperature_2m_min": 20.3,
       "precipitation_sum": 0.0,
@@ -180,7 +243,7 @@ GET /api/v1/weather?latitude=28.6139&longitude=77.2090&current=true&daily=true
       "weather_description": "Clear sky"
     },
     {
-      "date": "2026-10-19",
+      "date": "2026-10-29",
       "temperature_2m_max": 30.1,
       "temperature_2m_min": 21.0,
       "precipitation_sum": 2.5,
@@ -201,8 +264,8 @@ GET /api/v1/weather?latitude=28.6139&longitude=77.2090&current=true&daily=true
 | `timezone` | string | IANA timezone identifier |
 | `timezone_abbreviation` | string | Timezone abbreviation |
 | `elevation` | float | Elevation in meters |
-| `current_weather` | object | Current weather conditions |
-| `daily` | array | 7-day forecast array |
+| `current_weather` | object | Current weather conditions (optional) |
+| `daily` | array | 7-day forecast array (optional) |
 
 #### Current Weather Object
 
@@ -246,7 +309,7 @@ GET /api/v1/weather?latitude=28.6139&longitude=77.2090&current=true&daily=true
 
 ---
 
-### 6. Current Weather Only
+### 8. Current Weather Only
 
 **GET** `/api/v1/weather/current`
 
@@ -267,11 +330,11 @@ GET /api/v1/weather/current?latitude=28.6139&longitude=77.2090
 
 #### Success Response (200 OK)
 
-Same as weather response but with `daily` set to `null`.
+Same as `/api/v1/weather` but with `daily` set to `null`.
 
 ---
 
-### 7. Agricultural Resources
+### 9. Agricultural Resources
 
 **GET** `/api/v1/resources`
 
@@ -326,7 +389,7 @@ GET /api/v1/resources?category=schemes
 
 ---
 
-### 8. List Categories
+### 10. List Categories
 
 **GET** `/api/v1/resources/categories`
 
@@ -346,7 +409,7 @@ GET /api/v1/resources/categories
 
 ---
 
-### 9. Resources by Category (Path Parameter)
+### 11. Resources by Category (Path Parameter)
 
 **GET** `/api/v1/resources/{category}`
 
@@ -373,48 +436,140 @@ Same structure as `/api/v1/resources` but filtered.
 ```json
 {
   "detail": "Category 'invalid' not found",
-  "error_code": "CATEGORY_NOT_FOUND"
+  "error_code": "CATEGORY_NOT_FOUND",
+  "request_id": "3f0c...",
+  "errors": null
 }
 ```
 
 ---
 
-### Error Responses
+## Error Responses
 
-All errors return a consistent structure:
+All errors return a consistent flat envelope (ADR-009):
 
 ```json
 {
   "detail": "Human-readable error description",
-  "error_code": "MACHINE_READABLE_CODE"
+  "error_code": "MACHINE_READABLE_CODE",
+  "request_id": "3f0c...",
+  "errors": [{"field": "...", "message": "..."}]  // optional, validation only
 }
 ```
 
+**Request Correlation:** Every response includes `X-Request-ID` header matching the `request_id` in error responses.
+
 | Status | Error Code | Description |
 |--------|------------|-------------|
-| 400 | (Pydantic) | Request validation failed |
-| 404 | CONVERSATION_NOT_FOUND | Conversation ID not found |
+| 400 | REQUEST_BODY_TOO_LARGE | Request body exceeds `MAX_REQUEST_BODY_SIZE` |
+| 401 | UNAUTHORIZED | Missing/invalid access token (login required) |
+| 401 | TOKEN_EXPIRED | Access token expired; refresh via `/api/v1/auth/refresh` |
+| 404 | CONVERSATION_NOT_FOUND | Conversation ID not found (or not owned by caller) |
 | 404 | CATEGORY_NOT_FOUND | Resource category not found |
-| 422 | (Pydantic) | Request validation error |
-| 429 | RATE_LIMIT_EXCEEDED | Rate limit exceeded |
+| 413 | REQUEST_BODY_TOO_LARGE | Request body too large |
+| 422 | VALIDATION_ERROR | Request validation failed (Pydantic) |
+| 429 | RATE_LIMIT_EXCEEDED | Rate limit exceeded; `Retry-After` header included |
 | 503 | MODEL_NOT_FOUND | Ollama model not available |
 | 503 | OLLAMA_CONNECTION_FAILED | Cannot reach Ollama service |
+| 503 | AI_BUSY | AI gateway queue depth exceeded; retry after backoff |
 | 503 | WEATHER_CONNECTION_FAILED | Cannot reach weather service |
 | 504 | OLLAMA_TIMEOUT | Ollama request timed out |
 | 504 | WEATHER_TIMEOUT | Weather request timed out |
 | 500 | INTERNAL_ERROR | Unexpected server error |
 
-#### Example Error Response
+Plain-string `HTTPException` details (legacy paths) map to `error_code: "HTTP_ERROR"`.
+
+#### Example Error Response (404)
 
 ```json
 {
   "detail": "Conversation 550e8400-e29b-41d4-a716-446655440000 not found",
-  "error_code": "CONVERSATION_NOT_FOUND"
+  "error_code": "CONVERSATION_NOT_FOUND",
+  "request_id": "3f0c8a1b-9e2f-4d1a-8b7c-6d5e4f3a2b1c",
+  "errors": null
+}
+```
+
+#### Example Validation Error (422)
+
+```json
+{
+  "detail": "Request validation failed",
+  "error_code": "VALIDATION_ERROR",
+  "request_id": "3f0c8a1b-9e2f-4d1a-8b7c-6d5e4f3a2b1c",
+  "errors": [
+    {"field": "message", "message": "String should have at least 1 character"},
+    {"field": "latitude", "message": "Input should be a valid number"}
+  ]
 }
 ```
 
 ---
 
-### Conversation Management
+## Rate Limiting
 
-[... rest of the document remains unchanged ...]
+- **Default:** 60 requests per 60 seconds per client
+- **Configuration:** `RATE_LIMIT_REQUESTS`, `RATE_LIMIT_WINDOW_SECONDS`
+- **Trusted Proxies:** `TRUSTED_PROXY_CIDRS` (required in production)
+- **Excluded:** Health endpoints (`/health*`, `/api/v1/health`)
+- **Response on Limit:** HTTP 429 with `Retry-After` header (seconds)
+
+---
+
+## Request Limits
+
+- **Max Request Body:** 1,048,576 bytes (1 MB) default
+- **Configuration:** `MAX_REQUEST_BODY_SIZE`
+- **Response on Exceed:** HTTP 413 with `Retry-After: 60`
+
+---
+
+## Conversation Management
+
+Conversations are identified by UUID v4. The `conversation_id` is:
+- Returned on first message (new conversation)
+- Required for continuing existing conversations
+- Not user-owned until Phase 3 auth; currently uses `legacy_import` user (UUID nil)
+
+### Message Roles
+
+| Role | Description |
+|------|-------------|
+| `user` | Farmer's message |
+| `assistant` | AI response |
+| `system` | Internal system prompt (not returned in history) |
+
+### Context Window
+
+- Last 10 messages loaded per conversation
+- Messages ordered by `created_at` ascending for context
+- User message persisted before Ollama call; assistant response after
+
+---
+
+## Model Information
+
+- **Default Model:** `qwen3:0.6b` (522 MB, fits 2 GiB VRAM)
+- **Configured via:** `OLLAMA_MODEL` environment variable
+- **Available:** `qwen3:4b`, `qwen3-embedding:0.6b`, `nomic-embed-text:latest` (not yet integrated)
+
+---
+
+## OpenAPI Documentation
+
+- **Swagger UI:** `/docs` (disabled in production)
+- **ReDoc:** `/redoc` (disabled in production)
+- **OpenAPI JSON:** `/openapi.json`
+- **Artifact:** `docs/api/openapi.json` (committed, CI-validated)
+
+---
+
+## Versioning
+
+- **API Version:** `/api/v1` prefix (all chat/weather/resources endpoints)
+- **App Version:** `settings.app_version` (single source of truth)
+- **Root endpoints** (`/`, `/health*`) unversioned for infrastructure compatibility
+
+---
+
+*API Reference reflects current implementation as of Phase 1 completion (2026-10-28, v0.1.0).*

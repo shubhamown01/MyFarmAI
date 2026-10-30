@@ -13,11 +13,11 @@ Each record follows the same structure: context, decision, consequences, alterna
 
 | ID | Decision | Status | Needed by |
 |---|---|---|---|
-| ADR-001 | Modular monolith on FastAPI | Proposed | Phase 1 |
-| ADR-002 | Python 3.12 + `uv` lockfile | Proposed | Phase 1 |
-| ADR-003 | PostgreSQL 17 as system of record; SQLite tests only | Proposed | Phase 2 |
-| ADR-004 | SQLite-to-PostgreSQL migration and canonical-data choice | Proposed | Phase 2 |
-| ADR-005 | SQLAlchemy 2 + Alembic + asyncpg | Proposed | Phase 2 |
+| ADR-001 | Modular monolith on FastAPI | **APPROVED 2026-10-24** | Phase 1 |
+| ADR-002 | Python 3.12 + `uv` lockfile | **APPROVED 2026-10-24** | Phase 1 |
+| ADR-003 | PostgreSQL 17 as system of record; SQLite tests only | **APPROVED 2026-10-24** | Phase 2 |
+| ADR-004 | SQLite-to-PostgreSQL migration and canonical-data choice | **APPROVED 2026-10-24** | Phase 2 |
+| ADR-005 | SQLAlchemy 2 + Alembic + asyncpg | **APPROVED 2026-10-24** | Phase 2 |
 | ADR-006 | Provider-independent AI gateway over Ollama | Proposed | Phase 4 |
 | ADR-007 | SearXNG + PostgreSQL FTS; Qdrant deferred | Proposed | Phase 6 |
 | ADR-008 | Opaque sessions/tokens, Argon2id, service-layer authorization | Proposed | Phase 3 |
@@ -71,7 +71,7 @@ Each record follows the same structure: context, decision, consequences, alterna
 
 ## ADR-003 — PostgreSQL 17 is the system of record; SQLite is test-only
 
-**Status:** Proposed  
+**Status:** **APPROVED 2026-10-24**  
 **Context:** SQLite currently stores conversations and messages with no ownership columns, no enforced foreign keys, no migration history, and no backup procedure. Two divergent files exist (122/315 and 35/74 rows). Production needs multi-user concurrency, ownership, constraints, migrations, and reliable recovery.
 
 **Decision:** Use **PostgreSQL 17** (pin the exact minor/digest at implementation) as the production database. Use SQLite only for unit tests and isolated local development. Do not run SQLite in production after the migration is accepted.
@@ -90,7 +90,7 @@ Each record follows the same structure: context, decision, consequences, alterna
 
 ## ADR-004 — Migrate existing SQLite data explicitly; do not merge blindly
 
-**Status:** Proposed  
+**Status:** **APPROVED 2026-10-24**  
 **Context:** Two SQLite files exist:
 
 | File | Conversations | Messages | Used by | Git status |
@@ -124,7 +124,7 @@ Neither is declared canonical. Both pass `PRAGMA integrity_check`. The data may 
 
 ## ADR-005 — SQLAlchemy 2 + Alembic + asyncpg
 
-**Status:** Proposed  
+**Status:** **APPROVED 2026-10-24**  
 **Context:** Current data access is raw SQL through `aiosqlite`, with startup `CREATE TABLE IF NOT EXISTS`. The application is async. PostgreSQL needs typed models, migrations, and a driver compatible with the async stack.
 
 **Decision:** Use SQLAlchemy 2.x typed ORM models, Alembic migrations, and **asyncpg** through SQLAlchemy’s async engine. Use an async Alembic environment so migrations and runtime share one driver. Keep repositories thin; transactions belong to the service layer. Configure a small connection pool (`pool_size`/`max_overflow` tuned for 7 GiB), `pool_pre_ping`, and statement timeouts.
@@ -415,13 +415,13 @@ When justified, add one service at a time with a resource budget, health check, 
 
 ## 2. Decision log and approval
 
-| ID | Recommended decision | Approval needed from | Blocking |
-|---|---|---|---|
-| ADR-001 | Modular monolith | Project owner / engineering | Phase 1 |
-| ADR-002 | Python 3.12 + uv | Engineering | Phase 1 |
-| ADR-003 | PostgreSQL 17 production | Owner / operations | Phase 2 |
-| ADR-004 | Canonical DB + migration | Data owner | Phase 2 |
-| ADR-005 | SQLAlchemy/Alembic/asyncpg | Engineering | Phase 2 |
+| ID | Recommended decision | Approval needed from | Status | Approval Date |
+|---|---|---|---|---|
+| ADR-001 | Modular monolith | Project owner / engineering | **APPROVED** | 2026-10-24 |
+| ADR-002 | Python 3.12 + uv | Engineering | **APPROVED** | 2026-10-24 |
+| ADR-003 | PostgreSQL 17 production | Owner / operations | **APPROVED** | 2026-10-24 |
+| ADR-004 | Canonical DB + migration | Data owner | **APPROVED** | 2026-10-24 |
+| ADR-005 | SQLAlchemy/Alembic/asyncpg | Engineering | **APPROVED** | 2026-10-24 |
 | ADR-006 | AI gateway + model benchmark | Product/engineering | Phase 4 |
 | ADR-007 | SearXNG + PG FTS | Engineering/legal | Phase 6 |
 | ADR-008 | Sessions/tokens + Argon2id | Security/engineering | Phase 3 |

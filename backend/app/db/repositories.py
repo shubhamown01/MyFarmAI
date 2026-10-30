@@ -1,5 +1,6 @@
 """SQLAlchemy repositories for database operations."""
 
+import uuid
 from collections.abc import Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -363,11 +364,11 @@ class ConversationRepository:
 
     async def create(
         self,
-        user_id: str,
+        user_id: uuid.UUID,
         language: str = "en",
         crop: str | None = None,
         location: str | None = None,
-        farm_id: str | None = None,
+        farm_id: uuid.UUID | None = None,
         model_name: str | None = None,
         model_version: str | None = None,
     ) -> Conversation:
@@ -384,21 +385,28 @@ class ConversationRepository:
         await self.session.flush()
         return conversation
 
-    async def get_by_id(self, conversation_id: str) -> Conversation | None:
+    async def get_by_id(
+        self, conversation_id: uuid.UUID, user_id: uuid.UUID
+    ) -> Conversation | None:
+        """Ownership-scoped fetch (deny-by-default; cross-user looks like not-found)."""
         result = await self.session.execute(
-            select(Conversation).where(Conversation.id == conversation_id)
+            select(Conversation)
+            .where(Conversation.id == conversation_id)
+            .where(Conversation.user_id == user_id)
         )
         return result.scalar_one_or_none()
 
     async def get_by_id_with_messages(
         self,
-        conversation_id: str,
+        conversation_id: uuid.UUID,
+        user_id: uuid.UUID,
         limit: int = 50,
     ) -> Conversation | None:
         result = await self.session.execute(
             select(Conversation)
             .options(selectinload(Conversation.messages))
             .where(Conversation.id == conversation_id)
+            .where(Conversation.user_id == user_id)
         )
         conversation = result.scalar_one_or_none()
         if conversation and conversation.messages:
@@ -411,9 +419,9 @@ class ConversationRepository:
 
     async def get_user_conversations(
         self,
-        user_id: str,
+        user_id: uuid.UUID,
         limit: int = 20,
-        farm_id: str | None = None,
+        farm_id: uuid.UUID | None = None,
     ) -> Sequence[Conversation]:
         query = (
             select(Conversation)
@@ -429,7 +437,8 @@ class ConversationRepository:
 
     async def update_context(
         self,
-        conversation_id: str,
+        conversation_id: uuid.UUID,
+        user_id: uuid.UUID,
         language: str | None = None,
         crop: str | None = None,
         location: str | None = None,
@@ -437,7 +446,9 @@ class ConversationRepository:
         model_version: str | None = None,
     ) -> Conversation | None:
         result = await self.session.execute(
-            select(Conversation).where(Conversation.id == conversation_id)
+            select(Conversation)
+            .where(Conversation.id == conversation_id)
+            .where(Conversation.user_id == user_id)
         )
         conversation = result.scalar_one_or_none()
         if not conversation:
@@ -455,22 +466,28 @@ class ConversationRepository:
         await self.session.flush()
         return conversation
 
-    async def increment_message_count(self, conversation_id: str) -> None:
+    async def increment_message_count(self, conversation_id: uuid.UUID, user_id: uuid.UUID) -> None:
         await self.session.execute(
             update(Conversation)
             .where(Conversation.id == conversation_id)
+            .where(Conversation.user_id == user_id)
             .values(message_count=Conversation.message_count + 1)
         )
 
-    async def archive(self, conversation_id: str) -> bool:
+    async def archive(self, conversation_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         result = await self.session.execute(
-            update(Conversation).where(Conversation.id == conversation_id).values(is_archived=True)
+            update(Conversation)
+            .where(Conversation.id == conversation_id)
+            .where(Conversation.user_id == user_id)
+            .values(is_archived=True)
         )
         return result.rowcount > 0
 
-    async def delete(self, conversation_id: str) -> bool:
+    async def delete(self, conversation_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         result = await self.session.execute(
-            delete(Conversation).where(Conversation.id == conversation_id)
+            delete(Conversation)
+            .where(Conversation.id == conversation_id)
+            .where(Conversation.user_id == user_id)
         )
         return result.rowcount > 0
 
@@ -483,7 +500,7 @@ class MessageRepository:
 
     async def create(
         self,
-        conversation_id: str,
+        conversation_id: uuid.UUID,
         role: MessageRole,
         content: str,
         model_name: str | None = None,
@@ -506,7 +523,7 @@ class MessageRepository:
 
     async def get_recent(
         self,
-        conversation_id: str,
+        conversation_id: uuid.UUID,
         limit: int = 10,
     ) -> Sequence[Message]:
         result = await self.session.execute(
@@ -518,7 +535,7 @@ class MessageRepository:
         messages = result.scalars().all()
         return list(reversed(messages))
 
-    async def count(self, conversation_id: str) -> int:
+    async def count(self, conversation_id: uuid.UUID) -> int:
         result = await self.session.execute(
             select(func.count(Message.id)).where(Message.conversation_id == conversation_id)
         )
@@ -671,6 +688,7 @@ class SessionRepository:
         result = await self.session.execute(
             update(SessionModel)
             .where(SessionModel.session_id_hash == session_id_hash)
+            .where(SessionModel.is_revoked.is_(False))
             .values(
                 is_revoked=True,
                 revoked_at=func.now(),
@@ -760,6 +778,23 @@ class RefreshTokenRepository:
         # Also revoke the token itself
         await self.revoke(token_hash, reason)
         return result.rowcount + 1
+
+    async def revoke_all_user_tokens(self, user_id: str, reason: str | None = None) -> int:
+        """Revoke every live refresh token owned by the user (reuse-detection response).
+
+        Exit-gate fix: chain-walking alone leaves tokens >=2 generations old
+        live; suspected theft revokes everything for this user instead.
+        """
+        result = await self.session.execute(
+            update(RefreshToken)
+            .where(RefreshToken.user_id == user_id, RefreshToken.is_revoked == False)  # noqa: E712
+            .values(
+                is_revoked=True,
+                revoked_at=func.now(),
+                revoked_reason=reason,
+            )
+        )
+        return result.rowcount
 
     async def cleanup_expired(self) -> int:
         result = await self.session.execute(

@@ -112,7 +112,9 @@ These examples are not proof that this endpoint or schema exists. Confirm them a
 | Invalid input | Return a validation error |
 | Unauthorized request | Reject using the approved access policy |
 | Rate limit reached | Return a controlled rate-limit response |
-| AI provider unavailable | Explain that an answer could not be generated |
+| AI provider unavailable | Explain that an answer could not be generated (`OLLAMA_CONNECTION_FAILED` / `MODEL_NOT_FOUND`) |
+| AI gateway overloaded | Immediate controlled rejection — `503 AI_BUSY` when the queue depth limit is exceeded; client retries with backoff |
+| AI request times out | `504 OLLAMA_TIMEOUT`; no silent retry or model switching |
 | Research partially fails | Return a partial result only if it is valid and clearly marked |
 | No usable answer | Show an empty-result state |
 | Unexpected failure | Return a safe error and correlation identifier |

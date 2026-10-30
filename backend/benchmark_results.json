@@ -1,0 +1,80 @@
+[
+  {
+    "model": "qwen3:4b",
+    "ok": 1,
+    "failed": 4,
+    "latency_avg_s": 130.97,
+    "latency_max_s": 130.97,
+    "results": [
+      {
+        "id": "qa-simple-en",
+        "seconds": 130.97,
+        "status": "ok",
+        "out_chars": 268
+      },
+      {
+        "id": "qa-simple-hi",
+        "seconds": 180.76,
+        "status": "error: ReadTimeout",
+        "out_chars": 0
+      },
+      {
+        "id": "qa-refusal",
+        "seconds": 182.55,
+        "status": "error: ReadTimeout",
+        "out_chars": 0
+      },
+      {
+        "id": "qa-low-confidence",
+        "seconds": 180.79,
+        "status": "error: ReadTimeout",
+        "out_chars": 0
+      },
+      {
+        "id": "qa-structured",
+        "seconds": 180.8,
+        "status": "error: ReadTimeout",
+        "out_chars": 0
+      }
+    ]
+  },
+  {
+    "model": "qwen3:0.6b",
+    "ok": 5,
+    "failed": 0,
+    "latency_avg_s": 13.61,
+    "latency_max_s": 21.95,
+    "results": [
+      {
+        "id": "qa-simple-en",
+        "seconds": 17.88,
+        "status": "ok",
+        "out_chars": 241
+      },
+      {
+        "id": "qa-simple-hi",
+        "seconds": 12.06,
+        "status": "ok",
+        "out_chars": 205
+      },
+      {
+        "id": "qa-refusal",
+        "seconds": 10.23,
+        "status": "ok",
+        "out_chars": 1449
+      },
+      {
+        "id": "qa-low-confidence",
+        "seconds": 21.95,
+        "status": "ok",
+        "out_chars": 608
+      },
+      {
+        "id": "qa-structured",
+        "seconds": 5.92,
+        "status": "ok",
+        "out_chars": 33
+      }
+    ]
+  }
+]

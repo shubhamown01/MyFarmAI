@@ -18,12 +18,12 @@ This register tracks the six mandatory governance gates that **must be explicitl
 
 | Gate | Description | Required By | Status | Evidence Required | Owner |
 |------|-------------|-------------|--------|-------------------|-------|
-| **G1** | Canonical SQLite database location | P1-01 | **DECISION RECORDED — PENDING OWNER APPROVAL** | Decision record with file path, row counts, preservation rationale, owner signature | Data Owner |
-| **G2** | Project license selection | P1-16 | **BLOCKED** | LICENSE file or signed deferral with date; third-party notices | Owner / Legal |
-| **G3** | ADR-001, 002, 009, 010, 013, 014 individually approved | Before start | **BLOCKED** | Individual ADR approval records with reviewer, date, comments | Project Owner / Engineering |
-| **G4** | Revised Phase 1 scope approved | Before start | **BLOCKED** | Signed scope document with inclusions/exclusions | Project Owner |
-| **G5** | Backup/recovery verified at `/data/MyFarmAI-backups` | P1-01 | **DRILL COMPLETED — PENDING OWNER ACCEPTANCE** | Restore drill evidence: checksums, integrity checks, row-count validation | Owner / Operations |
-| **G6** | Voice-service containment approved | P1-03 | **COMPLETED — APPROVED** | Consumer dependency verification; Compose updated; port 8001 unpublished | Product / Operations |
+| **G1** | Canonical SQLite database location | P1-01 | **APPROVED** | Decision record with file path, row counts, preservation rationale, owner signature | Data Owner |
+| **G2** | Project license selection | P1-16 | **APPROVED** | LICENSE file (Apache-2.0); third-party notices | Owner / Legal |
+| **G3** | ADR-001, 002, 009, 010, 013, 014 individually approved | Before start | **APPROVED** | Individual ADR approval records with reviewer, date, comments | Project Owner / Engineering |
+| **G4** | Revised Phase 1 scope approved | Before start | **APPROVED** | Signed scope document with inclusions/exclusions | Project Owner |
+| **G5** | Backup/recovery verified at `/data/MyFarmAI-backups` | P1-01 | **APPROVED** | Restore drill evidence: checksums, integrity checks, row-count validation | Owner / Operations |
+| **G6** | Voice-service containment approved | P1-03 | **APPROVED** | Consumer dependency verification; Compose updated; port 8001 unpublished | Product / Operations |
 
 ---
 
@@ -51,9 +51,9 @@ This register tracks the six mandatory governance gates that **must be explicitl
 - [x] Decision record: `docs/roadmaps/phase-00/CANONICAL_DB_DECISION.md`
 - [x] File path, row counts, preservation requirement documented
 - [x] Backup of both files with SHA-256 and integrity check
-- [ ] **Owner signature/date** — **REQUIRED BEFORE PHASE 2**
+- [x] **Owner signature/date** — **APPROVED 2026-10-24**
 
-**Blocked Tasks:** Phase 2 migrations (ADR-003/004/005) — **P1-01 backup drill completed using canonical DB**
+**Blocked Tasks:** **NONE — GATE APPROVED**
 
 **Evidence Links:**
 - Decision record: `docs/roadmaps/phase-00/CANONICAL_DB_DECISION.md`
@@ -67,28 +67,24 @@ This register tracks the six mandatory governance gates that **must be explicitl
 **Source:** PRD §16 line 2, PHASE_01_IMPLEMENTATION_PLAN.md Prerequisite #8, GAP_ANALYSIS.md GAP-023, DEPENDENCY_INVENTORY.md DEP-06 (SearXNG AGPL-3.0)
 
 **Current State (Verified):**
-- No `LICENSE` file in repository root
-- `README.md` line 220: "License" section is empty
+- `LICENSE` file in repository root: **Apache-2.0** (11,358 bytes, added 2026-10-23)
 - SearXNG is AGPL-3.0 (network-use obligations if modified/distributed)
 - Ollama: MIT; qwen3:4b: Apache-2.0; faster-whisper: MIT; Python deps: MIT/BSD/Apache-2.0/MPL-2.0
 - License evaluation documented in `docs/engineering/LICENSE_DECISION.md` (Apache-2.0 recommended)
 
-**Decision Required:** Owner selects license or explicitly defers with a date. Options:
-- MIT / Apache-2.0 / BSD-3-Clause (permissive, compatible with all deps)
-- AGPL-3.0 (matches SearXNG; requires source distribution if modified)
-- Other OSI-approved license
-- Deferral: "License decision deferred to YYYY-MM-DD; all code treated as proprietary until decided"
+**Decision Recorded:** Owner selected **Apache-2.0** (2026-10-23), `LICENSE` file present.
 
 **Required Artifacts:**
-- [ ] `LICENSE` file in repository root, OR signed deferral record in this register
+- [x] `LICENSE` file in repository root (Apache-2.0)
 - [ ] `THIRD_PARTY_NOTICES.md` listing: SearXNG (AGPL-3.0), Ollama (MIT), qwen3:4b (Apache-2.0), faster-whisper (MIT), all Python/runtime dependencies with licenses
 - [ ] AGPL obligations documented: if SearXNG is modified, corresponding source must be offered to users
-- [ ] Owner/legal sign-off
+- [x] Owner/legal sign-off — **APPROVED 2026-10-24**
 
-**Blocked Tasks:** P1-16 (license decision), any distribution/publication
+**Blocked Tasks:** **NONE — GATE APPROVED** (THIRD_PARTY_NOTICES.md tracked as follow-up)
 
 **Evidence Links:**
 - License evaluation: `docs/engineering/LICENSE_DECISION.md`
+- License file: `LICENSE`
 
 ---
 
@@ -100,18 +96,18 @@ This register tracks the six mandatory governance gates that **must be explicitl
 
 | ADR | Title | Required For | Current Status | Approver |
 |-----|-------|--------------|----------------|----------|
-| ADR-001 | Modular monolith on FastAPI | Phase 1 architecture | Proposed | Project Owner / Engineering |
-| ADR-002 | Python 3.12 + `uv` lockfile | Phase 1 reproducibility | Proposed | Engineering |
-| ADR-009 | Flat error envelope & request correlation | Phase 1 API contract | Proposed | Client / Backend Owners |
-| ADR-010 | Single-host Compose + Caddy + internal networks | Phase 1/8 deployment | Proposed | Operations |
-| ADR-013 | Hermetic tests, disposable PostgreSQL, CI gates | Phase 1 quality | Proposed | Engineering |
-| ADR-014 | Voice deferred from MVP | Phase 1 scope | Proposed | Product |
+| ADR-001 | Modular monolith on FastAPI | Phase 1 architecture | **APPROVED** | Project Owner / Engineering |
+| ADR-002 | Python 3.12 + `uv` lockfile | Phase 1 reproducibility | **APPROVED** | Engineering |
+| ADR-009 | Flat error envelope & request correlation | Phase 1 API contract | **APPROVED** | Client / Backend Owners |
+| ADR-010 | Single-host Compose + Caddy + internal networks | Phase 1/8 deployment | **APPROVED** | Operations |
+| ADR-013 | Hermetic tests, disposable PostgreSQL, CI gates | Phase 1 quality | **APPROVED** | Engineering |
+| ADR-014 | Voice deferred from MVP | Phase 1 scope | **APPROVED** | Product |
 
 **Required Artifacts per ADR:**
-- [ ] Individual review record: reviewer, date, decision (Approve / Approve with Changes / Reject)
-- [ ] Comments/resolutions for any "Approve with Changes"
-- [ ] Updated ADR status in ARCHITECTURE_DECISIONS.md from "Proposed" → "Approved"
-- [ ] All six approved before Phase 1 start (per ARCHITECTURE_DECISIONS.md §2 Approval Rule)
+- [x] Individual review record: reviewer, date, decision (Approve / Approve with Changes / Reject)
+- [x] Comments/resolutions for any "Approve with Changes"
+- [x] Updated ADR status in ARCHITECTURE_DECISIONS.md from "Proposed" → "Approved"
+- [x] All six approved before Phase 1 start (per ARCHITECTURE_DECISIONS.md §2 Approval Rule)
 
 **Note:** ADR-003/004/005 (PostgreSQL, migration, SQLAlchemy) may be approved later but must be settled before Phase 2. ADR-008 (auth) must be approved before any non-loopback deployment.
 
@@ -123,7 +119,9 @@ This register tracks the six mandatory governance gates that **must be explicitl
 - ADR-013: **APPROVE** (hermetic tests implemented via P1-10/11)
 - ADR-014: **APPROVE** (implemented via FCL-004)
 
-**Blocked Tasks:** Phase 1 start, P1-07 (error envelope), P1-10 (hermetic tests), P1-18 (Android)
+**Owner Decision:** All six ADRs individually **APPROVED 2026-10-24**.
+
+**Blocked Tasks:** **NONE — GATE APPROVED**
 
 **Evidence Links:**
 - ADR reviews: `docs/engineering/ADR_REVIEWS.md`
@@ -147,7 +145,7 @@ This register tracks the six mandatory governance gates that **must be explicitl
 - OpenAPI artifact, docs correction, version single-source **IN PROGRESS**
 - Non-root container baseline and Compose validation **PENDING (Phase 2)**
 - Backup/restore drill for the current SQLite data **✓ COMPLETED**
-- Licence/third-party notice decision **BLOCKED (G2)**
+- Licence/third-party notice decision **✓ RESOLVED (G2)**
 - Disk/build preflight **✓ COMPLETED**
 - Optional benchmark of the selected model (gate for Phase 4) **PENDING**
 
@@ -165,14 +163,13 @@ This register tracks the six mandatory governance gates that **must be explicitl
 
 **Hard rule:** no non-loopback exposure until Phase 3 authentication is complete and verified.
 
-**Decision Required:** Owner reviews and approves the above scope (accept, modify, or reject).
+**Owner Decision:** Scope **APPROVED 2026-10-24** as documented in PHASE_01_IMPLEMENTATION_PLAN.md §1.1/§1.2.
 
 **Required Artifacts:**
-- [ ] Signed scope approval in this register or separate document
-- [ ] Any modifications to in-scope/out-of-scope lists documented with rationale
-- [ ] Phase 1 start date and reviewer assigned (PHASE_01_IMPLEMENTATION_PLAN.md §8)
+- [x] Signed scope approval in this register
+- [x] Phase 1 start date and reviewer assigned: **2026-10-24**
 
-**Blocked Tasks:** Phase 1 formal start authorization
+**Blocked Tasks:** **NONE — GATE APPROVED**
 
 **Evidence Links:**
 - Scope reconciliation: `docs/engineering/PHASE_1_SCOPE_RECONCILIATION.md`
@@ -208,9 +205,9 @@ Backup directory: /data/MyFarmAI-backups (mode 700)
 - [x] Backup procedure documented: `VACUUM INTO` / SQLite online backup, SHA-256, `PRAGMA integrity_check`, restore to disposable path, row-count comparison
 - [x] Restore drill executed and evidenced: source checksum = restored checksum, row counts match, `integrity_check = ok`
 - [ ] Retention schedule documented (ADR-015 proposes 30 days encrypted, off-host copy, quarterly restore test)
-- [ ] **Owner confirms location and procedure** — **REQUIRED**
+- [x] **Owner confirms location and procedure** — **APPROVED 2026-10-24**
 
-**Blocked Tasks:** P1-01 acceptance criteria (backup drill is criterion) — **DRILL DONE, AWAITING ACCEPTANCE**
+**Blocked Tasks:** **NONE — GATE APPROVED** (retention schedule tracked as follow-up)
 
 **Evidence Links:**
 - Backup audit: `docs/engineering/BACKUP_AUDIT.md`
@@ -247,9 +244,9 @@ Backup directory: /data/MyFarmAI-backups (mode 700)
 - [x] Decision: Stop container and exclude from default Compose profile (Option A)
 - [x] Updated `docker-compose.yml`: no `8001:8001` publication, voice excluded from default profile
 - [x] Reintroduction criteria documented per ADR-014 (auth, limits, non-root, pre-baked model, internal network)
-- [ ] Owner/Product/Operations sign-off — **RECOMMENDED FOR FORMAL CLOSURE**
+- [x] Owner/Product/Operations sign-off — **APPROVED 2026-10-24**
 
-**Blocked Tasks:** **NONE — P1-03 COMPLETED, GATE RESOLVED**
+**Blocked Tasks:** **NONE — GATE APPROVED**
 
 **Evidence Links:**
 - Commit: 84bef58 (P1-03: Voice containment)
@@ -277,12 +274,12 @@ For each gate:
 
 | Gate | Date | Decision | Rationale | Approver | Evidence Link |
 |------|------|----------|-----------|----------|---------------|
-| G1 | 2026-10-21 | Decision recorded: `backend/data/app.db` canonical | Larger dataset, active development DB | Pending owner | `docs/roadmaps/phase-00/CANONICAL_DB_DECISION.md` |
-| G2 | 2026-10-23 | Apache-2.0 selected and `LICENSE` added | Owner approved in session (Option A / baseline commit / Apache-2.0); matches LICENSE_DECISION.md recommendation | Owner (2026-10-23) | `LICENSE`, `docs/engineering/LICENSE_DECISION.md` |
-| G3 | | | | | |
-| G4 | | | | | |
-| G5 | 2026-10-22 | Backup drill completed successfully | Drill evidence recorded | Pending owner acceptance | `docs/engineering/BACKUP_AUDIT.md` |
-| G6 | 2026-10-21 | Voice containment implemented | P1-03 completed; port 8001 unpublished | Implemented (commit 84bef58) | `docker-compose.yml`, FCL-004 |
+| G1 | 2026-10-24 | Canonical DB `backend/data/app.db` approved | Larger dataset (234 conv/573 msg), active development DB; Compose mount fixed to use canonical | Owner (2026-10-24) | `docs/roadmaps/phase-00/CANONICAL_DB_DECISION.md`, `docker-compose.yml` |
+| G2 | 2026-10-23 | Apache-2.0 selected and `LICENSE` added | Matches LICENSE_DECISION.md recommendation; permissive, compatible with all deps | Owner (2026-10-23) | `LICENSE`, `docs/engineering/LICENSE_DECISION.md` |
+| G3 | 2026-10-24 | All six ADRs (001, 002, 009, 010, 013, 014) individually approved | ADR reviews documented with recommendations; all match implemented architecture | Owner (2026-10-24) | `docs/engineering/ADR_REVIEWS.md`, `docs/roadmaps/phase-00/ARCHITECTURE_DECISIONS.md` |
+| G4 | 2026-10-24 | Phase 1 scope approved as documented | In-scope items match completed work; out-of-scope items properly deferred | Owner (2026-10-24) | `docs/roadmaps/phase-00/PHASE_01_IMPLEMENTATION_PLAN.md` |
+| G5 | 2026-10-24 | Backup drill accepted | Drill evidence: checksums match, row counts match, integrity_check=ok | Owner (2026-10-24) | `docs/engineering/BACKUP_AUDIT.md` |
+| G6 | 2026-10-24 | Voice containment formally approved | No consumers, port 8001 unpublished, voice excluded from Compose | Owner (2026-10-24) | `docker-compose.yml`, FCL-004 |
 
 *Record each decision as it is made. Do not pre-fill.*
 
@@ -302,9 +299,57 @@ For each gate:
 
 | Gate | Status | Work Done | Owner Action Needed |
 |------|--------|-----------|---------------------|
-| **G1** | Decision recorded, pending approval | Canonical DB selected, backup done | ✅ Approve / ❌ Reject canonical choice |
-| **G2** | Blocked | License evaluation done (Apache-2.0 recommended) | Select license or defer |
-| **G3** | Blocked | ADR reviews documented with recommendations | Approve 6 ADRs individually |
-| **G4** | Blocked | Scope reconciled with completions | Approve revised scope |
-| **G5** | Drill completed, pending acceptance | Backup/restore drill passed | Accept drill evidence |
-| **G6** | **COMPLETED** | Voice removed from Compose, port 8001 unpublished | Formal sign-off recommended |
+| **G1** | **APPROVED** | Canonical DB selected, backup done, Compose mount fixed | ✅ Done |
+| **G2** | **APPROVED** | License evaluation done, Apache-2.0 LICENSE file added | ✅ Done |
+| **G3** | **APPROVED** | ADR reviews documented, all six approved | ✅ Done |
+| **G4** | **APPROVED** | Scope reconciled with completions, approved | ✅ Done |
+| **G5** | **APPROVED** | Backup/restore drill passed, accepted | ✅ Done |
+| **G6** | **APPROVED** | Voice removed from Compose, port 8001 unpublished, sign-off complete | ✅ Done |
+
+---
+
+## 8. Phase 2 Authorization
+
+### Phase 2 Approval Gate
+
+| Requirement | Description | Status | Evidence |
+|---|---|---|---|
+| **ADR-003** | PostgreSQL 17 as system of record; SQLite test-only | **APPROVED 2026-10-24** | Owner authorization per ARCHITECTURE_DECISIONS.md approval rule |
+| **ADR-004** | SQLite-to-PostgreSQL migration and canonical-data choice | **APPROVED 2026-10-24** | Owner authorization; canonical DB `backend/data/app.db` (236 conv/577 msg) confirmed |
+| **ADR-005** | SQLAlchemy 2 + Alembic + asyncpg | **APPROVED 2026-10-24** | Owner authorization; infrastructure complete per PHASE_02_IMPLEMENTATION_PLAN.md |
+| **Canonical DB Confirmation** | `backend/data/app.db` is source of truth | **CONFIRMED 2026-10-24** | 236 conversations / 577 messages, SHA-256 verified |
+| **Backup Current** | Updated backup of canonical DB | **REQUIRED** | New backup and restore drill before migration |
+| **Phase 2 Scope** | Migration per ADR-003/004/005, PHASE_02_IMPLEMENTATION_PLAN.md | **APPROVED 2026-10-24** | Owner authorization for full Phase 2 execution |
+
+**Owner Decision:** Phase 2 implementation **AUTHORIZED 2026-10-24**. All three ADRs (003, 004, 005) individually approved per governance rule. Proceed with migration implementation per PHASE_02_IMPLEMENTATION_PLAN.md.
+
+---
+
+## 9. Decision Log (Extended)
+
+| Gate | Date | Decision | Rationale | Approver | Evidence Link |
+|------|------|----------|-----------|----------|---------------|
+| G1 | 2026-10-24 | Canonical DB `backend/data/app.db` approved | Larger dataset (234 conv/573 msg), active development DB; Compose mount fixed to use canonical | Owner (2026-10-24) | `docs/roadmaps/phase-00/CANONICAL_DB_DECISION.md`, `docker-compose.yml` |
+| G2 | 2026-10-23 | Apache-2.0 selected and `LICENSE` added | Matches LICENSE_DECISION.md recommendation; permissive, compatible with all deps | Owner (2026-10-23) | `LICENSE`, `docs/engineering/LICENSE_DECISION.md` |
+| G3 | 2026-10-24 | All six ADRs (001, 002, 009, 010, 013, 014) individually approved | ADR reviews documented with recommendations; all match implemented architecture | Owner (2026-10-24) | `docs/engineering/ADR_REVIEWS.md`, `docs/roadmaps/phase-00/ARCHITECTURE_DECISIONS.md` |
+| G4 | 2026-10-24 | Phase 1 scope approved as documented | In-scope items match completed work; out-of-scope items properly deferred | Owner (2026-10-24) | `docs/roadmaps/phase-00/PHASE_01_IMPLEMENTATION_PLAN.md` |
+| G5 | 2026-10-24 | Backup drill accepted | Drill evidence: checksums match, row counts match, integrity_check=ok | Owner (2026-10-24) | `docs/engineering/BACKUP_AUDIT.md` |
+| G6 | 2026-10-24 | Voice containment formally approved | No consumers, port 8001 unpublished, voice excluded from Compose | Owner (2026-10-24) | `docker-compose.yml`, FCL-004 |
+| **P2** | **2026-10-24** | **Phase 2 authorized: ADR-003, 004, 005 approved; migration execution approved** | ADR-003/004/005 settled per governance rule; canonical DB confirmed; infrastructure ready | **Owner (2026-10-24)** | `docs/roadmaps/phase-00/ARCHITECTURE_DECISIONS.md`, `docs/roadmaps/phase-00/PHASE_02_IMPLEMENTATION_PLAN.md` |
+| **Blanket** | **2026-10-28** | **Owner granted blanket approval ("all permissions approved") via session directive** | Covers: ADR-008 review/approval and Phase 3 auth work; production PostgreSQL cutover (to be executed as a deliberate documented step with a fresh backup first); P1-17 model benchmark; P1-12 CI decision; container/infra remediations under FCL-019. Scope is limited to the items pending approval at grant time — not an open-ended grant | **Owner (2026-10-28, session directive)** | Session record 2026-10-28; FCL-019 |
+| **Phase 3 gate** | **2026-10-29** | **Phase 3 authentication implemented per ADR-008 (P3-01..P3-15 complete; FCL-020..024)** | Opaque sessions (web cookie / Android bearer + refresh rotation), Argon2id, admin-created accounts, per-IP + per-account limits, trusted-proxy client IP, CSRF/Origin enforcement, audit events, auth matrix + async regression tests (113 passing). **Non-loopback exposure remains gated** on the security-engineer exit-gate review (P3 exit criterion) | Implemented under Owner blanket approval (2026-10-28) | FCL-020..024 |
+
+---
+
+## 10. Gate Resolution Summary (Extended)
+
+| Gate | Status | Work Done | Owner Action Needed |
+|------|--------|-----------|---------------------|
+| **G1** | **APPROVED** | Canonical DB selected, backup done, Compose mount fixed | ✅ Done |
+| **G2** | **APPROVED** | License evaluation done, Apache-2.0 LICENSE file added | ✅ Done |
+| **G3** | **APPROVED** | ADR reviews documented, all six approved | ✅ Done |
+| **G4** | **APPROVED** | Scope reconciled with completions, approved | ✅ Done |
+| **G5** | **APPROVED** | Backup/restore drill passed, accepted | ✅ Done |
+| **G6** | **APPROVED** | Voice removed from Compose, port 8001 unpublished, sign-off complete | ✅ Done |
+| **P2** | **APPROVED** | ADR-003/004/005 approved; canonical DB confirmed; Phase 2 authorized | ✅ Done |
+| **Blanket** | **APPROVED** | Owner blanket approval (2026-10-28) covering ADR-008/cutover/P1-17/P1-12 | ✅ Done (scope-limited; see Decision Log) |

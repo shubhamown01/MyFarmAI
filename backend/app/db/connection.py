@@ -40,11 +40,15 @@ async def init_db(db_path: str | None = None) -> None:
             """
             CREATE TABLE IF NOT EXISTS conversations (
                 id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 language TEXT DEFAULT 'en',
                 crop TEXT,
-                location TEXT
+                location TEXT,
+                is_archived BOOLEAN NOT NULL DEFAULT 0,
+                message_count INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
             )
             """
         )
@@ -64,6 +68,12 @@ async def init_db(db_path: str | None = None) -> None:
             """
             CREATE INDEX IF NOT EXISTS idx_messages_conversation_id
             ON messages (conversation_id)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_conversations_user_id
+            ON conversations (user_id)
             """
         )
         await conn.commit()

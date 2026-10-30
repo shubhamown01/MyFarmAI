@@ -1,131 +1,68 @@
 # MyFarmAI — Authentication Flow
 
 **Document ID:** MYFARMAI-FLOW-004  
-**Version:** 1.0  
-**Status:** Conditional Draft — Owner Review Required  
-**Related documents:** `PRD.md`, `TRD.md`, `APP_FLOW.md`, approved SRS and ADRs
+**Version:** 2.0  
+**Status:** Implemented (Phase 3, per ADR-008) — verified by test suite and Phase 3 exit-gate review  
+**Related documents:** `PRD.md`, `TRD.md`, `ADR-008`, `AUTHZ_MATRIX.md`, `docs/api/openapi.json`
 
-## 1. Scope and Approval Gate
+## 1. Scope
 
-This document describes a proposed authentication flow only if MyFarmAI's approved scope requires user accounts.
+Describes the **implemented** authentication behavior (Phase 3). Authority: ADR-008 (MVP auth: admin-created accounts, no public registration; opaque session tokens; Android refresh-token rotation).
 
-The existence of this document does not confirm that authentication has been implemented or authorize introducing a new identity system. The selected authentication approach, session model, account recovery policy, and database implications must be approved before implementation.
+## 2. Account Model
 
-## 2. Sign-In Flow
+- Accounts are created **by an administrator** via `POST /api/v1/auth/admin/users` (admin-role session required). There is no public registration endpoint.
+- Passwords are hashed with **Argon2id**; verification cost ~114 ms by design. Rehash-on-login upgrades weak parameters transparently.
+- Generic error `INVALID_CREDENTIALS` (401) for both unknown-email and wrong-password — no account enumeration.
 
-```mermaid
-flowchart TD
-    A[Open Sign-in Screen] --> B[Enter Credentials or Approved Identity Method]
-    B --> C[Client-Side Validation]
-    C --> D{Input Valid?}
-    D -- No --> E[Show Validation Feedback]
-    E --> B
-    D -- Yes --> F[Send Secure Authentication Request]
-    F --> G[Backend Validates Identity]
-    G --> H{Authentication Successful?}
-    H -- No --> I[Show Generic Authentication Error]
-    H -- Yes --> J[Create Approved Session]
-    J --> K[Return Session or Token Response]
-    K --> L[Store Credential Securely]
-    L --> M[Open Authorized Application State]
-```
-
-## 3. Sign-In Requirements
-
-- Use the authentication method approved for the product.
-- Transmit credentials only over HTTPS in deployed environments.
-- Validate credentials on the server.
-- Return generic errors that do not unnecessarily reveal account existence.
-- Apply rate limits and abuse protections.
-- Do not log passwords, tokens, or recovery secrets.
-- Apply secure password hashing if password authentication is selected.
-- Protect sessions against theft, replay, and unauthorized reuse.
-- Keep credentials out of URLs and analytics events.
-
-## 4. Session Validation Flow
+## 3. Web Flow (Opaque Session Cookie)
 
 ```mermaid
 flowchart TD
-    A[Protected Action] --> B[Attach Approved Credential]
-    B --> C[Backend Authentication]
-    C --> D{Credential Valid?}
-    D -- No --> E[Reject Request]
-    E --> F[Clear or Revalidate Client Session]
-    F --> G[Sign-in Screen]
-    D -- Yes --> H[Check Authorization]
-    H --> I{Action Permitted?}
-    I -- No --> J[Return Forbidden Response]
-    I -- Yes --> K[Continue Request]
+    A[Sign-in screen] --> B[POST /api/v1/auth/login]
+    B --> C{Valid credentials?}
+    C -- No --> D[401 INVALID_CREDENTIALS / 429 ACCOUNT_LOCKED]
+    C -- Yes --> E[HttpOnly session cookie: SameSite=Lax, Secure in production]
+    E --> F[Subsequent requests authenticated by cookie or Bearer session id]
+    F --> G[POST /api/v1/auth/logout revokes the session server-side]
 ```
 
-Authentication proves identity; authorization determines whether that identity may perform the requested action. Both must be enforced on the backend.
+- Session id: 256-bit random opaque token; only its SHA-256 hash is stored (`sessions.session_id_hash`).
+- TTL from `session_ttl_hours`; expired sessions are rejected (401) and cleaned up.
+- Browser storage exposure is eliminated — the cookie is HttpOnly.
 
-## 5. Sign-Out Flow
+## 4. Android Flow (Bearer + Refresh Rotation)
 
-1. User requests sign-out.
-2. Client calls the approved logout endpoint when server-side invalidation is supported.
-3. Backend invalidates the relevant session or refresh token.
-4. Client clears locally stored credentials.
-5. Client removes protected in-memory state where appropriate.
-6. Client returns to the public or signed-out screen.
+1. `POST /api/v1/auth/login` with `client: "android"` → access session id (bearer token) **plus** a single-use refresh token.
+2. API calls: `Authorization: Bearer <session_id>`.
+3. Rotation: `POST /api/v1/auth/token/refresh` consumes the refresh token and issues a new one (old token marked revoked).
+4. **Reuse detection:** presenting an already-revoked refresh token revokes the entire chain **and all of the user's sessions** (suspected theft), emits `REFRESH_TOKEN_REVOKED` audit event, and returns 401.
 
-If the chosen authentication protocol is stateless, document the actual revocation strategy rather than claiming that a token has been invalidated when it has not.
+## 5. Protections (Phase 3 hardening)
 
-## 6. Account Recovery
+| Protection | Behavior |
+|---|---|
+| Rate limiting (per IP) | Global limit from settings; stricter limit (10 req/min/IP) on `/api/v1/auth/*`. Exceeded → 429 `RATE_LIMIT_EXCEEDED` + `Retry-After` |
+| X-Forwarded-For spoofing | Forwarded headers honored **only** when the socket peer is a configured trusted proxy (`trusted_proxy_cidrs`); otherwise the peer address is authoritative (Phase 0 finding closed) |
+| Account lockout | 5 failed logins per email / 15 min → 429 `ACCOUNT_LOCKED` + `Retry-After: 900`; checked before any DB work; cleared on success |
+| CSRF / Origin | Unsafe requests carrying the session cookie with a present-but-disallowed `Origin`/`Referer` → 403 `CSRF_ORIGIN_REJECTED`. Absent Origin is permitted (layered on SameSite=Lax; same-origin browsers always send Origin; bearer clients carry no cookie) |
+| Audit events | `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`, `REFRESH_TOKEN_REVOKED` (incl. reuse revocation), `ACCOUNT_CREATED` — no passwords/tokens/hashes in payloads |
 
-Account recovery is optional and must be explicitly scoped. If implemented, it must use verified recovery channels, time-limited single-use tokens, rate limiting, and safe responses that avoid exposing account existence.
+## 6. Errors
 
-Recovery tokens must be stored and handled securely. Password changes should invalidate or rotate relevant sessions according to the approved policy.
+| Condition | Status | `error_code` |
+|---|---|---|
+| Bad credentials / expired / revoked session | 401 | `INVALID_CREDENTIALS` / `UNAUTHORIZED` |
+| Account locked | 429 | `ACCOUNT_LOCKED` |
+| Rate limit exceeded | 429 | `RATE_LIMIT_EXCEEDED` |
+| Cross-origin cookie request | 403 | `CSRF_ORIGIN_REJECTED` |
 
-## 7. Web and Android Considerations
+Note: middleware error bodies are flat `{"detail": ..., "error_code": ...}`; endpoint `HTTPException` bodies nest as `{"detail": {"detail": ..., "error_code": ...}}`. Known inconsistency, tracked for normalization.
 
-### Web
-- Prefer secure, HttpOnly, appropriately configured cookies when the approved session design uses cookie-based authentication.
-- Apply CSRF protections where applicable.
-- Configure SameSite and Secure attributes according to deployment requirements.
-- Do not expose privileged secrets in browser bundles.
+## 7. Legacy Data
 
-### Android
-- Use platform-appropriate secure storage for credentials.
-- Do not store tokens in plain-text files or ordinary application logs.
-- Clear credentials on sign-out.
-- Handle revoked and expired sessions safely.
-- Do not embed backend administrative credentials in the application.
+Pre-authentication rows owned by the sentinel user `00000000-0000-0000-0000-000000000000` are **not** readable or reassignable by real users; chat creation always attributes the real authenticated user. Re-assignment of legacy rows is a separate owner decision.
 
-## 8. Roles and Authorization
+## 8. Out of Scope (MVP, per ADR-008)
 
-If roles are approved, define them in an authorization specification before implementation. Candidate roles may include ordinary user and administrator, but the final role model must not be inferred from this draft.
-
-Every protected operation must enforce permission checks on the backend. UI visibility alone is not an authorization mechanism.
-
-## 9. Security Tests
-
-- Invalid credentials are rejected.
-- Expired and revoked credentials are rejected.
-- Unauthorized users cannot access protected resources.
-- Users cannot access another user's private records by changing identifiers.
-- Rate limiting works for authentication endpoints.
-- Tokens and passwords do not appear in logs.
-- Sign-out and recovery behavior match the chosen protocol.
-- Browser session protections are tested where applicable.
-- Android credential storage follows the approved security design.
-
-## 10. Acceptance Criteria
-
-- The authentication mechanism is documented and approved.
-- Session lifecycle behavior is specified.
-- Authentication and authorization are tested independently.
-- Web and Android clients handle expiry and sign-out correctly.
-- Sensitive values are protected in transit, storage, and logs.
-- Recovery behavior, if in scope, is tested.
-- Documentation matches the actual implementation.
-
-## 11. Governance Notes
-
-- Confirm whether accounts are required before implementing this flow.
-- Review the existing authentication code and ADRs before changing identity or session behavior.
-- Database changes require the appropriate approval.
-- Do not add an external identity provider or paid service without approval.
-- Do not claim authentication is production-ready until security tests and session lifecycle verification pass.
-
-**Status:** Conditional Draft — Owner Review Required.
+Public registration, password reset, e-mail verification, MFA, OAuth/SSO. Revisit after MVP.

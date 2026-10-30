@@ -119,7 +119,7 @@ class TestWeatherEndpoint:
             )
             assert response.status_code == 503
             data = response.json()
-            assert data["detail"]["error_code"] == "WEATHER_CONNECTION_FAILED"
+            assert data["error_code"] == "WEATHER_CONNECTION_FAILED"
 
     @pytest.mark.asyncio
     async def test_weather_timeout(self, async_client: AsyncClient):
@@ -134,7 +134,7 @@ class TestWeatherEndpoint:
             )
             assert response.status_code == 504
             data = response.json()
-            assert data["detail"]["error_code"] == "WEATHER_TIMEOUT"
+            assert data["error_code"] == "WEATHER_TIMEOUT"
 
     @pytest.mark.asyncio
     async def test_weather_boundary_latitudes(self, async_client: AsyncClient):

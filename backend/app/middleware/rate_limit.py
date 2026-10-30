@@ -5,6 +5,7 @@ from typing import Any
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
+from app.core.client_ip import client_ip_from
 from app.core.config import settings
 
 
@@ -14,31 +15,39 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         app: Any,
         requests: int = 60,
         window_seconds: int = 60,
+        trusted_proxy_cidrs: list[str] | None = None,
+        path_prefix: str | None = None,
     ) -> None:
         super().__init__(app)
         self.requests = requests
         self.window_seconds = window_seconds
+        # Only honored when the socket peer is itself a trusted proxy (P3-11).
+        self.trusted_proxy_cidrs = trusted_proxy_cidrs or []
+        self.path_prefix = path_prefix
         self._requests: dict[str, list[float]] = defaultdict(list)
 
     def _get_client_ip(self, request: Request) -> str:
-        # Check X-Forwarded-For header (first IP in the chain)
-        forwarded_for = request.headers.get("x-forwarded-for")
-        if forwarded_for:
-            return forwarded_for.split(",")[0].strip()
-        # Fall back to client host
-        if request.client:
-            return request.client.host
-        return "unknown"
+        ip = client_ip_from(request, self.trusted_proxy_cidrs)
+        return ip or "unknown"
 
     def _cleanup_old_requests(self, client_ip: str, now: float) -> None:
         window_start = now - self.window_seconds
         self._requests[client_ip] = [
             timestamp for timestamp in self._requests[client_ip] if timestamp > window_start
         ]
+        # Bounded-memory strategy (P3-12): evict empty buckets and cap total
+        # tracked IPs so unbounded unique sources cannot exhaust memory.
+        if len(self._requests) > 10_000:
+            for key in [k for k, v in self._requests.items() if not v][:5_000]:
+                del self._requests[key]
 
     async def dispatch(self, request: Request, call_next: Any) -> Any:
         # Skip rate limiting for health checks
         if request.url.path in ("/health", "/api/v1/health"):
+            return await call_next(request)
+
+        # Path-scoped instances (e.g. stricter auth limits) only count their prefix.
+        if self.path_prefix and not request.url.path.startswith(self.path_prefix):
             return await call_next(request)
 
         client_ip = self._get_client_ip(request)

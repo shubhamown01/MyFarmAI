@@ -7,6 +7,8 @@ from fastapi import Request
 
 from app.db.connection import get_db_connection
 
+LEGACY_USER_ID = "00000000-0000-0000-0000-000000000000"
+
 
 async def create_conversation(
     language: str = "en",
@@ -20,10 +22,10 @@ async def create_conversation(
     try:
         await conn.execute(
             """
-            INSERT INTO conversations (id, language, crop, location)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO conversations (id, user_id, language, crop, location, is_archived, message_count)
+            VALUES (?, ?, ?, ?, ?, 0, 0)
             """,
-            (conversation_id, language, crop, location),
+            (conversation_id, LEGACY_USER_ID, language, crop, location),
         )
         await conn.commit()
         return conversation_id

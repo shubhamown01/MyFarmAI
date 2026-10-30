@@ -52,6 +52,13 @@ def validate_settings() -> list[str]:
             issues.append("CORS wildcard (*) not recommended for production")
         if settings.log_level.upper() == "DEBUG":
             issues.append("DEBUG log level not recommended for production")
+        # Exit-gate condition (security review 2026-10-29): production must
+        # explicitly declare the real hostnames it serves.
+        if settings.allowed_hosts_list == ["localhost", "127.0.0.1"]:
+            issues.append(
+                "ALLOWED_HOSTS must list the real production hostname(s) "
+                "(default localhost-only would reject all real-hostname requests)"
+            )
 
     return issues
 

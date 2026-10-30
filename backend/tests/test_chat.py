@@ -1,15 +1,35 @@
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
-import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
+
+from app.core.security import generate_session_id, hash_token
+from app.db.models.session import Session as SessionModel
+from app.db.models.user import User
+from app.db.session import db_manager
+
+
+def _login(client: TestClient) -> None:
+    """Insert a user + valid session row and set the auth cookie on the client."""
+    session_id = generate_session_id()
+    with db_manager.sync_session() as session:  # type: ignore[union-attr]
+        user = User(email="chat-user@example.com", password_hash="not-used")
+        session.add(user)
+        session.flush()
+        session.add(
+            SessionModel(
+                user_id=user.id,
+                session_id_hash=hash_token(session_id),
+                expires_at=(datetime.now(UTC) + timedelta(hours=1)).replace(tzinfo=None),
+            )
+        )
+    client.cookies.set("myfarmai_session", session_id)
 
 
 class TestChatEndpoint:
-    @pytest.mark.asyncio
-    async def test_chat_creates_new_conversation(
-        self, async_client: AsyncClient, mock_ollama_client
-    ):
-        response = await async_client.post(
+    def test_chat_creates_new_conversation(self, client: TestClient, mock_ollama_client):
+        _login(client)
+        response = client.post(
             "/api/v1/chat",
             json={"message": "What crop should I plant?"},
         )
@@ -21,12 +41,18 @@ class TestChatEndpoint:
         assert data["response"] == "Test response from mocked Ollama"
         assert len(data["conversation_id"]) == 36  # UUID format
 
-    @pytest.mark.asyncio
-    async def test_chat_continues_existing_conversation(
-        self, async_client: AsyncClient, mock_ollama_client
-    ):
+    def test_chat_requires_authentication(self, client: TestClient):
+        response = client.post(
+            "/api/v1/chat",
+            json={"message": "What crop should I plant?"},
+        )
+        assert response.status_code == 401
+        assert response.json()["error_code"] == "NOT_AUTHENTICATED"
+
+    def test_chat_continues_existing_conversation(self, client: TestClient, mock_ollama_client):
+        _login(client)
         # First request
-        response1 = await async_client.post(
+        response1 = client.post(
             "/api/v1/chat",
             json={"message": "Hello"},
         )
@@ -34,7 +60,7 @@ class TestChatEndpoint:
         conv_id = response1.json()["conversation_id"]
 
         # Second request with same conversation_id
-        response2 = await async_client.post(
+        response2 = client.post(
             "/api/v1/chat",
             json={"message": "And for rice?", "conversation_id": conv_id},
         )
@@ -42,29 +68,27 @@ class TestChatEndpoint:
         data = response2.json()
         assert data["conversation_id"] == conv_id
 
-    @pytest.mark.asyncio
-    async def test_chat_rejects_invalid_conversation_id(
-        self, async_client: AsyncClient, mock_ollama_client
-    ):
-        response = await async_client.post(
+    def test_chat_rejects_invalid_conversation_id(self, client: TestClient, mock_ollama_client):
+        _login(client)
+        response = client.post(
             "/api/v1/chat",
             json={"message": "Hello", "conversation_id": "invalid-uuid"},
         )
-        assert response.status_code == 404
-        data = response.json()
-        assert data["detail"]["error_code"] == "CONVERSATION_NOT_FOUND"
+        assert response.status_code == 422
+        response.json()
+        # Validation error for invalid UUID format
 
-    @pytest.mark.asyncio
-    async def test_chat_validates_message_length(self, async_client: AsyncClient):
+    def test_chat_validates_message_length(self, client: TestClient):
+        _login(client)
         # Empty message
-        response = await async_client.post(
+        response = client.post(
             "/api/v1/chat",
             json={"message": ""},
         )
         assert response.status_code == 422
 
         # Whitespace only
-        response = await async_client.post(
+        response = client.post(
             "/api/v1/chat",
             json={"message": "   "},
         )
@@ -72,78 +96,76 @@ class TestChatEndpoint:
 
         # Too long
         long_message = "x" * 2001
-        response = await async_client.post(
+        response = client.post(
             "/api/v1/chat",
             json={"message": long_message},
         )
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_chat_validates_language_code(self, async_client: AsyncClient):
+    def test_chat_validates_language_code(self, client: TestClient):
+        _login(client)
         # Invalid language code (too long)
-        response = await async_client.post(
+        response = client.post(
             "/api/v1/chat",
             json={"message": "Hi", "language": "eng"},
         )
         assert response.status_code == 422
 
         # Invalid language code (numbers)
-        response = await async_client.post(
+        response = client.post(
             "/api/v1/chat",
             json={"message": "Hi", "language": "en1"},
         )
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_chat_ollama_connection_error(self, async_client: AsyncClient):
+    def test_chat_ollama_connection_error(self, client: TestClient):
+        _login(client)
         with patch("app.services.chat.ollama_client") as mock:
             from app.services.ollama import OllamaConnectionError
 
             mock.chat = AsyncMock(side_effect=OllamaConnectionError("Connection failed"))
 
-            response = await async_client.post(
+            response = client.post(
                 "/api/v1/chat",
                 json={"message": "Hello"},
             )
             assert response.status_code == 503
             data = response.json()
-            assert data["detail"]["error_code"] == "OLLAMA_CONNECTION_FAILED"
+            assert data["error_code"] == "OLLAMA_CONNECTION_FAILED"
 
-    @pytest.mark.asyncio
-    async def test_chat_ollama_timeout(self, async_client: AsyncClient):
+    def test_chat_ollama_timeout(self, client: TestClient):
+        _login(client)
         with patch("app.services.chat.ollama_client") as mock:
             from app.services.ollama import OllamaTimeoutError
 
             mock.chat = AsyncMock(side_effect=OllamaTimeoutError("Timeout"))
 
-            response = await async_client.post(
+            response = client.post(
                 "/api/v1/chat",
                 json={"message": "Hello"},
             )
             assert response.status_code == 504
             data = response.json()
-            assert data["detail"]["error_code"] == "OLLAMA_TIMEOUT"
+            assert data["error_code"] == "OLLAMA_TIMEOUT"
 
-    @pytest.mark.asyncio
-    async def test_chat_ollama_model_not_found(self, async_client: AsyncClient):
+    def test_chat_ollama_model_not_found(self, client: TestClient):
+        _login(client)
         with patch("app.services.chat.ollama_client") as mock:
             from app.services.ollama import OllamaModelNotFoundError
 
             mock.chat = AsyncMock(side_effect=OllamaModelNotFoundError("Model not found"))
 
-            response = await async_client.post(
+            response = client.post(
                 "/api/v1/chat",
                 json={"message": "Hello"},
             )
             assert response.status_code == 503
             data = response.json()
-            assert data["detail"]["error_code"] == "MODEL_NOT_FOUND"
+            assert data["error_code"] == "MODEL_NOT_FOUND"
 
-    @pytest.mark.asyncio
-    async def test_chat_includes_optional_fields(
-        self, async_client: AsyncClient, mock_ollama_client
-    ):
-        response = await async_client.post(
+    def test_chat_includes_optional_fields(self, client: TestClient, mock_ollama_client):
+        _login(client)
+        response = client.post(
             "/api/v1/chat",
             json={
                 "message": "Test",
@@ -155,3 +177,25 @@ class TestChatEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["conversation_id"] is not None
+
+
+class TestModel1Matrix:
+    """Model 1 (qwen3:0.6b) acceptance matrix additions (Phase 4 master prompt §6)."""
+
+    def test_chat_rejects_empty_message(self, client: TestClient):
+        """Empty message → 422 (min_length=1)."""
+        _login(client)
+        response = client.post("/api/v1/chat", json={"message": ""})
+        assert response.status_code == 422
+
+    def test_chat_rejects_missing_message(self, client: TestClient):
+        """Malformed request (no message field) → 422, flat error envelope."""
+        _login(client)
+        response = client.post("/api/v1/chat", json={"prompt": "hi"})
+        assert response.status_code == 422
+
+    def test_chat_rejects_oversized_message(self, client: TestClient):
+        """Message > 2000 chars → 422."""
+        _login(client)
+        response = client.post("/api/v1/chat", json={"message": "x" * 2001})
+        assert response.status_code == 422

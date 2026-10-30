@@ -98,6 +98,8 @@ Show a connection state and allow manual retry. The client must not report a suc
 ### AI provider unavailable
 Return a controlled provider error. Do not silently transmit the prompt to an unapproved external model.
 
+**Degraded-mode contract (P4-02, implemented):** when local inference is saturated or unreachable, the API responds with explicit error codes — `503 AI_BUSY` (queue depth exceeded, `ai_max_queue_depth`), `503 OLLAMA_CONNECTION_FAILED` / `MODEL_NOT_FOUND`, or `504 OLLAMA_TIMEOUT`. The persisted assistant-side error message ("I'm unable to reach the AI service right now.") keeps the conversation coherent; there is **no automatic fallback to a paid provider**. Client-disconnect cancellation propagates via asyncio task cancellation into the in-flight gateway call.
+
 ### Research provider unavailable
 Return an explicit failure or a clearly labeled partial result if valid evidence is available.
 

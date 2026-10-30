@@ -1,0 +1,70 @@
+[
+  {
+    "model": "qwen3-embedding:0.6b",
+    "dim": 1024,
+    "consistent_dim": true,
+    "ok": 4,
+    "total": 4,
+    "avg_s": 7.56,
+    "rows": [
+      {
+        "id": "en-short",
+        "seconds": 29.06,
+        "dim": 1024,
+        "status": "ok"
+      },
+      {
+        "id": "en-long",
+        "seconds": 0.43,
+        "dim": 1024,
+        "status": "ok"
+      },
+      {
+        "id": "hi-short",
+        "seconds": 0.38,
+        "dim": 1024,
+        "status": "ok"
+      },
+      {
+        "id": "en-technical",
+        "seconds": 0.36,
+        "dim": 1024,
+        "status": "ok"
+      }
+    ]
+  },
+  {
+    "model": "nomic-embed-text:latest",
+    "dim": 768,
+    "consistent_dim": true,
+    "ok": 4,
+    "total": 4,
+    "avg_s": 2.02,
+    "rows": [
+      {
+        "id": "en-short",
+        "seconds": 7.86,
+        "dim": 768,
+        "status": "ok"
+      },
+      {
+        "id": "en-long",
+        "seconds": 0.08,
+        "dim": 768,
+        "status": "ok"
+      },
+      {
+        "id": "hi-short",
+        "seconds": 0.06,
+        "dim": 768,
+        "status": "ok"
+      },
+      {
+        "id": "en-technical",
+        "seconds": 0.06,
+        "dim": 768,
+        "status": "ok"
+      }
+    ]
+  }
+]

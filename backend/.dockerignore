@@ -1,0 +1,20 @@
+# Keep secrets, data, and dev files out of image layers.
+.env
+.env.*
+!.env.example
+data/
+*.db
+*.sqlite*
+.git/
+.gitignore
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+htmlcov/
+.coverage
+docker-compose*.yml
+.pg_password

@@ -15,6 +15,8 @@ dependencies = [
     "alembic==1.13.1",
     "psycopg[binary]==3.2.5",
     "psycopg-pool==3.2.2",
+    "argon2-cffi>=25.1.0",
+    "email-validator>=2.3.0",
 ]
 
 [project.optional-dependencies]
@@ -79,14 +81,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "app.api.*"
 ignore_missing_imports = true
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-addopts = "-v --tb=short"
 
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]

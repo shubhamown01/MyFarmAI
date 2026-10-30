@@ -8,6 +8,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 3 authentication foundation (P3-01..P3-08): Argon2id password hashing (`app/core/security.py`, m=131072 t=3 p=4, ~114 ms verify); opaque session IDs / refresh tokens stored as SHA-256 hashes only; `AuthService` (login with audit, session validate with expiry+revocation+idle-timeout, logout, single-use refresh rotation with reuse detection that revokes the chain and all user sessions); `POST /auth/login` (web: HttpOnly/SameSite=Lax cookie; Android: bearer access + refresh tokens), `POST /auth/logout`, `GET /auth/me`, `POST /auth/token/refresh`, `POST /auth/admin/users` (admin-only account creation, no public registration per ADR-008 MVP policy)
+- Ownership predicates (P3-05): all `ConversationRepository` single-record methods require `user_id` and filter in SQL (deny-by-default, cross-user = 404)
+- Chat auth-gating (P3-09): `POST /api/v1/chat` requires authentication (401 otherwise); conversations attributed to the authenticated user instead of the legacy UUID; `get_current_user_id` principal dependency (cookie + bearer paths)
+- Resource bounds (P3-12): rate-limit counters are bounded against memory exhaustion (stale-bucket eviction over 10k tracked IPs); new `ai_max_concurrent_requests` setting (default 2) caps in-flight AI requests via semaphore in the async chat path
+- Security middleware (P3-10/P3-11): trusted-proxy-aware client IP (`app/core/client_ip.py` — spoofed `X-Forwarded-For` no longer bypasses rate limits); CSRF/Origin enforcement for cookie-authenticated state changes (mismatched Origin/Referer → 403); stricter per-IP limit on auth endpoints (10 req/min); per-account failed-login lockout (5 failures / 15 min → 429)
+- Auth tests: 9 security-primitive + 17 service + 16 API + 6 ownership-predicate + 6 middleware + 2 auth-matrix/async-regression integration tests
+- Phase 4 execution report amended with post-report model-gate evidence (Models 3/4/6 states, FCL-042/043); mypy auth fast-follow recorded as PROPOSED
+- Model 6 (ASR) asset evaluation (read-only): `ai/voice/` is faster-whisper "small", no local weights, no auth, port 8001 not listening (Phase 0 containment finding not live) — integration blocked on architecture decision + owner input
+- Model gates post-exit: Model 3 (vision) BLOCKED on product scope (no image-upload API); Model 4 embedding candidates benchmarked (`qwen3-embedding` 1024d/0.4s, `nomic-embed-text` 768d/0.07s) — decision deferred pending retrieval eval + vector-store approval
+- Phase 4 execution report: `docs/backend/PHASE_04_EXECUTION_REPORT.md` — status PARTIAL-by-design, model integration matrix, security findings, test/performance summaries, 3 blockers, 5 owner decisions, next safe step
+- Phase 4 exit gate: security-engineer APPROVE-WITH-CONDITIONS (zero Critical/High) — all three conditions closed: local secret/artifact git-ignored, crop/location slot-injection covering test, client-facing error text genericized (no internal detail leakage). qa-reviewer independently verified 129-test gate (now 130)
+- Phase 4F integration verification: web (typecheck/lint clean, 19/19 tests, production build OK) and android (typecheck/lint clean) both compile against the flat error envelope — no contract drift
+- Phase 4D security pass: prompt-injection containment test at the gateway boundary (injection text stays user-role; system prompt never contaminated); secrets scan clean; full security inventory documented (FCL-039)
+- Phase 4 docs pass (P4-09): openapi.json regenerated with `AI_BUSY` 503 documented; API.md error table updated (AI_BUSY/UNAUTHORIZED/TOKEN_EXPIRED/HTTP_ERROR); new `docs/backend/RESOURCE_BUDGET.md` (host limits, serial-inference rules, degradation contract); AGRICULTURAL_QA_FLOW error table aligned with gateway codes
+- Eval set + runner (P4-08): `backend/evals/eval_set_v1.json` (versioned, machine-checkable criteria + human-review flags) and `backend/scripts/run_evals.py` — `qwen3:0.6b` passes 4/4 machine checks; groundedness items deferred to human review. Model 2 (`qwen3:4b`) benchmarked: 1/5 OK, stays disabled (does not fit 2 GB VRAM). Model 1 acceptance recorded
+- Versioned prompt templates (P4-05): system prompt moved to `app/ai/prompts.py` with `PROMPT_TEMPLATE_VERSION`; system policy separated from user content (no user-text interpolation)
+- Model registry (Phase 4B): `app/ai/registry.py` — capability/status/license metadata per model; only `qwen3:0.6b` enabled for per-request selection; gateway validates explicitly requested models before any Ollama call; drift detection vs live tags
+- Model benchmarks (P4-04): 4 VRAM-fitting chat candidates measured on the live host (`docs/backend/MODEL_BENCHMARKS.md`) — `qwen3:0.6b` 5/5 prompts OK (avg 11.8 s), remains default; quality claims deferred to the P4-08 evaluation set
+- Phase 4 preflight report (all 9 gates PASS) + Model 1 acceptance-matrix tests: empty/missing/oversized message → 422; model context bounded to 10 most recent messages; benchmark harness for chat candidates (`backend/scripts/benchmark_models.py`)
+- Model inventory (P4-03): `docs/backend/MODEL_INVENTORY.md` — 16 models (44 GB) verified on `/data` HDD storage (HDD-first compliant); VRAM-fitting chat candidates identified; Gemma license flagged
+- AI reliability bounds (P4-02): bounded queue depth (`ai_max_queue_depth`, default 10) — excess requests get 503 `AI_BUSY` instead of unbounded waits; degraded-mode contract documented in `ERROR_RECOVERY_FLOW.md` (no automatic paid-provider fallback; client-disconnect cancellation propagates into gateway calls)
+- AI gateway interface (P4-01): provider-independent `AIGateway` protocol + Ollama adapter (`app/ai/gateway.py`); chat path depends on the interface; Ollama errors mapped to gateway types; provider specifics confined to the adapter
+- `openapi.json` regenerated after the envelope change (FCL-028); Phase 4 implementation plan drafted (`docs/roadmaps/phases/PHASE_04_IMPLEMENTATION_PLAN.md` — 9 tasks P4-01..P4-09 with absorbed exit-gate fast-follows marked complete)
+- Phase 4 fast-follows (from exit-gate review): refresh-token reuse now revokes **all** of the user's refresh tokens (chain-walking left tokens ≥2 generations old live); unified flat error envelope `{detail, error_code}` across endpoints and middlewares via a single exception handler (breaking: nested error bodies no longer returned)
+- Exit-gate remediation (security-engineer APPROVE-WITH-CONDITIONS): configurable `ALLOWED_HOSTS` (production must declare real hostnames), chunked `Transfer-Encoding` rejected with 413, bounded lockout-tracking memory, admin account-creation audit now records `actor_id`
+- Documentation pass (P3-16/P3-17): `openapi.json` regenerated with auth endpoints; `AUTHENTICATION_FLOW.md` finalized as implemented per ADR-008; new `docs/engineering/AUTHZ_MATRIX.md` (endpoint authorization matrix + STRIDE threat model); API/audit/architecture docs aligned; DECISION_REGISTER Phase 3 gate row added (cookie attributes, bearer path, refresh rotation/reuse-kill, admin gate, no account-enumeration) — `bash scripts/check.sh` 98 tests PASS
+- New dependencies: `argon2-cffi` (BSD), `email-validator` (for pydantic `EmailStr`)
+- Phase 1 authorization: all six governance gates (G1–G6) formally approved and recorded in `docs/engineering/DECISION_REGISTER.md`
+- Owner blanket approval (2026-10-28) recorded: ADR-008/Phase 3 auth, production cutover, P1-17, P1-12
+- ADR-008 review (opaque sessions, Argon2id, service-layer authZ) written in `docs/engineering/ADR_REVIEWS.md` — APPROVE; Phase 3 unblocked
+- P1-14 container baseline completed: `backend/Dockerfile` rewritten (uv 0.5, `uv sync --frozen --no-dev` from `pyproject.toml`+`uv.lock`, non-root uid 10001, `HEALTHCHECK` on `/health/live`, uvicorn `--factory`); backend container verified healthy against PostgreSQL with real end-to-end chat (qwen3:0.6b) persisting to PostgreSQL (236/577 → 238/581 rows)
+- `scripts/ollama-bridge.sh` + user `@reboot` crontab: rootless socat forwarder bridging the Docker bridge gateway → host-loopback Ollama
+- Real `/health/ready` dependency checks (DB `SELECT 1` + Ollama health ping; 503 with per-dependency status when degraded) replacing a hardcoded stub
+- Phase 1 Readiness Report v2.0 (`docs/engineering/PHASE_1_READINESS_REPORT.md`) — status changed from BLOCKED to APPROVED
+- Stage 1 AI integration: `qwen3:0.6b` (522 MB, Q4_K_M) selected as default model — fits 2 GiB VRAM, verified on hardware
+- `qwen3:0.6b` Ollama smoke tests: 3/3 agricultural prompts coherent, latency < 10 s
+- Backend integration test: `/api/v1/chat` endpoint validated with real model — responses persisted to canonical DB
+- End-to-end verification: Web → Backend → Ollama → Response confirmed working
+- OpenAPI artifact: `docs/api/openapi.json` generated and committed (CI-validated)
+- Documentation updates: `docs/backend/BACKEND_AUDIT.md`, `ARCHITECTURE.md`, `API.md`, `ROADMAP.md` synchronized with Phase 1 implementation
+- Phase 2 migration rehearsal completed: `backend/scripts/migrate_sqlite_to_pg.py` (export/load/validate); 236 conversations + 577 messages migrated to disposable PostgreSQL 17 with all validation checks passing
+- `docs/backend/DATABASE_SCHEMA.md`: ER diagram + data dictionary for the SQLAlchemy 2 schema
+- `docs/backend/BACKUP_RUNBOOK.md`: verified `pg_dump -Fc` backup + restore drill procedure
+
+### Changed
+- `backend/app/api/v1/chat.py`: Fixed production-blocking 500 — the sync-session dependency crashed every async-mode request (`RuntimeError: Cannot use sync session in async mode`) before the endpoint body; replaced with `get_db_session_optional` (None in async mode, real session in test mode)
+- `backend/app/services/chat.py`: **Data-loss fix** — `generate_chat_response`, `get_conversation_history`, `list_user_conversations` used `async for session in get_db_session()` whose post-yield `commit()` was skipped on `return` (silent rollback); converted to `async with db_manager.session()` which commits on clean exit. Chat writes now persist (verified 238/581 rows)
+- `backend/app/core/config.py`: Validator now also normalizes bare `postgresql://` → `postgresql+asyncpg://` (psycopg2 not installed); password injection unchanged
+- `backend/app/factory.py`: Alembic startup migrations escape `%` for configparser and run via `asyncio.to_thread` (async env.py `asyncio.run()` crashed inside the lifespan loop); startup DSN log redacted (password leak fixed)
+- `docker-compose.yml`: Removed unreadable `.env` mount (12-factor config); backend runs as `${MYFARMAI_UID:-1000}:${MYFARMAI_GID:-1000}` (non-root, bind-mount ownership preserved); `OLLAMA_BASE_URL` + `extra_hosts` added for container→host Ollama
+- `docker-compose.yml`: Fixed volume mount to use canonical database (`./backend/data:/app/data` instead of `./data:/app/data`) — resolves dual-DB write split (F2)
+- `docker-compose.yml`: Backend now uses passwordless DSN + `DATABASE_PASSWORD_FILE` secret mount — fixes auth failure (hardcoded `myfarmai` password did not match the actual secret)
+- `backend/alembic/env.py`: `DATABASE_URL` env var now overrides `alembic.ini` `sqlalchemy.url` (dev URL was hardcoded)
+- `backend/app/core/config.py`: `database_password_file` setting with validator injecting the password into passwordless PostgreSQL URLs
+- `backend/app/core/config.py`: Default model changed from `qwen3:4b` (2.5 GB) to `qwen3:0.6b` (522 MB) — matches `.env` and hardware constraints
+- Governance documentation: All gates updated to APPROVED with owner signatures (2026-10-24)
+- Backend documentation: Full synchronization of BACKEND_AUDIT.md, ARCHITECTURE.md, API.md, ROADMAP.md to reflect Phase 1 actual state
+- `THIRD_PARTY_NOTICES.md`: SearXNG attribution corrected; versions verified against `uv.lock`
+
+### Fixed
+- Canonical database ambiguity resolved: `backend/data/app.db` (234 conv / 573 msg) confirmed as single source of truth
+- Model config split-brain resolved: code default, `.env`, and docs now all specify `qwen3:0.6b`
+- Swap saturation risk mitigated: default model now fits in available RAM without swap pressure
+- All mypy type errors resolved (32 errors across session.py, base.py, chat.py, repositories.py, API)
+- Ruff lint/format clean across entire backend
+
+### Added
 - Apache-2.0 LICENSE (governance gate G2 approved; decision recorded in `docs/engineering/DECISION_REGISTER.md`)
 - `docs/repository-audit.md` — full 2026-10-23 audit: structure, governance status, risks, staged mapping plan
 - Phase 6 documentation set verified against code: `docs/project-overview.md`, `docs/architecture.md`, `docs/setup-guide.md`, `docs/api-documentation.md`, `docs/database-design.md`, `docs/demo-guide.md`

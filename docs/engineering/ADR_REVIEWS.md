@@ -362,24 +362,83 @@ Remove voice from default MVP profile. Do not publish port 8001. Keep code for l
 
 | ADR | Title | Recommendation | Status |
 |-----|-------|----------------|--------|
-| ADR-001 | Modular Monolith | **APPROVE** | PENDING |
-| ADR-002 | Python 3.12 + uv | **APPROVE** | PENDING |
-| ADR-009 | Flat Error Envelope | **APPROVE WITH CHANGES** (coordinate clients) | PENDING |
-| ADR-010 | Compose + Caddy | **APPROVE** | PENDING |
-| ADR-013 | Hermetic Tests + CI | **APPROVE** | PENDING |
-| ADR-014 | Defer Voice | **APPROVE** | PENDING |
+| ADR-001 | Modular Monolith | **APPROVE** | APPROVED (2026-10-24) |
+| ADR-002 | Python 3.12 + uv | **APPROVE** | APPROVED (2026-10-24) |
+| ADR-009 | Flat Error Envelope | **APPROVE WITH CHANGES** (coordinate clients) | APPROVED (2026-10-24) |
+| ADR-010 | Compose + Caddy | **APPROVE** | APPROVED (2026-10-24) |
+| ADR-013 | Hermetic Tests + CI | **APPROVE** | APPROVED (2026-10-24) |
+| ADR-014 | Defer Voice | **APPROVE** | APPROVED (2026-10-24) |
+| ADR-008 | Opaque Sessions + Argon2id + AuthZ | **APPROVE** | APPROVED (2026-10-28, blanket) |
 
 ### Gate G3 Decision
 
 | Field | Value |
 |-------|-------|
-| **All 6 ADRs Approved** | ☐ Yes / ☐ No |
-| **Gate G3 Status** | ☐ APPROVED / ☐ BLOCKED |
-| **Owner Sign-off** | |
-| **Date** | |
+| **All 6 ADRs Approved** | ☑ Yes |
+| **Gate G3 Status** | ☑ APPROVED |
+| **Owner Sign-off** | Owner (2026-10-24) |
+| **Date** | 2026-10-24 |
 
 ### Next Steps After G3 Approval
 1. Update `ARCHITECTURE_DECISIONS.md` status from "Proposed" → "Approved" for each
 2. Update `DECISION_REGISTER.md` Gate G3 → APPROVED
 3. Unblock Phase 1 start, P1-07, P1-10, P1-18
 4. Begin Phase 1 implementation per combined execution plan
+
+---
+
+## 8. ADR-008 — Opaque Sessions and Tokens, Argon2id, Service-Layer Authorization
+
+### Source
+`docs/roadmaps/phase-00/ARCHITECTURE_DECISIONS.md` — "ADR-008 — Opaque sessions and tokens, Argon2id, service-layer authorization"
+
+### Problem & Context
+- No authentication or ownership enforcement exists anywhere in the backend
+- Conversation IDs currently act as bearer secrets (any caller can read/write any conversation)
+- Web client is browser-based; Android is a native app — both need revocable sessions
+- Hard governance rule: no non-loopback exposure until Phase 3 authentication is complete and verified
+
+### Decision
+- **Passwords:** Argon2id via a maintained library, tuned to ≈100–300 ms on the target host; rehash on parameter change
+- **Web:** opaque random session ID in `HttpOnly`/`Secure`/`SameSite=Lax` cookie; server stores only a hash; rotate on login; idle + absolute expiry; CSRF token or strict Origin check for state-changing requests
+- **Android:** short-lived opaque access token + rotating refresh token; hashes stored server-side; revoke on logout/password change/suspicion
+- **Authorization:** resolve a principal on every request; enforce ownership in SQL predicates/service layer; cross-user access returns 404 (no existence disclosure)
+- **Roles:** MVP farm roles `owner`/`member`; no global admin UI until required
+- **Registration/reset:** deployment-dependent — admin-created accounts acceptable for private deployment; documented choice for public registration
+
+### Alternatives Considered
+| Alternative | Assessment |
+|-------------|------------|
+| JWT access tokens | Rejected for MVP: revocation complexity |
+| Auth0/Keycloak | Rejected: paid or operationally heavy for single-host local AI |
+| API keys only | Rejected: insufficient for multi-user accounts |
+
+### Consequences
+- **Positive:** immediate revocation, no JWT key management, simple mental model, works for web and mobile
+- **Negative:** session table growth and cleanup; cookie/CSRF configuration must be correct; mobile token rotation adds client work
+- **Risk:** in-house auth is security-sensitive — requires review and tests, or a maintained library for primitives
+
+### Security & Data Implications
+- Directly remediates the Phase 0 audit finding "no authentication/authorization"
+- Opaque + hashed sessions: DB leak does not expose usable credentials
+- Ownership enforcement in SQL predicates prevents IDOR-class access
+- 404-on-cross-user avoids existence disclosure
+
+### Verification Criteria
+- Auth matrix tests (anonymous, expired, revoked, cross-user, cross-farm)
+- CSRF test; password-hash timing; session cleanup
+- No credentials in logs
+
+### Recommendation
+**APPROVE** — The design is appropriate for a single-host, privacy-sensitive local deployment: opaque sessions avoid JWT revocation complexity, Argon2id is the current password-hashing standard, and service-layer ownership enforcement matches the existing repository pattern (ownership predicates belong in the repos, which already exist). The in-house risk is mitigated by using maintained libraries for primitives (argon2-cffi) and the auth-matrix test requirements. Aligns with the hard rule that no non-loopback exposure occurs before this is implemented and verified.
+
+### Review Record
+| Field | Value |
+|-------|-------|
+| **Reviewer** | Owner (reviewed via session directive; review written by orchestrator) |
+| **Date** | 2026-10-28 |
+| **Decision** | ☑ Approve (owner blanket approval granted 2026-10-28; see DECISION_REGISTER.md "Blanket" entry) |
+| **Comments** | Implementation notes: use `argon2-cffi`; ownership predicates go in repositories; legacy-user UUID fallback (`00000000-...`) in chat must be replaced with real user attribution; add the auth-matrix tests as part of Phase 3 acceptance |
+| **Conflicts Resolved** | None — no competing auth design on record |
+
+---

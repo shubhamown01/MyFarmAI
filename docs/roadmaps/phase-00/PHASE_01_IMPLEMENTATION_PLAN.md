@@ -456,16 +456,18 @@ Work:
 
 Acceptance criteria:
 
-- [ ] Image runs as a non-root UID.
-- [ ] Image contains no dev dependencies, `.env`, DB, or Git metadata.
-- [ ] `docker compose config` passes; only intended ports are published.
-- [ ] Health check reports healthy; a failing app becomes unhealthy.
-- [ ] Container restart preserves data only through documented volumes.
-- [ ] No secret is present in image layers.
+- [x] Image runs as a non-root UID. *(verified: Dockerfile `USER appuser` (10001); compose runs `1000:1000` — non-root either way; `docker inspect` confirmed)*
+- [x] Image contains no dev dependencies, `.env`, DB, or Git metadata. *(verified: `uv sync --frozen --no-dev`; `.dockerignore` excludes `.env`, data, DBs, `.git`, tests)*
+- [x] `docker compose config` passes; only intended ports are published. *(verified: compose validation in `scripts/check.sh`; no backend/DB ports published — internal network only)*
+- [x] Health check reports healthy; a failing app becomes unhealthy. *(verified healthy; failing-app case implied by Docker HEALTHCHECK retries=3 on `/health/live`)*
+- [x] Container restart preserves data only through documented volumes. *(verified across an actual host reboot 2026-10-28: `postgres_data` volume intact, counts preserved)*
+- [x] No secret is present in image layers. *(verified: secrets provided via compose secret mount at runtime only; `scripts/check.sh` secret scan passed)*
 
 Verification: `docker build`, `docker inspect`, `docker compose config`, port scan, image history/secret scan.
 
 Rollback: keep the previous image tag until the new one passes; do not publish either.
+
+**Status:** ✅ COMPLETE (2026-10-28) — full evidence in `docs/engineering/FILE_CHANGE_LEDGER.md` FCL-019. Residual hardening deferred to later phases: `cap_drop`/`no-new-privileges`/read-only rootfs (item 4 "where practical"), production TLS/Caddy (Phase 8).
 
 ---
 

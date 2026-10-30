@@ -1,3 +1,5 @@
+import uuid
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -12,6 +14,18 @@ class ChatRequest(BaseModel):
         default=None,
         description="Existing conversation ID to continue, or null to start new",
     )
+
+    @field_validator("conversation_id")
+    @classmethod
+    def validate_conversation_id(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        try:
+            uuid.UUID(v)
+        except ValueError as e:
+            raise ValueError("Invalid conversation ID format") from e
+        return v
+
     language: str = Field(
         default="en",
         pattern="^[a-z]{2}$",

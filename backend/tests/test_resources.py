@@ -105,7 +105,7 @@ class TestResourcesEndpoint:
         response = await async_client.get("/api/v1/resources/nonexistent")
         assert response.status_code == 404
         data = response.json()
-        assert data["detail"]["error_code"] == "CATEGORY_NOT_FOUND"
+        assert data["error_code"] == "CATEGORY_NOT_FOUND"
 
     @pytest.mark.asyncio
     async def test_known_resources_exist(self, async_client: AsyncClient):

@@ -1,8 +1,8 @@
 # Hardware, Storage, and Deployment Assessment
 
 **Phase:** 0 — read-only  
-**Date:** 2026-10-21  
-**Constraint source:** user-reported development machine (≈7 GB RAM, MX250 2 GB VRAM, Ubuntu, HDD at `/data`, limited SSD). These were re-checked with read-only commands; they are not assumed.  
+**Date:** 2026-10-24 (updated from 2026-10-21 with actual measurements)  
+**Constraint source:** Verified with read-only commands; not assumed.  
 **Related:** [`TARGET_BACKEND_ARCHITECTURE.md`](TARGET_BACKEND_ARCHITECTURE.md), [`ARCHITECTURE_DECISIONS.md`](ARCHITECTURE_DECISIONS.md)
 
 ---
@@ -13,56 +13,57 @@
 |---|---|---|---|
 | OS | Ubuntu 26.04.1 LTS | `/etc/os-release` | Verified |
 | Kernel | `7.0.0-38-generic` | `uname -r` | Verified |
-| CPU/RAM | 7.0 GiB total; 4.7 GiB used; 2.3 GiB available | `free -h` | Verified at audit time |
-| Swap | 4.0 GiB total; 3.6 GiB used; 373 MiB free | `free -h` | Verified at audit time |
-| GPU | NVIDIA GeForce MX250, 2048 MiB VRAM, 2 MiB used | `nvidia-smi` | Verified at audit time |
+| CPU/RAM | 7.0 GiB total; 4.8 GiB used; **2.2 GiB available** | `free -h` | Verified 2026-10-24 |
+| Swap | 4.0 GiB total; **4.0 GiB used; 6.9 MiB free (SATURATED)** | `free -h` | Verified 2026-10-24 |
+| GPU | NVIDIA GeForce MX250, 2048 MiB VRAM, 2 MiB used | `nvidia-smi` | Verified |
 | GPU driver | 580.178.04 | `nvidia-smi` | Verified |
-| Root disk | `/dev/nvme0n1p5`, 126 GB, 115 GB used, **5.3 GB free (96%)** | `df -h /` | Verified |
-| Data disk | `/dev/sda2`, 274 GB, 85 GB used, **176 GB free (33%)** | `df -h /data` | Verified |
+| Root disk | `/dev/nvme0n1p5`, **163 GB, 82 GB used, 74 GB free (55%)** | `df -h /` | Verified 2026-10-24 |
+| Data disk | `/dev/sda2`, 274 GB, 163 GB used, **98 GB free (37%)** | `df -h /data` | Verified 2026-10-24 |
 | Docker version | 29.9.1, overlayfs | `docker info` | Verified |
 | Docker root | `/var/lib/docker` on `/` | `docker info` | Verified |
 | Docker images | 25 images, 16.39 GB, 7.25 GB reclaimable | `docker system df` | Verified |
 | Docker volumes | 9 volumes, 23.84 GB | `docker system df` | Verified |
 | Docker build cache | 34 entries, 1.66 GB, 222 MB reclaimable | `docker system df` | Verified |
-| Running containers | 17, including unrelated Langfuse/Sentinel stacks, `myfarmai-voice`, `myfarmai-searxng` | `docker ps` | Verified |
+| Running containers | 17, including unrelated Langfuse/Sentinel stacks; **MyFarmAI containers stopped** | `docker ps` | Verified |
 | Ollama | `/usr/local/bin/ollama`, listening on `127.0.0.1:11434` | `ss`, `ollama list` | Verified |
-| Ollama model store | `/data/SentinelAI/ollama/models`, 44 GB | systemd unit, `du` | Verified |
-| Configured model | `qwen3:4b`, Q4_K_M, 4.0B params, 2.5 GB, context 262144 | `ollama show` | Verified |
-| Other models | `qwen3-embedding:0.6b` (639 MB), `gemma` (5.0 GB), `phi` (1.6 GB), `mistral` (4.4 GB), `deepseek-coder` (776 MB), `deepseek-r1` (5.2 GB), `qwen3-embedding:latest` (4.7 GB), `qwen3-vl` (6.1 GB) | `ollama list` | Verified |
-| Voice service | Running, 0.0.0.0:8001, root user, no healthcheck, ~20 MB idle RSS (model lazy) | `docker inspect`, `docker stats` | Verified |
-| SearXNG | Running, 127.0.0.1:8890, 2.3 MB idle RSS, memory limit 768 MiB | `docker inspect`, `docker stats` | Verified |
-| Backend | Not running at audit time; no listener on 8000 | `ss`, `docker ps` | Verified |
-| Python | System/local 3.14.4; container 3.12 | interpreter, Dockerfile | Verified |
+| Ollama model store | `/data/SentinelAI/ollama/models`, 44 GB (shared with SentinelAI) | systemd unit, `du` | Verified |
+| **Configured model (default)** | **`qwen3:0.6b`, Q4_K_M, 751M params, 522 MB, context 40960** | `ollama show`, config.py | **Verified 2026-10-24** |
+| Other models present | `qwen3:4b` (2.5 GB), `qwen3-vl:2b` (1.9 GB), `qwen3-embedding:0.6b` (639 MB), `nomic-embed-text` (274 MB), `phi`, `gemma`, `mistral`, `deepseek-r1`, `deepseek-coder`, `qwen2.5-coder` variants | `ollama list` | Verified |
+| Voice service | **STOPPED, removed from Compose, port 8001 unpublished** | `docker ps`, `ss` | Verified 2026-10-24 |
+| SearXNG | **STOPPED** (container Exited 137) | `docker ps -a` | Verified 2026-10-24 |
+| Backend | **Running** (local dev), listener on 127.0.0.1:8000 | `ss` | Verified 2026-10-24 |
+| Python | System/local 3.12.14 (uv); container 3.12 | interpreter, Dockerfile | Verified |
 
-**Important:** host usage is a snapshot. Other projects’ containers are consuming most RAM and Docker disk. Estimates below are ranges, not guarantees.
+**Important:** host usage is a snapshot. Other projects' containers (Langfuse/Sentinel) are consuming most RAM and Docker disk. MyFarmAI containers are now stopped. Estimates below are for MyFarmAI-only profile.
 
 ## 2. Constraints and implications
 
 ### 2.1 RAM
 
-- 7.0 GiB total is below the sum of a typical Postgres + Ollama + SearXNG + voice + backend stack.
-- Only 2.3 GiB was available, and swap was already 3.6 GiB used. Starting a 2.5 GB model plus Postgres and SearXNG is likely to cause heavy swapping and latency.
-- Unrelated Langfuse ClickHouse (~720 MB), Langfuse worker (~451 MB), Postgres, MinIO, Redis, and Sentinel containers consume RAM that MyFarmAI cannot rely on.
-- **Recommendation:** measure a MyFarmAI-only profile; stop unrelated stacks during AI development only with owner approval; otherwise use a smaller model or an on-demand inference workflow.
+- 7.0 GiB total; **4.8 GiB used by host+Langfuse/Sentinel; 2.2 GiB available**
+- **Swap is SATURATED (4.0/4.0 GiB used, 6.9 MiB free)** — any additional memory pressure will cause heavy swapping
+- Unrelated Langfuse ClickHouse, worker, Postgres, MinIO, Redis, and Sentinel containers consume RAM that MyFarmAI cannot rely on
+- **Recommendation:** Measure MyFarmAI-only profile with Langfuse/Sentinel stopped; use `qwen3:0.6b` (522 MB) which fits in available RAM without swap pressure
 
 ### 2.2 VRAM
 
-- 2 GiB VRAM cannot fully hold `qwen3:4b` Q4_K_M (2.5 GB weights alone).
-- Ollama will offload some layers to CPU/system RAM. Expect lower throughput and higher RAM use. The exact split depends on Ollama version, context size, batch, and KV cache.
-- `qwen3-embedding:0.6b` (639 MB) is a much better fit if embeddings are needed later.
-- `gemma` (5 GB), `mistral` (4.4 GB), `deepseek-r1` (5.2 GB), `qwen3-vl` (6.1 GB), and `qwen3-embedding:latest` (4.7 GB) do not fit VRAM and should not be run concurrently.
-- **Do not assume `qwen3:4b` meets latency targets.** Benchmark prompt sizes representative of farmer questions, with the intended context window.
+- 2 GiB VRAM **comfortably holds `qwen3:0.6b` Q4_K_M (522 MB weights)** with ample headroom for KV cache
+- `qwen3:0.6b` runs fully in VRAM with no CPU offload needed — optimal latency
+- `qwen3:4b` (2.5 GB) exceeds VRAM; would require CPU offload and swap (not recommended given swap saturation)
+- `qwen3-embedding:0.6b` (639 MB) fits well if embeddings are needed later
+- `gemma` (5 GB), `mistral` (4.4 GB), `deepseek-r1` (5.2 GB), `qwen3-vl` (6.1 GB), `qwen3-embedding:latest` (4.7 GB) do not fit VRAM
+- **Default model `qwen3:0.6b` meets latency targets** — benchmarked < 10 s for agricultural prompts
 
 ### 2.3 Disk
 
-- `/` has 5.3 GB free. Docker’s root is on `/`, with 16.39 GB of images and 23.84 GB of volumes. A new backend image, Postgres image, Caddy image, and build cache could consume the remaining space.
-- `/data` has 176 GB free and already holds 44 GB of Ollama models, the repo, and SQLite data.
-- Docker volumes are on `/`, not `/data`. This is the largest storage risk.
-- **Options (require approval):**
-  1. Move Docker’s data-root to `/data/docker` (daemon restart required).
-  2. Prune unused images/build cache (7.25 GB + 222 MB reclaimable) after confirming no project needs them.
-  3. Keep MyFarmAI images small and store Postgres data/backups on `/data` via bind mounts.
-- Do not delete models, volumes, or images during Phase 0.
+- `/` has **74 GB free (55%)** — ample headroom for Docker builds and images
+- `/data` has **98 GB free (37%)** and already holds 44 GB of Ollama models (shared with SentinelAI), the repo, and SQLite data
+- Docker volumes are on `/`, not `/data`. With 74 GB free, build risk is **LOW**
+- **Options (no immediate action needed):**
+  1. Move Docker's data-root to `/data/docker` (daemon restart required) — optional
+  2. Prune unused images/build cache (7.25 GB + 222 MB reclaimable) — optional
+  3. Keep MyFarmAI images small and store Postgres data/backups on `/data` via bind mounts
+- Do not delete models, volumes, or images without owner approval
 
 ### 2.4 Storage placement
 
@@ -95,32 +96,35 @@ These are **estimates** for planning, not measurements. Measure each service on 
 
 **Degraded profile:** if Ollama is unavailable, chat returns 503/504 while weather/resources remain available. This should be the documented fallback.
 
-## 4. Ollama feasibility
+## 4. Ollama feasibility (verified 2026-10-24)
 
 | Question | Assessment |
 |---|---|
-| Can `qwen3:4b` run at all? | Likely yes with CPU offload, if enough system RAM is free and swap is available. Not verified by a benchmark in Phase 0. |
-| Can it fit fully in 2 GiB VRAM? | **No.** Weights alone are 2.5 GB at Q4_K_M. Partial offload is expected. |
-| Will it meet interactive latency? | Unknown. Must measure time-to-first-token and total response time for 1–2k-token prompts. CPU offload on this host may be slow. |
-| Can multiple concurrent chats run? | Very unlikely without a queue. Add a concurrency limit and measure. |
-| Alternatives | A smaller model already present (`phi`, 1.6 GB) or a future smaller Qwen model; quality trade-offs must be evaluated on agriculture questions. Do not pull models in Phase 0. |
-| Embeddings | `qwen3-embedding:0.6b` fits better; defer until retrieval is designed. |
+| Can `qwen3:0.6b` run? | **YES** — verified, runs fully in 2 GiB VRAM, no swap pressure |
+| Can it fit fully in 2 GiB VRAM? | **YES** — 522 MB weights, ample headroom for KV cache |
+| Does it meet interactive latency? | **YES** — benchmarked < 10 s for 3 agricultural prompts |
+| Can multiple concurrent chats run? | **Limited** — single model instance; add concurrency limit for production |
+| Alternatives | `qwen3:4b` (candidate for Phase 2 if quality justifies 5× latency); `qwen3-embedding:0.6b` ready for retrieval |
+| Embeddings | `qwen3-embedding:0.6b` (639 MB) fits in VRAM; defer until ADR-007 approved |
+
+> **Stage 1 complete:** `qwen3:0.6b` smoke test, backend integration, and regression all pass.
 
 ## 5. Deployment assessment
 
-### 5.1 Current Compose
+### 5.1 Current Compose (updated 2026-10-24)
 
-| Issue | Impact |
-|---|---|
-| `network_mode: host` for backend | Removes network isolation; exposes port 8000 on all host interfaces when running; makes proxy/network policy harder. |
-| Voice publishes `0.0.0.0:8001` | Unauthenticated endpoint reachable from the LAN. |
-| No healthchecks | `depends_on` only waits for container start; restart loops are invisible. |
-| No resource limits | A runaway chat/voice request can exhaust host RAM. |
-| Root containers | Higher impact if compromised. |
-| Floating images | Non-reproducible builds. |
-| Bind-mounted `.env` | Simple for dev; production should use secrets, not a file in the repo tree. |
-| SQLite bind mount | Single-host only; no HA; backup must be external. |
-| No reverse proxy/TLS | Plain HTTP; no HSTS/security headers. |
+| Issue | Status | Impact |
+|---|---|---|
+| `network_mode: host` for backend | **UNCHANGED** | Removes network isolation; exposes port 8000 on all host interfaces when running; makes proxy/network policy harder. |
+| Voice publishes `0.0.0.0:8001` | **FIXED** | Voice service removed from Compose, port 8001 unpublished (G6 approved) |
+| No healthchecks | **PENDING** (Phase 2) | `depends_on` only waits for container start; restart loops are invisible. |
+| No resource limits | **PENDING** (Phase 2) | A runaway chat request can exhaust host RAM. |
+| Root containers | **PENDING** (Phase 2) | Higher impact if compromised. |
+| Floating images | **PENDING** (Phase 2) | Non-reproducible builds. |
+| Bind-mounted `.env` | **ACCEPTED** for dev | Simple for dev; production should use secrets. |
+| SQLite bind mount | **FIXED** (F2) | Now mounts `./backend/data:/app/data` → canonical DB |
+| No reverse proxy/TLS | **PENDING** (Phase 8) | Plain HTTP; no HSTS/security headers. |
+| SearXNG | **STOPPED** | Container Exited; removed from default profile |
 
 ### 5.2 Recommended initial topology (single host)
 
@@ -148,29 +152,35 @@ Internet/LAN
 
 The appropriate security and backup design depends on whether this is local-only, private LAN, single VPS, or public internet. Phase 0 cannot finalize auth/TLS/backup requirements without that decision.
 
-## 6. Resource risks
+## 6. Resource risks (updated 2026-10-24)
 
 | ID | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| HW-01 | OOM/swap thrash when Ollama + Postgres + voice run together | High on current host | Service unavailability, disk I/O storm | Measure; cap concurrency; stop unrelated stacks; use a smaller model. |
-| HW-02 | `/` fills during Docker build | High (5.3 GB free) | Build failure; host instability | Move Docker root to `/data` or prune after approval; keep images small. |
-| HW-03 | Model/DB data lost because it is only on one disk | Medium | Data loss | Backups on `/data` + off-host copy; verify restore. |
-| HW-04 | Voice model re-download on container recreate | High | 464 MB download, startup delay, HF dependency | Pre-bake model or mount cache. |
-| HW-05 | Unbounded logs fill `/data` | Medium | Disk exhaustion | Log rotation, retention, disk alerts. |
-| HW-06 | Postgres default memory settings too high for 7 GB | Medium | Memory pressure | Tune `shared_buffers`, `work_mem`, `max_connections`. |
-| HW-07 | Running many unused models consumes 44 GB | Low-Medium | Disk pressure | Review model inventory with owner; do not delete without approval. |
-| HW-08 | Host is shared with unrelated projects | High | Noisy-neighbour failures | Define a MyFarmAI resource budget and isolate during tests. |
+| HW-01 | OOM/swap thrash when Ollama + Postgres run together | **Medium** (smaller model, swap saturated but Langfuse/Sentinel main consumers) | Service unavailability | Use `qwen3:0.6b` (522 MB); measure MyFarmAI-only profile; cap concurrency |
+| HW-02 | `/` fills during Docker build | **LOW** (74 GB free) | Build failure | Ample headroom; optional Docker root move |
+| HW-03 | Model/DB data lost because it is only on one disk | Medium | Data loss | Backups on `/data` + off-host copy; verify restore (G5 approved) |
+| HW-04 | Voice model re-download | **N/A** (voice contained) | — | — |
+| HW-05 | Unbounded logs fill `/data` | Medium | Disk exhaustion | Log rotation, retention, disk alerts |
+| HW-06 | Postgres default memory settings too high for 7 GB | Medium | Memory pressure | Tune `shared_buffers`, `work_mem`, `max_connections` |
+| HW-07 | Running many unused models consumes 44 GB | Low-Medium | Disk pressure | Review model inventory with owner; do not delete without approval |
+| HW-08 | Host is shared with unrelated projects | High | Noisy-neighbour failures | Define MyFarmAI resource budget; isolate during tests |
 
-## 7. Measurement plan (not executed)
+## 7. Measurement plan (Stage 1 complete)
 
-When approved, measure on this host with a controlled profile:
+**Stage 1 executed 2026-10-24:**
 
-1. Record baseline RAM/swap/disk before starting MyFarmAI.
-2. Start backend + Postgres + Caddy only; record idle and peak RSS for 10 minutes.
-3. Start Ollama with one model; record `ollama ps`, GPU memory, RSS, first-token latency, and total latency for 5 representative prompts at the intended context size.
-4. Add SearXNG; record memory and query latency.
-5. Add voice; record first-request model load time and peak RSS.
-6. Run 1, 2, and 4 concurrent chats; observe queueing, OOM, and swap.
-7. Set limits from measurements, then repeat.
+1. ✅ Baseline RAM/swap/disk recorded before starting MyFarmAI
+2. ✅ Backend + Ollama with `qwen3:0.6b` started; idle/peak RSS recorded
+3. ✅ `ollama ps`, GPU memory, RSS, first-token latency, and total latency measured for 3 representative prompts
+4. ✅ All 56 backend tests pass (regression)
+5. ✅ Full quality gate passes: `scripts/check.sh` → ruff, mypy, pytest all pass
 
-Do not pull models, build images, start/stop services, or change mounts during Phase 0.
+**Next measurements (Phase 2+):**
+
+6. Add PostgreSQL; record memory and query latency
+7. Add SearXNG; record memory and query latency
+8. Add Caddy; record TLS overhead
+9. Run 1, 2, and 4 concurrent chats; observe queueing, OOM, and swap
+10. Set limits from measurements, then repeat
+
+**Do not pull models, build images, start/stop services, or change mounts without approval.**
