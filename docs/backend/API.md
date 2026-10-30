@@ -555,6 +555,18 @@ Note: message `id` is an integer (the `messages` table uses an Integer autoincre
 
 ---
 
+## Crop Image Assistance (P5E)
+
+**POST** `/api/v1/vision/analyze` — one-shot crop-photo analysis. Requires authentication. Multipart form: `file` (jpeg/png/webp by magic bytes, max 5 MiB — declared content-type headers are untrusted), optional `question` (≤500), `crop` (≤100), `language` (2-letter, default en).
+
+Images are processed **in memory only** — never written to disk and never logged (nothing is retained). The response is structured observations + possible explanations with uncertainty + recommended next steps; the assistant never claims a definitive disease diagnosis and no detection accuracy is claimed or implied. Errors: `415 UNSUPPORTED_IMAGE_FORMAT`, `413 IMAGE_TOO_LARGE`, `503 VISION_MODEL_UNAVAILABLE`/`AI_UNAVAILABLE`, `504 VISION_TIMEOUT`, `502 VISION_FAILED`.
+
+```json
+{ "response": "Observed: … Possible: … (uncertain). Next: …", "model": "qwen3-vl:2b", "language": "en" }
+```
+
+---
+
 ## Research (P5D)
 
 **GET** `/api/v1/research?q=rice%20blast&limit=8` — agricultural web search with verifiable citations. Requires authentication. `q` 2–200 chars, `limit` 1–20 (default 8).

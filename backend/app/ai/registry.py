@@ -63,11 +63,12 @@ _REGISTRY: tuple[ModelInfo, ...] = (
         status="installed",
         license="Apache-2.0 (verify model card)",
     ),
-    # Vision candidate — separate capability gate required (Model 3).
+    # Vision model — enabled for crop-image assistance (Model 3 gate resolved:
+    # qwen3-vl:2b present locally, Apache-2.0, owner approval 2026-10-31).
     ModelInfo(
         tag="qwen3-vl:2b",
         capability=VISION,
-        status="installed",
+        status="enabled",
         license="Apache-2.0 (verify model card)",
     ),
     # Embedding candidates — benchmark before choosing one (Model 4).

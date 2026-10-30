@@ -28,6 +28,12 @@ class Settings(BaseSettings):
         default="qwen3:0.6b",
         description="Model name for chat completions",
     )
+    # Vision (P5E) — crop-image assistance model
+    vision_model: str = Field(
+        default="qwen3-vl:2b",
+        description="Vision-language model for crop image analysis (must be VISION-enabled in registry)",
+    )
+
     ollama_timeout_seconds: int = Field(
         default=120,
         description="Request timeout for Ollama API calls",

@@ -84,6 +84,23 @@ def _format_weather(weather: dict | None) -> str:
     )
 
 
+_VISION_SYSTEM_TEMPLATE = """You are an agricultural assistant analyzing a photo of a crop uploaded by a farmer.
+
+Structure your answer as: (1) visible observations only, (2) possible explanations with uncertainty, (3) recommended next steps (inspection, sampling, or contacting a local agriculture extension officer). Never claim a definitive disease diagnosis from a photo. Do not ask for the image again.
+
+{language_line}
+{safety_rules}"""
+
+
+def build_vision_system_prompt(language: str = "en") -> str:
+    """P5E: vision system prompt — observations + uncertainty + expert referral,
+    self-protecting safety rules (no invented doses/quantities/withdrawals)."""
+    return _VISION_SYSTEM_TEMPLATE.format(
+        language_line=f"- Use the farmer's language: {language}.",
+        safety_rules=_SAFETY_RULES,
+    )
+
+
 def _format_farm_context(farm_context: dict | None) -> str:
     if not farm_context:
         return ""

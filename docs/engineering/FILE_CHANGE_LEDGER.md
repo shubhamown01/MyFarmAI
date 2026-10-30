@@ -1164,6 +1164,22 @@
 
 ---
 
+### FCL-057 — P5E: Crop-Image Assistance (vision, in-memory, no accuracy claims)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-057 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | P5E; Model 3 gate resolved (qwen3-vl:2b present locally, Apache-2.0, owner blanket approval 2026-10-31) |
+| **File Path** | `backend/app/ai/registry.py` (qwen3-vl:2b installed → enabled for VISION); `backend/app/ai/prompts.py` (`build_vision_system_prompt`: observations → uncertainty → expert referral; never definitive diagnosis; `_SAFETY_RULES` reused); `backend/app/api/v1/vision.py` (new: POST /vision/analyze — multipart, magic-byte sniffing jpeg/png/webp, 5 MiB cap, in-memory only); `backend/app/core/config.py` (`vision_model` = qwen3-vl:2b); `backend/app/api/v1/router.py`; `backend/tests/test_p5e_vision.py` (new, 6 tests); `pyproject.toml` (+python-multipart 0.0.32 — standard FastAPI upload dependency) |
+| **Security/privacy** | Images processed in memory only — never written to disk, never logged (retention-by-construction); declared MIME headers untrusted — bytes decide; auth required; explicit per-request model selection keeps the Phase 4 registry check active |
+| **Honest limits** | NO disease-detection accuracy claims (no independent evaluation dataset — per final-testing master prompt); outputs are observations/uncertainty/next-steps only |
+| **Tests** | `bash scripts/check.sh`: **186 passed, all checks passed** (180 + 6). Gotchas: `_login` must be async; httpx multipart tuple order is (filename, fileobj, content_type) |
+| **Open** | Live qwen3-vl:2b call for evidence (unbenchmarked on 2 GiB VRAM); 5F/5I remain |
+| **Status** | COMPLETE — gate green; P5E ticked |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

@@ -17,6 +17,7 @@ dependencies = [
     "psycopg-pool==3.2.2",
     "argon2-cffi>=25.1.0",
     "email-validator>=2.3.0",
+    "python-multipart>=0.0.32",
 ]
 
 [project.optional-dependencies]

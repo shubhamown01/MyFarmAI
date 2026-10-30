@@ -38,8 +38,9 @@
 - Research API shipped: GET /api/v1/research via SearXNG JSON API — verbatim http/https citations, official-source prioritization, freshness timestamp, auth + bounded query, 503 on provider failure; SSRF-safe by construction. AGPL accepted + secret env-wired (FCL-053). 7 tests — gate 180 passed. Deferred to Phase 6: chat-citation wiring, SearXNG compose service, live-search evidence
 - ~~BLOCKED until SearXNG AGPL review + secret rotation complete~~ (closed 2026-10-31)
 
-### P5E — Crop image assistance
-- **BLOCKED on Model 3 gate** (no image-upload API; owner decision pending).
+### P5E — Crop image assistance — **COMPLETE (2026-10-31, FCL-057)**
+- Vision API shipped: POST /api/v1/vision/analyze — multipart upload, magic-byte validation (jpeg/png/webp, 5 MiB cap), in-memory-only processing (nothing stored/logged), qwen3-vl:2b enabled in registry (Model 3 gate resolved: locally present, Apache-2.0, owner approval 2026-10-31). Output = observations + uncertainty + expert referral; NO disease-detection accuracy claims. 6 tests — gate 186 passed. Open: live-model evidence; VRAM unbenchmarked
+- ~~BLOCKED on Model 3 gate~~ (resolved 2026-10-31)
 
 ### P5F — Voice-first experience
 - **BLOCKED on Model 6 gate** (architecture decision: separate service vs backend-native; the `ai/voice/` service has no auth).
