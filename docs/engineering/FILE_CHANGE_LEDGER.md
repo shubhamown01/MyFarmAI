@@ -1223,6 +1223,20 @@
 
 ---
 
+### FCL-061 — Phase 6I Incident Runbooks + Phase 6N Legal/Privacy/Licensing Inventory
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-061 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6I + 6N (documentation-only items, no infrastructure decisions needed) |
+| **File Path** | `docs/backend/PHASE_6I_INCIDENT_RUNBOOKS.md` (new: 10 runbooks — backend/db outage, AI/weather/search provider down, storage, auth incident, data exposure, failed deploy, backup failure; S1–S4 severity model); `docs/backend/PHASE_6N_LEGAL_PRIVACY_LICENSING.md` (new: OSS license inventory incl. AGPL/ABPL posture, verified privacy posture, 5 required pre-launch documents, DPDP Act + AGPL + license-choice flags for qualified legal review) |
+| **Honest limits** | Runbooks are operational documentation — active only when production deployment exists. Legal docs are inventories + requirements, NOT legal advice; public launch blocked until privacy policy/ToS/consent/retention/security-contact exist and flagged items get qualified review |
+| **Open (owner)** | License choice for the codebase (Phase 0 gate); ADR-015 retention; AGPL/Open-Meteo/DPDP legal review; account-deletion flow gap flagged |
+| **Status** | COMPLETE — 6I + 6N delivered |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
