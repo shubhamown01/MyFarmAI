@@ -117,7 +117,7 @@ def test_prompt_template_versioned():
     """P4-05: template is versioned; system policy separate from user content."""
     from app.ai.prompts import PROMPT_TEMPLATE_VERSION, build_system_prompt
 
-    assert PROMPT_TEMPLATE_VERSION == "2"
+    assert PROMPT_TEMPLATE_VERSION == "3"
     sp = build_system_prompt("hi", "tomato", None)
     assert "hi" in sp and "tomato" in sp
     # User content must never be interpolated into the system prompt.

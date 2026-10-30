@@ -13,6 +13,7 @@ from app.schemas.chat import ChatRequest, ChatResponse, ErrorResponse
 from app.services.chat import generate_chat_response
 from app.services.context import FarmContextService
 from app.services.farm import FarmNotFoundError, FarmService
+from app.services.weather import weather_client
 
 router = APIRouter(tags=["Chat"])
 
@@ -75,6 +76,17 @@ async def chat(
             "longitude": ctx.longitude,
             "crops": ctx.active_crops,
         }
+        # P5C: attach live weather when the farm has coordinates. Fail-open —
+        # a weather outage must never block chat; the prompt then contains no
+        # weather block and the model is instructed not to invent conditions.
+        if farm_context.get("latitude") is not None and farm_context.get("longitude") is not None:
+            try:
+                weather = await weather_client.get_weather(
+                    float(ctx.latitude), float(ctx.longitude), include_daily=False
+                )
+            except Exception:
+                weather = None
+
     # Check if we're in test mode (synchronous database)
     is_test = settings.environment == "test" and settings.database_path.startswith("sqlite")
 
@@ -103,6 +115,7 @@ async def chat(
                 request=request,
                 user_id=user_id,
                 farm_context=farm_context,
+                weather=weather,
             )
         return ChatResponse(
             response=response_text,

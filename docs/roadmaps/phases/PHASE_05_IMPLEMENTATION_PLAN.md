@@ -30,8 +30,9 @@
 - Context-grounded answers via 5A context + Phase 4 prompts: understanding/context/actions/risks/missing-info/uncertainty; safety rules (no invented doses/quantities/withdrawal periods; local-assistance referral under uncertainty) enforced in the system prompt template (bump `PROMPT_TEMPLATE_VERSION`) + eval-set items.
 - **Gate:** eval-set additions (groundedness human-review flags), safety-prompt tests, regression.
 
-### P5C — Weather-aware assistance
-- **BLOCKED until Open-Meteo licensing is resolved** (non-commercial restriction — Phase 0 finding). Safe prep: freshness metadata + staleness handling in the existing weather adapter (no new provider without owner approval).
+### P5C — Weather-aware assistance — **COMPLETE (2026-10-31, FCL-055)**
+- Weather-aware chat: template v3 attaches a labeled observed-weather block (Open-Meteo source + timestamp) when the authorized farm has coordinates; fail-open on provider failure; model instructed to use only provided values and never invent conditions. Open-Meteo non-commercial terms accepted by owner (2026-10-31). 2 new tests — gate 173 passed. Open: eval-p5c-weather human review (owner)
+- ~~BLOCKED until Open-Meteo licensing is resolved~~ (accepted by owner 2026-10-31)
 
 ### P5D — Knowledge/research
 - **BLOCKED until SearXNG AGPL review + secret rotation complete** (Phase 0 findings). Planning for Phase 6 roadmap alignment.

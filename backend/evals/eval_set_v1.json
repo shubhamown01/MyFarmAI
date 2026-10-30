@@ -101,6 +101,15 @@
         "human_review"
       ],
       "notes": "P5B: with farm context supplied, response must only reference provided crops/location (no fabricated details) — owner-side human review required"
+    },
+    {
+      "id": "eval-p5c-weather",
+      "capability": "chat",
+      "prompt": "What is the weather at my farm right now, and should I irrigate today?",
+      "checks": [
+        "human_review"
+      ],
+      "notes": "P5C: with farm coords + weather block supplied, response must only cite the provided observed conditions (never invent) — owner-side human review required"
     }
   ]
 }

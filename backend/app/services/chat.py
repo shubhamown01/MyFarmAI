@@ -47,6 +47,7 @@ def generate_chat_response_sync(
     db: Session | None = None,
     user_id: uuid.UUID | None = None,
     farm_context: dict | None = None,
+    weather: dict | None = None,
 ) -> tuple[str, str]:
     """Generate a chat response and persist to database using synchronous SQLAlchemy (for tests)."""
     import concurrent.futures
@@ -110,7 +111,7 @@ def generate_chat_response_sync(
             messages = [
                 {
                     "role": "system",
-                    "content": build_system_prompt(language, crop, location, farm_context),
+                    "content": build_system_prompt(language, crop, location, farm_context, weather),
                 }
             ]
             for msg in reversed(recent_messages):
@@ -202,6 +203,7 @@ async def generate_chat_response(
     request: Request | None = None,
     user_id: uuid.UUID | None = None,
     farm_context: dict | None = None,
+    weather: dict | None = None,
 ) -> tuple[str, str]:
     """Generate a chat response and persist to database using SQLAlchemy repositories (async)."""
     import logging
@@ -238,7 +240,7 @@ async def generate_chat_response(
             messages = [
                 {
                     "role": "system",
-                    "content": build_system_prompt(language, crop, location, farm_context),
+                    "content": build_system_prompt(language, crop, location, farm_context, weather),
                 }
             ]
             for msg in recent_messages:

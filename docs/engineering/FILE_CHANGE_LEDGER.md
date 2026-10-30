@@ -1133,6 +1133,21 @@
 
 ---
 
+### FCL-055 — P5C: Weather-Aware Chat (template v3 + fail-open fetch)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-055 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | P5C (`PHASE_05_IMPLEMENTATION_PLAN.md`); Open-Meteo non-commercial terms accepted by owner (blanket approval 2026-10-31) |
+| **File Path** | `backend/app/ai/prompts.py` (`_WEATHER_BLOCK` + `_format_weather`; `build_system_prompt` gains `weather` param; PROMPT_TEMPLATE_VERSION → "3"); `backend/app/services/chat.py` (both paths accept/forward `weather`); `backend/app/api/v1/chat.py` (farm_id with coords → current weather via existing `weather_client`, fail-open); `backend/tests/test_prompts_v2.py` (+2 weather tests, 9 total); `backend/tests/test_ai_gateway.py` (version → "3"); `backend/evals/eval_set_v1.json` (+1 human_review item) |
+| **Design** | Weather block = labeled observed data (source Open-Meteo, observation timestamp, condition/temp/wind) with "use ONLY these values / do not invent / say you don't have data" instructions. Fetch happens only when the authorized farm context has coordinates; any weather error → no block, chat proceeds (fail-open). Sync test path passes weather=None (farm-context precedent) |
+| **Tests** | `bash scripts/check.sh`: **173 passed, all checks passed** (171 + 2) |
+| **Open** | eval-p5c-weather human review (owner); live-eval re-run pending |
+| **Status** | COMPLETE — gate green; P5C ticked |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
