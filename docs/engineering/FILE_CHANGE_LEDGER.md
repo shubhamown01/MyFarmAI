@@ -1103,6 +1103,21 @@
 
 ---
 
+### FCL-053 — Owner Approval: Phase 5 Committed + SearXNG Secret Finding Closed
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-053 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Owner approval ("all permissions approved") + Phase 0 containment follow-up |
+| **Commits** | `7dafc8a` — Phase 5A/5B/5G backend + docs + evals (all reviewer-gated work); `d39cb47` — previously-uncommitted owner work (android/, orchestrator runtime, Dockerfile, alembic env, docker-compose postgres+secrets wiring, .opencode/ agents+skills, engineering docs, Phase 4 verification reports) — committed with explicit owner approval |
+| **Left untracked (by design)** | `.orchestrator/` (runtime worktrees), `resources/` (92 MB local data), `opencode.json.backup-*`, `test-*.js` scratch scripts, root `package.json`/`package-lock.json` (scratch tooling), untracked egg-info (now also untracked from Git — was gitignored) |
+| **SearXNG secret finding — CLOSED** | Phase 0 finding ("hardcoded secret in `infra/searxng/config/settings.yml`") is stale: tracked file already uses `secret_key: "${SEARXNG_SECRET}"` env substitution (fixed in a prior commit); repo-wide sweep found no hardcoded secret in any yml/env file; service currently not deployed (nothing on 8890, no container) — when redeployed, the secret must come from `.env`/compose env. No rotation needed (no live secret to rotate) |
+| **Pre-commit verification** | Secret scan of full diff: no credentials/keys/tokens; no model weights; final gate 170 passed before commit |
+| **Status** | COMPLETE — Phase 5 work is committed; tree clean except by-design untracked files |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
