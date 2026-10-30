@@ -1195,6 +1195,20 @@
 
 ---
 
+### FCL-059 — Phase 6A: Production Architecture Review (read-only)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-059 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6A master prompt (after Phase 5 acceptance default: continue) |
+| **File Path** | `docs/backend/PHASE_6A_ARCHITECTURE_REVIEW.md` (new — review only, no infra changed) |
+| **Key findings** | Compose: postgres 17 (secrets-file, internal net) + non-root backend; web lacks production build path; no CI; no monitoring; backups ad-hoc (no pg_dump schedule/restore drill). SearXNG undeployed. Host capacity improved: `/` 74 GiB free (Phase 0 5-GB constraint lifted). Proposal: single-host Caddy (auto-TLS) → Next.js standalone + FastAPI, private postgres/searxng/ollama, nightly pg_dump. Risk register: R1 backups (High), R2 TLS (High), R3 CI (Med), R4 monitoring (Med), R5 web build (Med) |
+| **Approvals needed** | Domain/DNS, port exposure, hosting choice, backup schedule — before any 6B+ execution |
+| **Status** | COMPLETE — 6A review delivered; awaiting owner direction on 6B+ |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
