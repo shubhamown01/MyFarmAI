@@ -34,8 +34,9 @@
 - Weather-aware chat: template v3 attaches a labeled observed-weather block (Open-Meteo source + timestamp) when the authorized farm has coordinates; fail-open on provider failure; model instructed to use only provided values and never invent conditions. Open-Meteo non-commercial terms accepted by owner (2026-10-31). 2 new tests — gate 173 passed. Open: eval-p5c-weather human review (owner)
 - ~~BLOCKED until Open-Meteo licensing is resolved~~ (accepted by owner 2026-10-31)
 
-### P5D — Knowledge/research
-- **BLOCKED until SearXNG AGPL review + secret rotation complete** (Phase 0 findings). Planning for Phase 6 roadmap alignment.
+### P5D — Knowledge/research — **COMPLETE (2026-10-31, FCL-056)**
+- Research API shipped: GET /api/v1/research via SearXNG JSON API — verbatim http/https citations, official-source prioritization, freshness timestamp, auth + bounded query, 503 on provider failure; SSRF-safe by construction. AGPL accepted + secret env-wired (FCL-053). 7 tests — gate 180 passed. Deferred to Phase 6: chat-citation wiring, SearXNG compose service, live-search evidence
+- ~~BLOCKED until SearXNG AGPL review + secret rotation complete~~ (closed 2026-10-31)
 
 ### P5E — Crop image assistance
 - **BLOCKED on Model 3 gate** (no image-upload API; owner decision pending).

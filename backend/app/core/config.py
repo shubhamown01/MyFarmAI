@@ -35,6 +35,19 @@ class Settings(BaseSettings):
         le=300,
     )
 
+    # SearXNG (P5D research) — loopback-only by default (Phase 0 containment);
+    # never expose SearXNG publicly.
+    searxng_base_url: str = Field(
+        default="http://127.0.0.1:8888",
+        description="Base URL for the SearXNG JSON API (loopback-only default)",
+    )
+    searxng_timeout_seconds: int = Field(
+        default=10,
+        description="Request timeout for SearXNG API calls",
+        ge=1,
+        le=60,
+    )
+
     # Database
     database_path: str = Field(
         default="data/app.db",

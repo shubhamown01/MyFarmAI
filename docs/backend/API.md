@@ -555,6 +555,26 @@ Note: message `id` is an integer (the `messages` table uses an Integer autoincre
 
 ---
 
+## Research (P5D)
+
+**GET** `/api/v1/research?q=rice%20blast&limit=8` — agricultural web search with verifiable citations. Requires authentication. `q` 2–200 chars, `limit` 1–20 (default 8).
+
+Results are provider-observed (SearXNG), URLs verbatim and http/https-only, official agricultural domains (gov.in, ICAR, edu) ranked first. Every response carries a UTC `retrieved_at` freshness stamp. Provider unavailable → `503 RESEARCH_UNAVAILABLE`. The API never fabricates citations and never fetches user-supplied URLs server-side.
+
+```json
+{
+  "query": "rice blast",
+  "results": [
+    { "rank": 1, "title": "…", "url": "https://icar.org.in/…", "snippet": "…",
+      "source_domain": "icar.org.in", "official_source": true }
+  ],
+  "provider": "searxng",
+  "retrieved_at": "2026-10-31T12:00:00Z"
+}
+```
+
+---
+
 ## User Preferences (P5G)
 
 **PATCH** `/api/v1/auth/preferences` — update the authenticated user's own preferences. Requires a valid session; there is no user-id parameter (own-only by construction).

@@ -1148,6 +1148,22 @@
 
 ---
 
+### FCL-056 — P5D: Agricultural Research API (SearXNG, verbatim citations)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-056 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | P5D; AGPL accepted + secret env-wired (FCL-053); Open-Meteo not involved |
+| **File Path** | `backend/app/services/research.py` (new); `backend/app/schemas/research.py` (new); `backend/app/api/v1/research.py` (new: GET /research, auth, q 2–200, limit 1–20, 503 RESEARCH_UNAVAILABLE); `backend/app/api/v1/router.py`; `backend/app/core/config.py` (`searxng_base_url` loopback default, `searxng_timeout_seconds`); `backend/tests/test_p5d_research.py` (new, 7 tests) |
+| **Security model** | SSRF-safe by construction: only outbound fetch is to the server-configured SearXNG (never user-supplied URLs; result URLs never fetched server-side). URLs verbatim, scheme-filtered http/https. Official agri domains (gov.in/nic.in/ICAR/edu/ac.in) prioritized in a stable two-tier order. Snippets are data only — never interpolated into prompts |
+| **Scope note** | Shipped scope = standalone research API (plan P5D text: "Planning for Phase 6 alignment"). Chat-citation integration deferred to Phase 6 planning |
+| **Tests** | `bash scripts/check.sh`: **180 passed, all checks passed** (173 + 7). Test-design note: router 503 test patches `ResearchService.search` (global httpx monkeypatch leaked into the request path); service error-conversion covered by a direct test |
+| **Open** | SearXNG has no compose service yet (loopback docker run needed for live evidence); chat-citation wiring deferred |
+| **Status** | COMPLETE — gate green; P5D ticked |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
