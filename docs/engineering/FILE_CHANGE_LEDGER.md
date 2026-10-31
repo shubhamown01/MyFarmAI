@@ -1237,6 +1237,21 @@
 
 ---
 
+### FCL-062 — Phase 6C/6E Audits + Live Vision Evidence + Registry-Gate Fix (G1)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-062 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6C backend hardening audit (security-engineer subagent, read-only) + 6E AI inference readiness audit (ai-ml-engineer subagent, read-only) + live evidence |
+| **File Path** | `docs/backend/PHASE_6C_BACKEND_HARDENING_AUDIT.md` (new — 15 verified-PASS areas with file:line; gaps M1 weather/resources no-auth Medium, M2 allowed_hosts never validated Medium, L1-L3, I1-I2; verdict PASS WITH GAPS, no Critical/High); `docs/backend/PHASE_6E_AI_INFERENCE_READINESS.md` (new + addendum — registry integrity, resource feasibility, failure modes, prompt posture; verdict PASS WITH GAPS); `backend/app/api/v1/vision.py` (G1 fix: registry.require_enabled VISION gate before Ollama call — was bypassing registry via direct OllamaClient); `backend/tests/test_p5e_vision.py` (+1: chat-only model → 503 VISION_MODEL_UNAVAILABLE) |
+| **Live evidence (G2 closed)** | POST /vision/analyze → **200** from live qwen3-vl:2b on a real JPEG (128x128 solid green via ffmpeg); response followed template exactly: observations + uncertainty + expert referral, no diagnosis. Cold-start finding: cold VL load (1.89 GB) exceeds 120s default timeout on swap-full host — deployment requirement: warm before serving or OLLAMA_TIMEOUT_SECONDS>=300. Warm control call 24s; model is a thinking model (emits <think>, ignores think:false) |
+| **Tests** | `bash scripts/check.sh`: **189 passed, all checks passed** (188 + 1). Gotcha: gate had to run before the broad except (HTTPException was being re-mapped 503→502 VISION_FAILED) |
+| **Open (owner)** | M1 auth-on-weather/resources decision; M2/L1/L2 small code fixes queued; SearXNG image pull needs SSD permission; swap-full host (G7) ops concern |
+| **Status** | COMPLETE — 6C/6E audits delivered, G1 fixed with test, G2 live evidence captured |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

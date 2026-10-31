@@ -5,6 +5,7 @@ import base64
 import io
 
 import pytest
+from fastapi import FastAPI
 from httpx import AsyncClient
 
 from app.core.security import hash_password
@@ -102,6 +103,18 @@ async def test_model_not_found_maps_503(async_client: AsyncClient, monkeypatch) 
         raise OllamaModelNotFoundError("model not enabled")
 
     monkeypatch.setattr(OllamaClient, "chat", fail)
+    resp = await async_client.post("/api/v1/vision/analyze", files=_file(PNG_BYTES))
+    assert resp.status_code == 503
+    assert resp.json()["error_code"] == "VISION_MODEL_UNAVAILABLE"
+
+
+async def test_vision_rejects_non_vision_registry_model(
+    async_client: AsyncClient, async_app: FastAPI
+) -> None:
+    """6E audit G1: model selection must pass the registry VISION gate — a
+    registered but chat-only model must yield 503, never reach Ollama."""
+    await _login(async_client, "p5e-f@verifytest.com")
+    async_app.state.settings.vision_model = "qwen3:0.6b"  # registered, CHAT-only
     resp = await async_client.post("/api/v1/vision/analyze", files=_file(PNG_BYTES))
     assert resp.status_code == 503
     assert resp.json()["error_code"] == "VISION_MODEL_UNAVAILABLE"

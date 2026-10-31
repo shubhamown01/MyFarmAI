@@ -8,14 +8,16 @@ Design:
 - No disease-detection accuracy is claimed: the system prompt yields
   observations + uncertainty + expert referral only.
 - Model: qwen3-vl:2b (enabled in the registry — Model 3 gate resolved
-  2026-10-31). Explicit per-request selection keeps the Phase 4 registry check
-  active.
+  2026-10-31). Explicit per-request selection is gated through
+  registry.require_enabled so unregistered/disabled models can never be
+  selected (Phase 6E audit G1).
 """
 
 import base64
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 
+from app.ai import registry
 from app.api.v1.auth import get_current_user_id
 from app.core.config import Settings
 from app.services.ollama import OllamaClient
@@ -84,6 +86,18 @@ async def analyze_image(
             "images": [base64.b64encode(data).decode("ascii")],
         },
     ]
+    # Registry gate (6E G1) must run before the broad except below — an
+    # unavailable model is a 503, not a gateway failure.
+    try:
+        registry.require_enabled(settings.vision_model, registry.VISION)
+    except registry.ModelNotAvailableError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "detail": "vision model unavailable",
+                "error_code": "VISION_MODEL_UNAVAILABLE",
+            },
+        ) from e
     try:
         response_text = await OllamaClient().chat(gateway_messages, model=settings.vision_model)
     except Exception as e:
