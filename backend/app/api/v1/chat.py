@@ -1,5 +1,6 @@
 """Chat API endpoints."""
 
+import logging
 import uuid
 from collections.abc import Generator
 
@@ -16,6 +17,8 @@ from app.services.farm import FarmNotFoundError, FarmService
 from app.services.weather import weather_client
 
 router = APIRouter(tags=["Chat"])
+
+logger = logging.getLogger("myfarmai.chat_api")
 
 
 def get_settings(request: Request) -> Settings:
@@ -58,6 +61,7 @@ async def chat(
     # P5B: resolve authorized farm context (async mode only — the sync test
     # path uses sync sessions which FarmService cannot await).
     farm_context: dict | None = None
+    weather: dict | None = None
     if chat_request.farm_id and db_manager._is_async:
         async with db_manager.session() as session:
             try:
@@ -185,6 +189,9 @@ async def chat(
                 detail={"detail": str(e), "error_code": "CONVERSATION_NOT_FOUND"},
             ) from e
         else:
+            # Log before sanitizing: an unexpected 500 must be diagnosable
+            # from server logs without leaking str(e) to the client.
+            logger.exception("Unhandled chat error: %s", type(e).__name__)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail={"detail": "An unexpected error occurred", "error_code": "INTERNAL_ERROR"},

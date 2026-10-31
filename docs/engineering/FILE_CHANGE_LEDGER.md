@@ -1357,6 +1357,24 @@
 
 ---
 
+### FCL-070 — Live Chat 500 Root-Caused and Fixed (P5B regression: async-path UnboundLocalError)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-070 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6 final testing §6 (AI latency) — blocked on live chat 500 |
+| **File Path** | `backend/app/api/v1/chat.py` |
+| **Root cause** | `weather` was only assigned inside the `if chat_request.farm_id ...` block, but the async branch passed `weather=weather` unconditionally -> UnboundLocalError on every farm-less chat in async (production) mode. Reachable only in live/dev: pytest always runs with environment="test" which routes to the sync branch — the is_test split hid the entire async endpoint path from the suite. Diagnosis required adding `logger.exception` to the generic 500 handler (it previously swallowed the traceback entirely — production diagnosability gap fixed in the same commit) |
+| **Fix** | Initialize `weather: dict | None = None` alongside `farm_context` (one line) + unhandled-error logging in the 500 handler |
+| **Live verification** | POST /api/v1/chat on live server (scratch sqlite, real Ollama): 3 turns 200 OK — 17.4 s (first), 6.9 s, 7.7 s on qwen3:0.6b; model + grounded reply returned |
+| **Gate finding** | test_security timing-band test failed once under post-Ollama load (passed in isolation + on clean rerun) — timing-sensitive test, note for CI reliability |
+| **Known gap (recorded)** | Endpoint-level async-branch coverage absent from pytest (is_test routing); live verification used as evidence for this fix. Upgrade: an async-mode endpoint test fixture |
+| **Tests** | `bash scripts/check.sh`: **195 passed, exit=0** (clean rerun) |
+| **Status** | COMPLETE — chat regression fixed; §6 latency evidence collected |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
