@@ -59,7 +59,7 @@ Verified good: session-derived identity on every route (no client-supplied user_
 2. Crop profiles/growth stages — **PASS**
 3. Intelligence uses valid context — **PASS** (within model-compliance caveat above)
 4. Weather-aware workflows with timestamped data — **PASS** (5C: provider-observed, timestamped, fail-open)
-5. Genuine research citations — **PASS** (5D: verbatim URLs, provider-sourced; live-search evidence pending SearXNG deployment)
+5. Genuine research citations — **PASS** (5D: verbatim URLs, provider-sourced; live evidence captured 2026-10-31: live SearXNG loopback container, GET /research → 200 with official gov.in/ICAR domains ranked first — FCL-063)
 6. Vision/voice validated tests — **PASS** (5E: 6 tests, in-memory; 5F: N/A server-side by ADR-016, capabilities endpoint tested)
 7. Memory/personalization privacy — **PASS** (P5G, reviewer-gated)
 8. Notifications — **FAIL → NOT IMPLEMENTED** (5I explicitly deferred to Phase 6 per plan: "only after weather + farm/crop data are reliable")

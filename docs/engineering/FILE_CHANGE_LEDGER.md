@@ -1252,6 +1252,20 @@
 
 ---
 
+### FCL-063 — Live Research Evidence (P5D/SearXNG) — no code change
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-063 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Optional live-evidence item: SearXNG loopback container + one live /research call (owner approved the image pull after confirming storage already lands on /data) |
+| **Storage finding** | NO Docker relocation was needed: /etc/docker/daemon.json (data-root=/data/docker) and /etc/containerd/config.toml (root=/data/containerd) were already HDD-wired; kernel mount table confirms live container snapshots under /data/containerd. Earlier "Docker Root Dir: /var/lib/docker" reading was the legacy metadata field only. searxng/searxng:latest pulled (387 MB) onto /data |
+| **Evidence** | Ephemeral loopback container (127.0.0.1:8888, random secret, repo settings.yml with JSON format) → GET /api/v1/research?q=tomato leaf disease management (live server, fresh scratch sqlite, auth'd) → **200**: provider=searxng, retrieved_at UTC, 8 results with verbatim URLs; **two-tier official-domain ranking demonstrated live** — ranks 1-2 = agritech.tnau.ac.in + nhb.gov.in (official_source: true) above commercial/companion sites |
+| **Cleanup** | Evidence container stopped (—rm), scratch server killed, scratch DB removed. Nothing entered repo except this ledger entry + report addendum |
+| **Status** | COMPLETE — P5D live-search evidence captured (criterion 5 of the Phase 5 report no longer 'pending' ) |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
