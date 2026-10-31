@@ -88,3 +88,9 @@ graphify-out/
 # Phase 4 exit-gate condition 1: local secret + misnamed SQLite artifact
 .pg_password
 backend/file:test
+
+# Phase 6G: release signing material must never enter git (owner keeps the
+# keystore outside the repo with its own backup)
+*.keystore
+*.jks
+*.pem

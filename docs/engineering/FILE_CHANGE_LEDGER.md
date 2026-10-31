@@ -1280,6 +1280,22 @@
 
 ---
 
+### FCL-065 — Phase 6F Web Standalone Build + Phase 6G Android Release Audit
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-065 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6F (web production build path) + 6G (Android release/signing audit, android-engineer subagent read-only) |
+| **6F** | `web/next.config.js`: `output: "standalone"` (minimal prod server; NEXT_PUBLIC_API_BASE_URL baked at BUILD time — documented in-file). Verified locally: `npm run build` OK; standalone entry `.next/standalone/web/server.js` (63 MB) booted and served 200 on port 8766. Container/Dockerfile deliberately deferred to the deployment track (hosting decision) |
+| **6G** | `docs/backend/PHASE_6G_ANDROID_RELEASE_AUDIT.md` (new): verdict **PASS WITH GAPS** — no signing config and NO keystore material in git (correct state); typecheck+lint PASS; INTERNET+RECORD_AUDIO justified (ADR-016 on-device speech); gaps: owner-side keystore (G10), versionCode unset (G2), placeholder prod URL fallback (G9), device QA (G11); no auth wiring in client yet (documented) |
+| **File Path** | `web/next.config.js`; `docs/backend/PHASE_6G_ANDROID_RELEASE_AUDIT.md`; `.gitignore` (+*.keystore/*.jks/*.pem — release signing material can never enter git) |
+| **Tests** | web build + standalone boot 200; android typecheck+lint PASS (subagent); backend gate unaffected — last full gate 192 passed |
+| **Open (owner)** | Keystore + Play App Signing enrollment; versionCode strategy; real prod API URL; device QA; FINE_LOCATION permission review |
+| **Status** | COMPLETE — 6F build path verified locally; 6G audit delivered |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
