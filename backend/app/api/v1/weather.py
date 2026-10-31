@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.api.v1.auth import get_current_user_id
 from app.schemas.weather import WeatherErrorResponse, WeatherResponse
 from app.services.weather import (
     WeatherConnectionError,
@@ -20,6 +21,7 @@ router = APIRouter(tags=["Weather"])
     },
 )
 async def get_weather(
+    user_id=Depends(get_current_user_id),
     latitude: float = Query(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees"),
     longitude: float = Query(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees"),
     current: bool = Query(True, description="Include current weather"),
@@ -63,6 +65,7 @@ async def get_weather(
     },
 )
 async def get_current_weather(
+    user_id=Depends(get_current_user_id),
     latitude: float = Query(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees"),
     longitude: float = Query(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees"),
 ) -> WeatherResponse:

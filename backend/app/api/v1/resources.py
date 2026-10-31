@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
+from app.api.v1.auth import get_current_user_id
 from app.schemas.resources import ResourcesResponse
 from app.services.resources import resources_catalogue
 
@@ -14,6 +15,7 @@ router = APIRouter(tags=["Agricultural Resources"])
     },
 )
 async def list_resources(
+    user_id=Depends(get_current_user_id),
     category: str | None = Query(
         None,
         description="Filter by category (e.g., 'schemes', 'advisory', 'market', 'weather', 'research', 'financial', 'digital')",

@@ -13,7 +13,7 @@ Every workstream executable **without owner infrastructure decisions** is comple
 | 6A Architecture review | COMPLETE | `PHASE_6A_ARCHITECTURE_REVIEW.md` — current/proposed topology, risk register |
 | 6B Environment separation | VERIFIED | Production validator (CORS/DB-path/Ollama-URL/allowed_hosts), secrets hygiene, `.env` gitignored |
 | 6C Backend hardening audit | COMPLETE — PASS WITH GAPS | `PHASE_6C_BACKEND_HARDENING_AUDIT.md` — 15 verified-PASS areas, no Critical/High; M2/L1/L2 **fixed with tests** (FCL-064); M1 = owner decision |
-| 6D/6L Backup + restore drill | PRE-WORK COMPLETE — DRILL PASSED | `scripts/backup.sh` (UNscheduled) + isolated drill restored **14/14 tables** (FCL-066); activation gate = owner |
+| 6D/6L Backup + restore drill | **COMPLETE** (6D activated) | Nightly cron active (owner-approved 2026-10-31) + verified runs; drill restored **14/14 tables** (FCL-066/068) |
 | 6E AI inference readiness | COMPLETE — PASS WITH GAPS | `PHASE_6E_AI_INFERENCE_READINESS.md` — chat production-ready; G1 registry bypass **fixed**; **G2 closed with live evidence** |
 | 6F Web production build | COMPLETE (build path) | `output: standalone`, build + boot verified locally (200); Dockerfile deferred to hosting decision |
 | 6G Android release audit | COMPLETE — PASS WITH GAPS | `PHASE_6G_ANDROID_RELEASE_AUDIT.md` — no keystore material in git; owner-side: keystore, versionCode, prod URL, device QA |
@@ -48,9 +48,9 @@ Every workstream executable **without owner infrastructure decisions** is comple
 
 ## 5. Decisions that unblock the remaining track
 
-1. **Hosting target** — this machine (fits: 7 GiB RAM, HDD storage; swap needs attention) or a VPS (~US$5–10/mo).
-2. **Domain name** — available and which registrar/DNS.
-3. **Nightly pg_dump schedule** — approve → activates `scripts/backup.sh` (6D complete).
-4. **M1** — keep weather/resources public or require auth.
+1. **Hosting target** — **DECIDED: this machine now; free cloud (Oracle/AWS) later** — design for portability.
+2. **Domain name** — **DECIDED: free/opensource TLS route** (plan: DuckDNS subdomain + Caddy DNS-01, or Cloudflare Tunnel alternative; registration is an owner account action).
+3. ~~Nightly pg_dump schedule~~ — **APPROVED + ACTIVE** (2026-10-31).
+4. ~~M1~~ — **owner chose require-auth; implemented + tested** (FCL-068).
 
 With 1–3 answered: 6D activation → 6K domain/TLS (Caddy auto-HTTPS) → 6H monitoring → 6M acceptance → Report 2 re-issue at **READY FOR OWNER RELEASE APPROVAL** (or honest failure).

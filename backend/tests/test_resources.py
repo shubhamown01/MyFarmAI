@@ -2,6 +2,23 @@ import pytest
 from httpx import AsyncClient
 
 
+@pytest.fixture(autouse=True)
+async def _authed_client(async_client: AsyncClient, request):
+    """6C M1: weather/resources now require auth — log in before each test."""
+    from app.core.security import hash_password
+    from app.db.models.user import User
+    from app.db.session import db_manager
+
+    email = f"auth-{abs(hash(request.node.nodeid)) % 10**10}@verifytest.com"
+    async with db_manager.session() as session:
+        session.add(User(email=email, password_hash=hash_password("Pass-2026!x")))
+    resp = await async_client.post(
+        "/api/v1/auth/login", json={"email": email, "password": "Pass-2026!x"}
+    )
+    assert resp.status_code == 200, resp.text
+    return async_client
+
+
 class TestResourcesEndpoint:
     @pytest.mark.asyncio
     async def test_list_all_resources(self, async_client: AsyncClient):
@@ -141,3 +158,10 @@ class TestResourcesEndpoint:
         data = response.json()
         resource_categories = {r["category"] for r in data["resources"]}
         assert set(data["categories"]) == resource_categories
+
+
+async def test_resources_requires_auth(async_client: AsyncClient):
+    """6C M1: resources must require authentication."""
+    async_client.cookies.clear()  # autouse fixture leaves a session cookie
+    resp = await async_client.get("/api/v1/resources")
+    assert resp.status_code == 401

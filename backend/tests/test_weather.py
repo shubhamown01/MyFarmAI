@@ -4,6 +4,23 @@ import pytest
 from httpx import AsyncClient
 
 
+@pytest.fixture(autouse=True)
+async def _authed_client(async_client: AsyncClient, request):
+    """6C M1: weather/resources now require auth — log in before each test."""
+    from app.core.security import hash_password
+    from app.db.models.user import User
+    from app.db.session import db_manager
+
+    email = f"auth-{abs(hash(request.node.nodeid)) % 10**10}@verifytest.com"
+    async with db_manager.session() as session:
+        session.add(User(email=email, password_hash=hash_password("Pass-2026!x")))
+    resp = await async_client.post(
+        "/api/v1/auth/login", json={"email": email, "password": "Pass-2026!x"}
+    )
+    assert resp.status_code == 200, resp.text
+    return async_client
+
+
 class TestWeatherEndpoint:
     MOCK_WEATHER_RESPONSE = {
         "latitude": 28.6139,
@@ -186,3 +203,13 @@ class TestWeatherEndpoint:
             assert response.status_code == 200
             data = response.json()
             assert "current_weather" in data
+
+
+@pytest.mark.asyncio
+async def test_weather_requires_auth(async_client: AsyncClient):
+    """6C M1: weather must not relay third-party traffic unauthenticated."""
+    async_client.cookies.clear()  # autouse fixture leaves a session cookie
+    response = await async_client.get(
+        "/api/v1/weather", params={"latitude": 28.6139, "longitude": 77.2090}
+    )
+    assert response.status_code == 401

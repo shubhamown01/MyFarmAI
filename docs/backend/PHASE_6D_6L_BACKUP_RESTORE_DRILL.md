@@ -1,6 +1,6 @@
 # Phase 6D/6L — Backup Script + Restore Drill (Pre-Work)
 
-**Date:** 2026-10-31 · **Status:** Script + one-shot drill complete. **The nightly schedule is NOT activated** — pending owner approval (the 6D gate).
+**Date:** 2026-10-31 · **Status (updated 2026-10-31):** 6D COMPLETE — owner approved the nightly schedule; cron installed (02:00 daily, log to backup.log) and verified with two manual integrity-checked runs. Restore drill PASSED earlier (14/14 tables, isolated container). Retention: 14 nightly dumps + all first-of-month.
 
 ## What was done
 
@@ -17,6 +17,6 @@
 
 ## Remaining owner gates
 
-- Approve the nightly schedule (cron entry / compose-side timer) → activates 6D.
+- ~~Approve the nightly schedule~~ — DONE (owner approval 2026-10-31, cron active).
 - Decide on offsite/second-copy storage.
 - Re-run the drill after any schema change (via Alembic migration) and once post-launch at production scale.

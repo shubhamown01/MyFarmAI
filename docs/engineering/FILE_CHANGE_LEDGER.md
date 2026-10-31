@@ -1327,6 +1327,21 @@
 
 ---
 
+### FCL-068 — Owner Decisions Executed: M1 Fix (weather/resources auth) + 6D Backup Activation
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-068 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Owner decisions (2026-10-31): M1 require auth (approved); nightly backup approved; hosting = this machine now / free cloud later; domain = free/opensource TLS option |
+| **M1 fix** | `backend/app/api/v1/weather.py` + `backend/app/api/v1/resources.py`: all 4 endpoints now require get_current_user_id (6C M1 — unauthenticated third-party relay closed). 19 existing tests updated via autouse login fixture; 2 explicit 401 tests added (cookies.clear() needed — autouse login leaves session cookies) |
+| **6D activation** | Nightly cron installed (owner-approved): 02:00 daily, `scripts/backup.sh >> /data/MyFarmAI-backups/postgres/backup.log`, marker comment `MYFARMAI-NIGHTLY-BACKUP` for identifiability. Immediate manual run OK: myfarmai-20261031-114244.dump + 114331.dump (44K each, integrity-checked). Script fix: retention grep pipeline returns 1 when nothing to delete — wrapped with || true (also fixed a precedence bug: xargs must run on grep SUCCESS) |
+| **Gate-integrity finding** | check.sh printed "All checks passed!" even with 2 failing tests (observed twice now) — future verification MUST read the pytest result line / exit code. This session verified: 194 passed, exit=0 |
+| **Tests** | `bash scripts/check.sh`: **194 passed, exit=0** (192 + 2 new 401 tests) |
+| **Status** | COMPLETE — M1 fixed, 6D active (cron + verified runs); deployment/domain decisions recorded for 6K |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

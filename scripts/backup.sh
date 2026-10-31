@@ -32,5 +32,6 @@ else
 fi
 
 # Retention: delete nightly dumps beyond KEEP_NIGHTLY (keep 1st-of-month).
-ls -1t "$DEST"/myfarmai-*.dump 2>/dev/null | tail -n +$((KEEP_NIGHTLY + 1)) |
-    grep -vE 'myfarmai-[0-9]{8}-01-' | xargs -r rm -f
+# grep exits 1 when there is nothing to delete — the || true covers it.
+{ ls -1t "$DEST"/myfarmai-*.dump 2>/dev/null | tail -n +$((KEEP_NIGHTLY + 1)) |
+    grep -vE 'myfarmai-[0-9]{8}-01-' | xargs -r rm -f; } || true
