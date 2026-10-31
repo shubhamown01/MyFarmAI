@@ -1296,6 +1296,22 @@
 
 ---
 
+### FCL-066 — Phase 6D/6L Pre-Work: Backup Script + One-Shot Restore Drill (schedule NOT activated)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-066 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6D backup readiness + 6L restore drill (owner gate = nightly SCHEDULE approval only; script and drill are safe pre-work) |
+| **File Path** | `scripts/backup.sh` (new — pg_dump -Fc, integrity-checked with pg_restore --list, 14-nightly retention keeping 1st-of-month; UNSCHEDULED pending owner approval); `docs/backend/PHASE_6D_6L_BACKUP_RESTORE_DRILL.md` (new — drill evidence + honest scope) |
+| **Drill evidence** | One-shot backup OK (44 KB, 28 TABLE entries in dump); restored into an ISOLATED throwaway postgres:17 container (no volumes, ephemeral password, removed after) — **14/14 public tables match live**. Expected role-ownership warning on cross-cluster restore (harmless). Live instance touched read-only only |
+| **Honest limits** | Live DB tiny (8.5 MB, 0 users) — proves mechanism, not production-scale timing; offsite copy = owner decision; re-drill after any migration and post-launch |
+| **Gotcha** | pg_dump --file=- inside docker exec emits 0 bytes — use plain `pg_dump -Fc` to stdout |
+| **Open (owner)** | Approve nightly schedule -> activates 6D; offsite copy decision |
+| **Status** | COMPLETE — script + drill evidence delivered; schedule gate untouched |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
