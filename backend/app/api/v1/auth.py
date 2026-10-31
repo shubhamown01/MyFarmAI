@@ -140,7 +140,15 @@ async def logout(
     session_id = request.cookies.get(SESSION_COOKIE)
     if session_id:
         await svc.logout(session_id, client_ip=_client_ip(request))
-    response.delete_cookie(SESSION_COOKIE, path="/")
+    # Match the set_cookie attributes (including secure, which is
+    # environment-dependent at login) so browsers actually clear the cookie.
+    response.delete_cookie(
+        SESSION_COOKIE,
+        path="/",
+        secure=svc._settings.environment == "production",
+        httponly=True,
+        samesite="lax",
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

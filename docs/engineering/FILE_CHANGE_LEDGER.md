@@ -1266,6 +1266,20 @@
 
 ---
 
+### FCL-064 — 6C Audit Code Fixes: M2 (allowed_hosts validation), L1 (dead secret_key check), L2 (logout cookie attrs)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-064 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6C audit code-fix queue (items needing no owner decision; M1 auth-on-weather/resources remains an owner decision) |
+| **File Path** | `backend/app/core/config_profiles.py` (M2: production validator now rejects the default localhost-only allowed_hosts — TrustedHostMiddleware would otherwise reject all real traffic; L1: removed dead secret_key check — no such Settings field exists, session cookie carries a server-side token, no signing secret); `backend/app/api/v1/auth.py` (L2: logout delete_cookie now matches set_cookie attrs incl. environment-dependent secure, so browsers actually clear the cookie); `backend/tests/test_config_profiles.py` (new: 3 tests) |
+| **Tests** | `bash scripts/check.sh`: **192 passed, all checks passed** (189 + 3) |
+| **Open** | M1 (owner decision); L3 container hardening bundled with 6B/6F deployment work |
+| **Status** | COMPLETE — M2/L1/L2 fixed with tests; gate green |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

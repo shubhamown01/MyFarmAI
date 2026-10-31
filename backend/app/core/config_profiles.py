@@ -64,7 +64,11 @@ def validate_production_settings(settings_dict: dict[str, Any]) -> list[str]:
         if settings_dict.get("ollama_base_url", "").startswith("http://localhost"):
             errors.append("Production Ollama URL should not use localhost")
 
-        if "default" in str(settings_dict.get("secret_key", "")).lower():
-            errors.append("Default secret detected in production")
+        allowed_hosts = str(settings_dict.get("allowed_hosts", "")).strip()
+        if allowed_hosts in ("", "localhost,127.0.0.1", "127.0.0.1,localhost", "localhost"):
+            errors.append(
+                "allowed_hosts must list the real production hostname "
+                "(default localhost-only would reject all real traffic)"
+            )
 
     return errors
