@@ -1312,6 +1312,21 @@
 
 ---
 
+### FCL-067 — Report 2: Phase 6 Production Readiness (pre-deployment state)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-067 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6 master prompt: compile Report 2 with honest verdict |
+| **File Path** | `docs/backend/PHASE_6_PRODUCTION_READINESS_REPORT.md` (new) |
+| **Verdict** | **PARTIAL — repo-ready; deployment track awaits owner decisions.** All owner-decision-independent workstreams complete (6A/6B/6C+fixes/6D-6L pre-work+drill/6E+G1 fix/6F/6G/6I/6J/6N + live evidence). Honest gaps: no deployment exists (by design), M1 owner decision, 6N pre-launch docs absent, ADR-015/016 acceptance pending, host swap 100% full |
+| **Tests** | Backend 192 passed (latest gate); web build + standalone boot 200; android typecheck/lint PASS |
+| **Unblocking decisions** | Hosting target; domain; nightly-backup approval; M1 auth posture |
+| **Status** | COMPLETE — Report 2 issued at PARTIAL; re-issue at READY FOR OWNER RELEASE APPROVAL after the deployment track |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
