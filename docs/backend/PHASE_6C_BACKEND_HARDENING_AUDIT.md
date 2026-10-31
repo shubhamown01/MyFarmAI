@@ -41,3 +41,13 @@
 - Verified secure baseline: authN/Z, session management, injection defenses (`_sanitize_slot`), vision magic-bytes, research SSRF-safe construction, secrets handling all confirmed during Phases 3–5 and re-confirmed here.
 
 **Verdict: 6C PASS WITH GAPS** — hardened baseline verified; M1/M2 are the priority fixes before public exposure.
+
+---
+
+## Addendum (2026-10-31, later session): code fixes applied
+
+- **M2 FIXED** (FCL-064): `validate_production_settings` now rejects the default localhost-only `allowed_hosts` in production.
+- **L1 FIXED** (FCL-064): dead `secret_key` check removed (no such Settings field — sessions are server-side tokens; no signing secret exists).
+- **L2 FIXED** (FCL-064): logout `delete_cookie` now matches the login `set_cookie` attributes (environment-dependent `secure`, `httponly`, `samesite`).
+- **Still open:** M1 (auth on weather/resources — owner decision), L3 (container hardening — bundled with deployment work), I1/I2 (owner sign-off or fix).
+- Gate at time of addendum: **192 passed, all checks passed**.
