@@ -165,3 +165,10 @@ async def test_resources_requires_auth(async_client: AsyncClient):
     async_client.cookies.clear()  # autouse fixture leaves a session cookie
     resp = await async_client.get("/api/v1/resources")
     assert resp.status_code == 401
+
+
+async def test_resources_categories_and_category_require_auth(async_client: AsyncClient):
+    """6C M1 (QA-caught gap): the remaining /resources endpoints need auth too."""
+    async_client.cookies.clear()
+    assert (await async_client.get("/api/v1/resources/categories")).status_code == 401
+    assert (await async_client.get("/api/v1/resources/crops")).status_code == 401

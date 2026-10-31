@@ -1342,6 +1342,21 @@
 
 ---
 
+### FCL-069 — Phase 6 Final Testing (PART A): Baseline Inspection + Timed DR Exercise + QA-Caught M1 Gap Closed
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-069 |
+| **Date/Time** | 2026-10-31 |
+| **Task Ref** | Phase 6 final testing master prompt (PART A §1 baseline + §5/§11 DR with real measurements + independent QA) |
+| **File Path** | `docs/backend/PHASE_6_BASELINE_INSPECTION.md` (new — read-only inspection at commit 6658c62); `backend/app/api/v1/resources.py` (M1 gap closed: /resources/categories + /resources/{category} now require auth — caught by independent QA reviewer, my regex had missed single-line signatures); `backend/tests/test_resources.py` (+1 combined 401 test) |
+| **Timed DR exercise (§11)** | Fresh backup (1 s) -> isolated postgres:17 drill container (ephemeral password, port 55432, no volumes) -> restore 7 s (14/14 tables) -> app booted against the RESTORED database (health 200) -> **login on restored data: 200**. Measured RTO ≈ 8 s at this scale (0 users, 8.5 MB). Live DB untouched (read-only dump; test user created only in the drill COPY) |
+| **New finding (Low)** | Malformed stored argon2 hash produced 500 on login instead of clean 401 (verifier exception unhandled) — robustness note, queued as a fix candidate |
+| **Tests** | `bash scripts/check.sh`: **195 passed, exit=0** |
+| **Status** | COMPLETE — baseline + timed DR + M1 gap closed; independent QA verification in progress |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

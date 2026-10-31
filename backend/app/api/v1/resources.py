@@ -37,7 +37,7 @@ async def list_resources(
     "/resources/categories",
     response_model=list[str],
 )
-async def list_categories() -> list[str]:
+async def list_categories(user_id=Depends(get_current_user_id)) -> list[str]:
     return resources_catalogue.get_categories()
 
 
@@ -48,7 +48,9 @@ async def list_categories() -> list[str]:
         404: {"description": "Category not found"},
     },
 )
-async def get_resources_by_category(category: str) -> ResourcesResponse:
+async def get_resources_by_category(
+    category: str, user_id=Depends(get_current_user_id)
+) -> ResourcesResponse:
     resources = resources_catalogue.get_by_category(category)
     if not resources:
         from fastapi import HTTPException
