@@ -1,4 +1,11 @@
-import { ChatResponse, WeatherResponse, ResourcesResponse, HealthResponse } from './types';
+import {
+  ChatResponse,
+  WeatherResponse,
+  ResourcesResponse,
+  HealthResponse,
+  DashboardResponse,
+  FarmSummary,
+} from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
 const REQUEST_TIMEOUT = 120000; // 120s for chat
@@ -125,6 +132,16 @@ class ApiClient {
     return this.request<ResourcesResponse>(`/resources/${category}`);
   }
 
+  // Farms & Dashboard
+  async getFarms() {
+    return this.request<FarmSummary[]>('/farms');
+  }
+
+  async getDashboard(farmId: string) {
+    const params = new URLSearchParams({ farm_id: farmId });
+    return this.request<DashboardResponse>(`/dashboard?${params}`);
+  }
+
   // Health
   async checkHealth() {
     return this.request<HealthResponse>('/health');
@@ -132,4 +149,4 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
-export type { ChatResponse, WeatherResponse, ResourcesResponse, HealthResponse };
+export type { ChatResponse, WeatherResponse, ResourcesResponse, HealthResponse, DashboardResponse, FarmSummary };

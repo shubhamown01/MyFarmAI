@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { QuestionComposer } from './QuestionComposer';
+import { FarmIntelligence } from './FarmIntelligence';
 import { FormattedText } from '@/components/Chat/FormattedText';
 import { SeedlingIllustration } from '@/components/Icons/FarmIcons';
 import {
@@ -188,6 +189,8 @@ export function HomeDashboard() {
           })}
         </div>
       </section>
+
+      <FarmIntelligence />
 
       <section className="mt-8" aria-labelledby="recent-heading">
         <SectionHeading

@@ -1451,6 +1451,20 @@
 
 ---
 
+### FCL-076 — Phase 7A-2: Web Farm Intelligence Dashboard
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-076 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7A plan task 7A-2 (implemented by frontend-engineer subagent, 3 sessions; test fixes finalized by orchestrator: regex matcher + explicit 3 s findBy timeouts for the two-step query chain under --ci) |
+| **File Paths** | `web/src/lib/api/types.ts` (dashboard contract types), `web/src/lib/api/client.ts` (getFarms + getDashboard), `web/src/components/Dashboard/useDashboard.ts` (new hook: farms→dashboard two-step query, retry 1, staleTime 5 min, phases loading/no-farm/offline/error/ready; 404 FARM_NOT_FOUND → no-farm), `web/src/components/Dashboard/FarmIntelligence.tsx` (new; per-block cards, "Last updated …", unavailable_reason rendered as-is, Spinner/OfflineIndicator reuse, friendly no-farm empty state, 44 px retry target), `web/src/components/Dashboard/HomeDashboard.tsx` (wired after Quick Actions), `web/src/__tests__/farm-intelligence.test.tsx` (new, 6 cases incl. jest-axe) |
+| **Evidence** | typecheck exit=0 · jest **25/25** · lint clean · production build success. Zero-cost: no new npm deps. Deviation recorded: hook colocated in src/components/Dashboard/ (not src/hooks/) |
+| **Also tracked** | `docs/backend/PHASE_6_QA_INDEPENDENT_VERIFICATION.md` (independent QA report from the Phase 6 cycle — was left untracked; now in git as acceptance evidence) |
+| **Status** | COMPLETE — 7A-2 done; 7A-3 docs + 7A-4 android next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
