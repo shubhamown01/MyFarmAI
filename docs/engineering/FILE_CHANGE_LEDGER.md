@@ -1375,6 +1375,24 @@
 
 ---
 
+### FCL-071 — §4 Backend Production Checks: Request-ID Now Rendered in Logs + Graceful-Shutdown Smoke PASS
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-071 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 6 final testing §4 (Request-ID tests / Logging tests / Graceful shutdown) |
+| **File Path** | `backend/app/factory.py` |
+| **Finding (Medium, observability)** | Request-ID middleware passed `extra={"request_id": ...}` but the default stdlib formatter drops extra fields — request IDs were echoed in the response header yet NEVER appeared in log lines, breaking incident correlation |
+| **Fix** | `_RequestIdFormatter` appended via a StreamHandler in basicConfig — renders `request_id=<id>` on any record that carries it |
+| **Live evidence** | `curl -H "x-request-id: mf6-log-check-7" /health` -> header echoed AND both log lines show `request_id=mf6-log-check-7` |
+| **Graceful shutdown** | SIGTERM to live uvicorn -> "Application shutting down" -> "Database connections closed" -> "Application shutdown complete" -> port released |
+| **Known gap** | Request-ID middleware has no pytest coverage (7 middleware tests cover IP/redaction only); live smoke used as evidence |
+| **Tests** | `bash scripts/check.sh`: **195 passed, exit=0** |
+| **Status** | COMPLETE — §4 request-ID/logging/shutdown items closed with live evidence |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

@@ -70,10 +70,20 @@ def create_app(custom_settings: Settings | None = None, *, test_mode: bool = Fal
     """
     app_settings = custom_settings or default_settings
 
-    # Configure logging
+    # Configure logging. Request-ID-aware formatter: middleware passes the id
+    # via extra={}, which the default formatter drops — without this, request
+    # IDs never appear in log lines and incidents can't be correlated.
+    class _RequestIdFormatter(logging.Formatter):
+        def format(self, record: logging.LogRecord) -> str:
+            base = super().format(record)
+            rid = getattr(record, "request_id", None)
+            return f"{base} request_id={rid}" if rid else base
+
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(_RequestIdFormatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
     logging.basicConfig(
         level=getattr(logging, app_settings.log_level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        handlers=[_handler],
     )
     logger = logging.getLogger("myfarmai")
 
