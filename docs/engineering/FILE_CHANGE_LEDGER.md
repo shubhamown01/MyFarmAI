@@ -1505,6 +1505,20 @@
 
 ---
 
+### FCL-080 — Phase 7B Plan Issued + OWNER APPROVED the First Alembic Migration (3 tables)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-080 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Master prompt §17 (7B); owner answered "Approve as proposed" to the schema question (interactive approval 2026-11-01) |
+| **File Path** | `docs/backend/PHASE_7B_IMPLEMENTATION_PLAN.md` (new) |
+| **Approved scope** | ONE migration: crop_plans (user-scoped, farm+cycle-linked, variety, planting_date, assumptions), crop_plan_tasks (source user|suggested — farmer tasks never overwritten; soft-cancel only), crop_plan_revisions (append-only history with JSON snapshot). Milestones derive ONLY from planting_date + existing Crop.growing_days_min/max, assumptions displayed verbatim. No fertilizer/chemical quantities. Irrigation/fertilizer/pest schedules deferred pending sourced data |
+| **Tasks** | 7B-1 models+migration · 7B-2 repo/service/API+tests · 7B-3 web · 7B-4 android · 7B-5 docs · 7B-6 QA |
+| **Status** | COMPLETE — plan approved; 7B-1 implementation next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
