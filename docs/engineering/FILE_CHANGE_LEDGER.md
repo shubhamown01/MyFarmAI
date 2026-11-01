@@ -1436,6 +1436,21 @@
 
 ---
 
+### FCL-075 — Phase 7A-1: Dashboard Backend (Service + Endpoint + Tests)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-075 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7A plan task 7A-1 (docs/backend/PHASE_7A_IMPLEMENTATION_PLAN.md) |
+| **File Paths** | `backend/app/schemas/dashboard.py` (new), `backend/app/services/dashboard.py` (new), `backend/app/api/v1/dashboard.py` (new), `backend/app/api/v1/router.py` (registration), `backend/tests/test_dashboard.py` (new, 5 tests) |
+| **Design** | GET /api/v1/dashboard?farm_id= — auth-gated; authorization via FarmContextService.get_context (member roles incl. VIEWER; non-members get 404 FARM_NOT_FOUND, no existence leak; error body uses the ADR-009 flat envelope). Blocks: farm / crops (active CropCycle+Crop join) / weather (fail-open; missing-coordinates and provider-outage both explicit) / tasks (real expected_harvest_date only) / alerts (derived locally: weather outage, no cycles, passed harvest window) / recommendations (honest not-available-yet — no saved-recommendation feature exists) / activity (own audit events, cap 20). Every block carries available + updated_at; one unavailable source never blanks the dashboard |
+| **No new tables** | None (existing models only) · **No model calls** (v1) · **No new dependencies** (zero-cost policy) |
+| **Tests** | 5/5 dashboard tests (auth 401, happy path, weather-outage fail-open, no-coordinates, non-member 404); full gate **200 passed, exit=0** |
+| **Status** | COMPLETE — 7A-1 done; 7A-2 (web dashboard) next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
