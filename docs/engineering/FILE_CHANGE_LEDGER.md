@@ -1477,6 +1477,20 @@
 
 ---
 
+### FCL-078 — Phase 7A-4: Android Farm Intelligence Dashboard
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-078 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7A plan task 7A-4 (implemented by android-engineer subagent; investigation + implementation in one session) |
+| **File Paths** | NEW: `android/src/lib/auth/session.ts` (SecureStore token storage), `android/src/types/dashboard.ts` (schema-mirroring types), `android/src/hooks/useDashboard.ts` (farms→dashboard; loading/signed-out/no-farm/offline/error/ready), `android/src/components/DashboardScreen.tsx` (7 blocks, independent degradation, per-block last-updated, honest recommendations state, 48dp targets, accessibility roles). MODIFIED: `android/src/config/api.ts` (farms/dashboard/login endpoints), `android/src/lib/api/client.ts` (bearer auth from SecureStore, getFarms/getDashboard/login with android:true, 30s timeout), `android/src/App.tsx` (Dashboard as initial route; Chat/Weather/Resources intact) |
+| **Deviations (recorded)** | Minimal inline sign-in added (app had ZERO auth wiring — required to reach the auth-gated endpoint; no prior flow changed); refresh-token rotation deferred (401 → sign-in); Dashboard is the new initial route. NOT TESTED: emulator/device runs, EAS build; android has no jest infra (pre-existing; no deps added per zero-cost rule) |
+| **Verification** | `npm run typecheck` PASS exit=0; `npm run lint` PASS exit=0 (actual runs by the subagent) |
+| **Status** | COMPLETE — 7A-4 done; full 7A regression + 7A-5 independent QA next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

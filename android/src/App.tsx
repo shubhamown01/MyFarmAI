@@ -6,6 +6,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from './theme';
+import DashboardScreen from './components/DashboardScreen';
 import ChatInterface from './components/ChatInterface';
 import WeatherCard from './components/WeatherCard';
 import ResourcesList from './components/ResourcesList';
@@ -27,9 +28,14 @@ const App = () => {
               }}
             >
               <Stack.Screen
+                name="Dashboard"
+                component={DashboardScreen}
+                options={{ title: 'MyFarm AI' }}
+              />
+              <Stack.Screen
                 name="Chat"
                 component={ChatScreen}
-                options={{ title: 'MyFarm AI' }}
+                options={{ title: 'MyFarm AI Chat' }}
               />
               <Stack.Screen
                 name="Weather"

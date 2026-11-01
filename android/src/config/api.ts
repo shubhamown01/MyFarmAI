@@ -4,6 +4,9 @@ export const API_ENDPOINTS = {
   weatherCurrent: '/api/v1/weather/current',
   resources: '/api/v1/resources',
   resourceCategories: '/api/v1/resources/categories',
+  farms: '/api/v1/farms',
+  dashboard: '/api/v1/dashboard',
+  login: '/api/v1/auth/login',
   health: '/health',
 } as const;
 

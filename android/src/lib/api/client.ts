@@ -4,9 +4,12 @@ import {
   ResourcesResponse,
   HealthResponse,
 } from '../../types';
+import { DashboardResponse, FarmSummary } from '../../types/dashboard';
+import { getSessionToken } from '../auth/session';
 
 const REQUEST_TIMEOUT = 120000; // 120s for chat (Ollama can be slow)
 const WEATHER_TIMEOUT = 30000; // 30s for weather
+const DASHBOARD_TIMEOUT = 30000; // 30s for dashboard (plain DB + optional weather)
 
 class ApiClient {
   private baseHeaders: Record<string, string> = {
@@ -21,6 +24,7 @@ class ApiClient {
     const requestId = crypto.randomUUID();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const sessionToken = await getSessionToken();
 
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -28,6 +32,11 @@ class ApiClient {
         headers: {
           ...this.baseHeaders,
           'x-request-id': requestId,
+          // Backend accepts the Android session ID as a bearer token
+          // (auth.py _presented_session_id: bearer header or web cookie).
+          ...(sessionToken
+            ? { Authorization: `Bearer ${sessionToken}` }
+            : {}),
           ...options.headers,
         },
         signal: controller.signal,
@@ -140,6 +149,37 @@ class ApiClient {
       API_ENDPOINTS.health,
       {},
       WEATHER_TIMEOUT
+    );
+  }
+
+  // Farms (auth-gated)
+  async getFarms() {
+    return this.request<FarmSummary[]>(
+      API_ENDPOINTS.farms,
+      {},
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  // Dashboard (auth-gated)
+  async getDashboard(farmId: string) {
+    return this.request<DashboardResponse>(
+      `${API_ENDPOINTS.dashboard}?farm_id=${encodeURIComponent(farmId)}`,
+      {},
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  // Android login: backend returns the session ID in the body when
+  // android: true (web instead gets an HttpOnly cookie).
+  async login(email: string, password: string) {
+    return this.request<{ access_token: string | null; refresh_token: string | null }>(
+      API_ENDPOINTS.login,
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, password, android: true }),
+      },
+      DASHBOARD_TIMEOUT
     );
   }
 }
