@@ -1465,6 +1465,18 @@
 
 ---
 
+### FCL-077 — Phase 7A-3: Dashboard Documentation (API.md + APP_FLOW)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-077 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7A plan task 7A-3 (document-first policy) |
+| **File Paths** | `docs/backend/API.md` (new section "Farm Dashboard (P7A)" — contract, auth/404 semantics, per-block availability, ADR-009 envelope note, no-inference/no-invented-statistics statement), `docs/product/APP_FLOW.md` (new §3a dashboard flow: farm resolution → blocks → independent degradation → no-farm empty state → web/Android parity) |
+| **Status** | COMPLETE — 7A-3 done; 7A-4 android next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

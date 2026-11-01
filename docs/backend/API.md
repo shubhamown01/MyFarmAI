@@ -484,6 +484,24 @@ Latitude must be −90..90 and longitude −180..180 (422 otherwise). Creates th
 
 ---
 
+## Farm Dashboard (P7A)
+
+**GET** `/api/v1/dashboard?farm_id=<uuid>` — read-only aggregation of farm intelligence for the caller's farm. Requires authentication; farm members only (roles: owner/member/viewer); non-members get `404 FARM_NOT_FOUND` (no existence leak). Errors use the flat ADR-009 envelope.
+
+Each block carries `available` (bool) and `updated_at`; blocks that can fail also carry `unavailable_reason`. Blocks degrade independently — one unavailable source never fails the request.
+
+- `farm` — name, timezone, address, latitude, longitude.
+- `crops` — active crop cycles (`crop`, `status`, `season_year`, `planting_date`, `expected_harvest_date`).
+- `weather` — current conditions from Open-Meteo (fail-open: unavailable when the farm has no coordinates or the provider is down; reason given).
+- `tasks` — upcoming expected-harvest windows derived from real cycle dates only.
+- `alerts` — derived locally from real state (weather unavailable, no active cycles, passed harvest window).
+- `recommendations` — currently `available: false` ("Saved recommendations are not available yet") — feature not built; shown as an honest empty state.
+- `activity` — the caller's own 20 most recent audit events (never another user's).
+
+No model inference is involved; no invented statistics are returned.
+
+---
+
 ## Crop Cycles (P5A-02)
 
 Crop-cycle records (a crop growing season on a farm). All endpoints require authentication; authorization is farm-membership-scoped (deny-by-default, `404 CROP_CYCLE_NOT_FOUND` for non-members). Create/update require `owner` or `member`; viewers read-only.

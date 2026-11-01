@@ -64,6 +64,17 @@ flowchart TD
 
 History, saved results, and settings subfeatures must be retained or implemented only when supported by the approved scope and current product design.
 
+## 3a. Farm Intelligence Dashboard Flow (P7A)
+
+The home dashboard renders live farm intelligence from the authenticated backend endpoint `GET /api/v1/dashboard?farm_id=<uuid>` (P7A):
+
+1. The app resolves the caller's first farm (`GET /api/v1/farms`), then fetches the dashboard.
+2. The dashboard shows blocks for farm overview, active crop cycles, current weather, upcoming tasks, alerts, saved recommendations, and recent activity — each with a last-updated timestamp.
+3. Blocks degrade independently: weather unavailable (no coordinates or provider outage), no active crops, or missing features (e.g., saved recommendations not yet built) render explicit reasons — never invented statistics.
+4. A user with no farm sees a friendly empty state pointing to farm creation; a failing request shows an error with retry; offline serves cached data with an offline note.
+5. Web and Android consume the same endpoint and business logic (flow parity, §10).
+
+
 ## 4. Agricultural Question-and-Answer Flow
 
 ### 4.1 User journey
