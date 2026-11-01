@@ -1,0 +1,52 @@
+# Phase 7A — Independent QA Verification (Farm Intelligence Dashboard)
+
+**Role:** QA Reviewer (independent verification; read-only except test execution)
+**Date:** 2026-11-01
+**Commits under review:** `1b34e49` (backend, 7A-1), `c8e9889` (web, 7A-2), `7ad6027` (docs, 7A-3), `3c1e51c` (android, 7A-4)
+**Method:** every implementation report was treated as untrusted; each claim was re-checked by running the command or reading the code.
+
+## Verification table
+
+| # | Claim | Command / Inspection | Actual result | Verdict |
+|---|---|---|---|---|
+| 1 | Four 7A commits exist; no uncommitted **tracked** changes | `git log --oneline -8`; `git status --porcelain` | All four commits present in order `1b34e49 → c8e9889 → 7ad6027 → 3c1e51c`. Status shows only untracked files (`.orchestrator/`, `resources/`, `opencode.json.backup-*`, root `package*.json`, `test-*.js`) — all owner-expected, none touched | **VERIFIED** |
+| 2 | `GET /api/v1/dashboard` exists, auth-gated, user-scoped | Read `backend/app/api/v1/dashboard.py` | Route registered with `Depends(get_current_user_id)` (auth-gated); service resolves context via `get_context(user_id, farm_id)` (user-scoped); non-members/permission-denied mapped to `404 FARM_NOT_FOUND` (no existence leak) | **VERIFIED** |
+| 3 | `uv run pytest tests/test_dashboard.py -q` → 5 passed | Run in `backend/` | `5 passed, 1 warning in 3.15s` | **VERIFIED** |
+| 4 | The 5 cases assert: auth 401; happy path (farm name/crops/task); weather-outage fail-open (200); no-coordinates unavailable; non-member 404 FARM_NOT_FOUND | Read `backend/tests/test_dashboard.py` (137 lines) | `test_dashboard_requires_auth` asserts 401. `test_dashboard_happy_path` asserts farm name + latitude, `crops.available`, crop name "Tomato", task derived from a real `expected_harvest_date` 10 days out, honest `recommendations.available=false`, `updated_at` on all blocks. `test_dashboard_weather_outage_fails_open` monkeypatches `get_weather` to raise, asserts **200**, `weather.available=false` with reason, farm block still available. `test_dashboard_no_coordinates_reports_unavailable` asserts "no coordinates" in reason. `test_dashboard_non_member_404` asserts 404 + `error_code == "FARM_NOT_FOUND"`. All are real behavioral assertions; none weakened | **VERIFIED** |
+| 5 | No new DB tables/migrations; no model/AI calls in `services/dashboard.py`; no new backend deps | `git show --stat 1b34e49`; `git diff 8dfc055 1b34e49 -- backend/pyproject.toml`; read `backend/app/services/dashboard.py` | Commit touches only router/schemas/service/tests/ledger/CHANGELOG — no models or migrations. `pyproject.toml` diff is empty. Service imports only DB models/repos, schemas, existing services, and `weather_client`; no model/AI inference calls; read-only aggregation | **VERIFIED** |
+| 6 | Full backend gate: pytest **200 passed**, exit=0 (pytest line, not the banner) | `bash scripts/check.sh > log; echo $?` | `====================== 200 passed, 24 warnings in 41.58s ======================`, **EXIT=0**. Ruff format + Ruff lint also pass. **Flag:** the gate runs `mypy app || true` (non-blocking); mypy reports pre-existing errors in files unrelated to 7A (`app/ai/prompts.py`, `app/services/farm.py`, etc.). Not a 7A regression, but the "All checks passed!" banner alone would indeed be misleading — recorded here as a pre-existing gate weakness | **VERIFIED** (with pre-existing mypy weakness flagged) |
+| 7 | Web: typecheck + jest `--runInBand --ci` + lint + build all pass, 25/25 | `cd web && npm run typecheck && npm test -- --runInBand --ci && npm run lint && npm run build` | typecheck exit 0; jest `Test Suites: 5 passed, 5 total` / **`Tests: 25 passed, 25 total`** exit 0; lint "No ESLint warnings or errors" exit 0; build completed exit 0 | **VERIFIED** |
+| 8 | `farm-intelligence.test.tsx` asserts: farm name; unavailable weather shows reason; no-farm empty state; 404→empty state; error+retry; jest-axe | Read `web/src/__tests__/farm-intelligence.test.tsx` (184 lines) | 6 tests: (1) farm name "Green Acres" + weather/crops/task/last-updated rendered; (2) unavailable weather renders the exact `unavailable_reason` text; (3) empty farms list → "No farm yet", dashboard endpoint never called; (4) `ApiError(404, FARM_NOT_FOUND)` → same "No farm yet" empty state; (5) network error → `role="alert"` + "try again" button; (6) `jest-axe` `toHaveNoViolations()` on rendered data. All real assertions against the API-error types the client actually throws | **VERIFIED** |
+| 9 | No new web deps | `git diff 8dfc055 HEAD -- web/package.json` | Empty diff | **VERIFIED** |
+| 10 | Android: typecheck + lint pass | `cd android && npm run typecheck && npm run lint` | typecheck exit 0; `eslint . --ext .ts,.tsx` exit 0 (no output = no findings) | **VERIFIED** |
+| 11 | `useDashboard.ts` maps 404 FARM_NOT_FOUND → no-farm; 401 → signed-out with token clear | Read `android/src/hooks/useDashboard.ts` | `error.status === 401` → `clearSessionTokens()` then `status='signed-out'`; `error.status === 404 && error.code === 'FARM_NOT_FOUND'` → `status='no-farm'`; plus offline/error branches. `signOut` also clears tokens | **VERIFIED** |
+| 12 | `client.ts` sends Bearer from SecureStore; login uses `android: true` | Read diff of `android/src/lib/api/client.ts` + `android/src/lib/auth/session.ts`; cross-checked `backend/app/api/v1/auth.py` | Every request attaches `Authorization: Bearer <sessionToken>` when `SecureStore.getItemAsync` returns a token (`session.ts`, new file, uses `expo-secure-store` — pre-existing dep). `login()` posts `{email, password, android: true}`; backend `auth.py` lines 102/119 confirm `android` flag → token returned in body | **VERIFIED** |
+| 13 | No new Android deps | `git diff 8dfc055 HEAD -- android/package.json` | Empty diff. (Full `git diff 8dfc055..HEAD --stat` shows **no** package.json/package-lock/pyproject changes on any platform in the whole 7A range) | **VERIFIED** |
+| 14 | Android device QA | — | **Not run.** Android has no Jest/test infrastructure (`android/` has no test runner config), and no emulator/device session was available. The manual checklist (chat, weather, resources, STT/TTS, offline, rate limit, APK install, permissions) was **NOT TESTED**. FCL-078 itself discloses "device QA still pending" — the report is honest | **UNVERIFIED** (disclosed in FCL-078) |
+| 15 | `docs/backend/API.md` "Farm Dashboard (P7A)" section matches the schema | Read diff of API.md + cross-check against `schemas/dashboard.py` fields exercised by tests | Section documents GET endpoint, auth, member-only, 404 no-leak, per-block `available`/`updated_at`/`unavailable_reason`, all 7 blocks (farm/crops/weather/tasks/alerts/recommendations/activity), fail-open weather, honest recommendations empty state, no model inference — matches the tested behavior and schema field names | **VERIFIED** |
+| 16 | `APP_FLOW.md` §3a exists and matches behavior | Read diff of APP_FLOW.md; cross-checked web `useDashboard.ts` / `FarmIntelligence.tsx` | §3a present; steps 1–3 match tests. Step 4's "offline serves cached data with an offline note" is implemented in web code (`phase: 'ready', offline: true` with "showing the last loaded farm data" note) but has **no Jest coverage** — code-verified only. Step 5 parity claim holds structurally (both clients hit the same endpoint) | **VERIFIED** (offline-cached path code-verified, not test-covered — minor) |
+| 17 | FCL-075..078 present in FILE_CHANGE_LEDGER.md | `git diff 8dfc055..HEAD -- docs/engineering/FILE_CHANGE_LEDGER.md` | Four entries `FCL-075`–`FCL-078` with Change ID, Task Ref, Status rows; statuses marked COMPLETE with accurate scope descriptions (including the pending-device-QA disclosure in FCL-078) | **VERIFIED** |
+| 18 | CHANGELOG.md mentions 7A-1..7A-4 | Same diff | Four CHANGELOG bullets, one per 7A-1..7A-4, matching the work done | **VERIFIED** |
+| 19 | Dependency policy: no mandatory external quota for dashboard's essential function | Read `DEPENDENCY_POLICY.md` §3 (rules 6, 15); review 7A diff | Dashboard's essential function is DB-only aggregation; weather is the sole external call and is **fail-open** (provider raise → explicit unavailable block, dashboard still 200 — asserted by test). This matches rule 6 (no free-tier dependency for core function) and rule 15 (graceful degradation); Open-Meteo remains classified OPTIONAL-FREE-EXTERNAL. Zero-cost stack untouched: no dependency manifests changed anywhere in the 7A range (see #5, #9, #13); no paid services introduced | **VERIFIED** |
+| 20 | Playwright critical flows / axe-core browser checks | Not run | Not part of the 7A claim set given for verification; not executed in either QA session. Existing Playwright baseline was not re-exercised against the new dashboard UI | **NOT TESTED** (out of claimed scope; noted for release gate) |
+
+## Verdict: CONFIRMED WITH EXCEPTIONS
+
+All verifiable claims reproduced exactly as stated. The exceptions:
+
+1. **Android device QA — NOT TESTED.** No test infra exists in `android/` and no device/emulator session was run. The only Android evidence is static: typecheck, lint, and code inspection. FCL-078 discloses this honestly; it remains an open release-gate item.
+2. **Pre-existing gate weakness (not 7A's):** `scripts/check.sh` treats mypy as non-blocking (`|| true`) while printing "All checks passed!". The authoritative pass signal is the pytest line (`200 passed`) and exit code, both recorded above. The mypy errors present are in files predating 7A; `services/dashboard.py` and `api/v1/dashboard.py` introduce no new mypy findings in that non-blocking output beyond the pre-existing pattern (`context.py`/`farm.py` annotations).
+3. **Two behavior paths are code-verified but lack automated test coverage:** web offline-cached-with-note (APP_FLOW §3a step 4) and the Android 401-token-clear path (verified by reading `useDashboard.ts`, not executed).
+
+No failed checks. No test weakening observed — all 7A test assertions are behavioral and were read in full.
+
+## Evidence retention
+
+- Backend test output: `5 passed, 1 warning in 3.15s` (session log).
+- Gate output: `200 passed, 24 warnings in 41.58s`, exit 0 (session log).
+- Web: typecheck/jest/lint/build all exit 0; jest summary `Tests: 25 passed, 25 total`.
+- Android: typecheck exit 0, lint exit 0.
+- Dependency diffs (web/android package.json, backend pyproject.toml vs `8dfc055`): all empty.
+
+QA: @qa-reviewer (independent)
+Date: 2026-11-01

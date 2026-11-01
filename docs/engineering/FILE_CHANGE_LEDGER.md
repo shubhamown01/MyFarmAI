@@ -1491,6 +1491,20 @@
 
 ---
 
+### FCL-079 — Phase 7A-5: Independent QA Verification — CONFIRMED WITH EXCEPTIONS
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-079 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7A plan task 7A-5 (qa-reviewer subagent, read-only + test execution) |
+| **File Path** | `docs/backend/PHASE_7A_QA_INDEPENDENT_VERIFICATION.md` (new; 20 claims, all reproducible claims reproduced) |
+| **Verdict** | CONFIRMED WITH EXCEPTIONS. Verified: backend 5/5 dashboard tests + code inspection (no migrations/AI calls/deps); gate 200 passed exit=0; web typecheck/jest 25/25/lint/build + 6 test cases read in full; android typecheck+lint + 401/404 handling + bearer wiring cross-checked against backend auth.py; no dependency manifest changed anywhere in the 7A diff range; docs consistent (API.md / APP_FLOW §3a / FCL-075..078 / CHANGELOG) |
+| **Exceptions (flagged)** | Android device QA NOT TESTED (no test infra/emulator — static evidence only); mypy non-blocking in check.sh (pre-existing gate weakness, banner overstates); two code-verified paths lack automated coverage (web offline-cache note, android 401 token-clear); Playwright/axe browser flows not run (release-gate gap) |
+| **Status** | COMPLETE — Phase 7A evidence independently verified; 7A closed with recorded exceptions. Next: 7B (crop planning) per plan |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
