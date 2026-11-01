@@ -1422,6 +1422,20 @@
 
 ---
 
+### FCL-074 — Owner Acceptance of Phase 6 Recorded + Phase 7A Plan Issued
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-074 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Master prompt §14 hard stop → owner answered "Accept — begin Phase 7" (2026-11-01, interactive approval); PART E steps 7–8 |
+| **File Path** | `docs/backend/PHASE_7A_IMPLEMENTATION_PLAN.md` (new) |
+| **Plan content** | One aggregation endpoint GET /api/v1/dashboard (auth-gated, user-scoped) built strictly on existing services (FarmService, CropCycleService, weather_client fail-open, AuditRepository); per-block available/unavailable_reason + updated_at; no new tables; no model calls in v1 (no invented insights); tasks 7A-1..7A-5 with per-task verification |
+| **Zero-cost policy conformance** | No new external dependencies; weather remains OPTIONAL-FREE-EXTERNAL with explicit unavailable state |
+| **Status** | COMPLETE — plan issued; 7A-1 implementation next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
