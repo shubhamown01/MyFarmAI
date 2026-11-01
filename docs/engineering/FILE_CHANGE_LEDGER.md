@@ -1393,6 +1393,21 @@
 
 ---
 
+### FCL-072 — Owner Directive Applied: Zero-Cost & Open-Source Dependency Policy
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-072 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Owner directive 2026-11-01 (zero-cost & open-source policy) — applied to current state before Report 1 |
+| **File Path** | `docs/engineering/DEPENDENCY_POLICY.md` (new) |
+| **Content** | Full classification of all external services (Postgres, Ollama + qwen models, SearXNG, Open-Meteo, DuckDNS/Caddy plan) and direct code stacks (backend/web/android/infra) per the 7-way classification; conformance check against all 18 directive rules; acceptance-rule assessment |
+| **Key postures** | No PAID-PROHIBITED deps; Open-Meteo OPTIONAL-FREE-EXTERNAL with verified fail-open degradation (rule 6 pass); SearXNG AGPL caveat documented (unmodified self-host = current posture); qwen model licenses recorded as Apache-2.0 per model card with a pre-public-release re-verify note; transitive license audit queued via pip-licenses/license-checker (rule 13 follow-up) |
+| **Tests** | N/A (documentation) — classification evidence cross-references live-verified behaviors (fail-open chat, 503 gates, M1 auth) |
+| **Status** | COMPLETE — directive applied; feeds Phase 6 acceptance criterion 12 |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
