@@ -10,7 +10,7 @@ Crop.growing_days_min/max and displays its assumptions verbatim.
 import uuid
 from datetime import UTC, date, datetime
 from enum import Enum as PyEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import JSON, Date, ForeignKey, String, Text
 from sqlalchemy import Enum as SQLEnum
@@ -116,7 +116,7 @@ class CropPlanRevision(Base, UUIDMixin):
         nullable=False,
     )
     summary: Mapped[str] = mapped_column(String(500), nullable=False)
-    snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
         default=lambda: datetime.now(UTC),

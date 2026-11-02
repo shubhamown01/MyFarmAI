@@ -2,8 +2,8 @@
 
 import uuid
 from collections.abc import Sequence
-from datetime import datetime
-from typing import TYPE_CHECKING
+from datetime import date, datetime
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -890,9 +890,9 @@ class CropPlanRepository:
         *,
         crop_cycle_id: str | None = None,
         variety: str | None = None,
-        planting_date=None,
+        planting_date: date | None = None,
         assumptions: str | None = None,
-        tasks: Sequence[dict] = (),
+        tasks: Sequence[dict[str, Any]] = (),
     ) -> CropPlan:
         plan = CropPlan(
             user_id=user_id,
@@ -934,7 +934,7 @@ class CropPlanRepository:
         return result.scalars().all()
 
     async def append_revision(
-        self, plan_id: str, changed_by: str, summary: str, snapshot: dict
+        self, plan_id: str, changed_by: str, summary: str, snapshot: dict[str, Any]
     ) -> CropPlanRevision:
         revision = CropPlanRevision(
             plan_id=plan_id,

@@ -11,10 +11,14 @@ computation, zero external APIs) and their assumptions are displayed
 verbatim. No fertilizer/chemical quantities exist anywhere in this service.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
+from typing import Any
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.crop_plan import (
     CropPlan,
+    CropPlanRevision,
     CropPlanTask,
     CropPlanTaskSource,
     CropPlanTaskStatus,
@@ -25,6 +29,7 @@ from app.db.repositories import (
     CropPlanRepository,
     CropRepository,
 )
+from app.services.farm import FarmService
 
 ASSUMPTIONS_TEXT = (
     "Milestones are estimates from generic growing-day ranges for the crop — "
@@ -50,7 +55,7 @@ class PlanTaskNotFoundError(Exception):
 class CropPlanService:
     """Crop-plan CRUD + task lifecycle + milestone derivation."""
 
-    def __init__(self, session, farm_service):
+    def __init__(self, session: AsyncSession, farm_service: FarmService) -> None:
         self._plans = CropPlanRepository(session)
         self._cycles = CropCycleRepository(session)
         self._crops = CropRepository(session)
@@ -58,7 +63,7 @@ class CropPlanService:
 
     # --- milestones -------------------------------------------------------
 
-    async def _milestones(self, plan: CropPlan) -> list[dict]:
+    async def _milestones(self, plan: CropPlan) -> list[dict[str, Any]]:
         """Derive milestones from planting_date + generic growing-day ranges.
 
         No data, no milestones — never invented. Assumptions ride along.
@@ -93,7 +98,7 @@ class CropPlanService:
     # --- revisions --------------------------------------------------------
 
     @staticmethod
-    def _snapshot(plan: CropPlan) -> dict:
+    def _snapshot(plan: CropPlan) -> dict[str, Any]:
         return {
             "variety": plan.variety,
             "planting_date": plan.planting_date.isoformat() if plan.planting_date else None,
@@ -110,12 +115,12 @@ class CropPlanService:
             ],
         }
 
-    async def _record(self, plan: CropPlan, user_id: str, summary: str) -> None:
+    async def _record(self, plan: CropPlan, user_id: str, summary: str) -> None:  # noqa
         await self._plans.append_revision(str(plan.id), user_id, summary, self._snapshot(plan))
 
     # --- plan lifecycle ---------------------------------------------------
 
-    async def create_plan(self, user_id: str, farm_id: str, **kwargs) -> CropPlan:
+    async def create_plan(self, user_id: str, farm_id: str, **kwargs: Any) -> CropPlan:
         await self._farm_service._authorized_farm(user_id, farm_id, require=_WRITE_ROLES)
         tasks = kwargs.pop("tasks", [])
         cycle_id = kwargs.pop("crop_cycle_id", None)
@@ -137,7 +142,7 @@ class CropPlanService:
     async def get_plan(self, user_id: str, plan_id: str) -> CropPlan:
         return await self._authorized_plan(user_id, plan_id)
 
-    async def update_plan(self, user_id: str, plan_id: str, **fields) -> CropPlan:
+    async def update_plan(self, user_id: str, plan_id: str, **fields: Any) -> CropPlan:
         plan = await self._authorized_plan(user_id, plan_id, require_member=True)
         cycle_id = fields.pop("crop_cycle_id", None)
         changed = list(fields)
@@ -156,13 +161,15 @@ class CropPlanService:
             setattr(plan, key, value)
         return plan
 
-    async def get_revisions(self, user_id: str, plan_id: str) -> list:
+    async def get_revisions(self, user_id: str, plan_id: str) -> list[CropPlanRevision]:
         plan = await self._authorized_plan(user_id, plan_id)
         return sorted(plan.revisions, key=lambda r: r.created_at)
 
     # --- task lifecycle ---------------------------------------------------
 
-    async def add_task(self, user_id: str, plan_id: str, title: str, due_date=None) -> CropPlanTask:
+    async def add_task(
+        self, user_id: str, plan_id: str, title: str, due_date: date | None = None
+    ) -> CropPlanTask:
         plan = await self._authorized_plan(user_id, plan_id, require_member=True)
         task = CropPlanTask(
             plan_id=plan.id,
@@ -175,7 +182,9 @@ class CropPlanService:
         await self._record(plan, user_id, f"task added: {title}")
         return task
 
-    async def update_task(self, user_id: str, plan_id: str, task_id: str, **fields) -> CropPlanTask:
+    async def update_task(
+        self, user_id: str, plan_id: str, task_id: str, **fields: Any
+    ) -> CropPlanTask:
         """User tasks are freely editable by the farmer (never by the system);
         `source` is immutable. Cancellation is soft — nothing is hard-deleted."""
         plan = await self._authorized_plan(user_id, plan_id, require_member=True)

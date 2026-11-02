@@ -11,6 +11,8 @@ service's membership+role check is the required authorization boundary.
 
 import uuid
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.models.audit import AuditEventType
 from app.db.models.farm import Farm, FarmMember, FarmRole
 from app.db.repositories import AuditRepository, FarmRepository, UserRepository
@@ -34,7 +36,7 @@ _MEMBER_ROLES = (FarmRole.OWNER, FarmRole.MEMBER)
 class FarmService:
     """Farm CRUD and membership with ownership checks."""
 
-    def __init__(self, session):
+    def __init__(self, session: AsyncSession) -> None:
         self._farms = FarmRepository(session)
         self._users = UserRepository(session)
         self._audit = AuditRepository(session)

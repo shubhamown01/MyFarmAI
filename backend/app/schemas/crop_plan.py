@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import date, datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -75,5 +76,5 @@ class CropPlanRevisionResponse(BaseModel):
     id: uuid.UUID
     changed_by: uuid.UUID
     summary: str
-    snapshot: dict
+    snapshot: dict[str, Any]
     created_at: datetime

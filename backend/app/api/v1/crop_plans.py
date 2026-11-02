@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.v1.auth import get_current_user_id
 from app.core.config import Settings
+from app.db.models.crop_plan import CropPlan
 from app.db.session import db_manager
 from app.schemas.crop_plan import (
     CropPlanCreate,
@@ -42,27 +43,29 @@ async def get_crop_plan_service(
         yield CropPlanService(session, FarmService(session))
 
 
-def _not_found(code: str = "CROP_PLAN_NOT_FOUND", detail: str = "crop plan not found"):
+def _not_found(
+    code: str = "CROP_PLAN_NOT_FOUND", detail: str = "crop plan not found"
+) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND, detail={"detail": detail, "error_code": code}
     )
 
 
-def _forbidden():
+def _forbidden() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail={"detail": "insufficient farm role", "error_code": "FARM_FORBIDDEN"},
     )
 
 
-def _invalid(e: CropPlanInvalidError):
+def _invalid(e: CropPlanInvalidError) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         detail={"detail": str(e), "error_code": "CROP_PLAN_INVALID"},
     )
 
 
-async def _response(service: CropPlanService, plan) -> CropPlanResponse:
+async def _response(service: CropPlanService, plan: CropPlan) -> CropPlanResponse:
     milestones = await service._milestones(plan)
     return CropPlanResponse(
         id=plan.id,
@@ -73,7 +76,7 @@ async def _response(service: CropPlanService, plan) -> CropPlanResponse:
         planting_date=plan.planting_date,
         assumptions=plan.assumptions or ASSUMPTIONS_TEXT,
         milestones=[MilestoneResponse(**m) for m in milestones],
-        tasks=plan.tasks,
+        tasks=[PlanTaskResponse.model_validate(t) for t in plan.tasks],
         created_at=plan.created_at,
         updated_at=plan.updated_at,
     )

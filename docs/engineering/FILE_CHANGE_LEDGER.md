@@ -1603,6 +1603,20 @@
 
 ---
 
+### FCL-087 — Readiness Sprint 1: mypy Threshold Gate + Type Cleanup (owner-approved)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-087 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Owner directive 2026-11-01: "fix all bugs and check everything and proper readiness for production and deployment"; owner approved threshold gate interactively |
+| **File Paths** | `scripts/check.sh` (mypy \|\| true removed → error-count threshold gate, baseline 85, may only decrease; final banner no longer overstates — points to the pytest line as authoritative), `backend/app/services/crop_plan.py` + `app/db/models/crop_plan.py` + `app/schemas/crop_plan.py` + `app/db/repositories.py` (7B files fully typed), `app/api/v1/crop_plans.py` (helper/route annotations; REAL type bug fixed: tasks=plan.tasks passed ORM objects where PlanTaskResponse expected — now model_validate'd), `app/services/farm.py` (__init__ typed with AsyncSession — also clears chat.py's untyped-call error) |
+| **Effect** | mypy errors 99 → 71 across the repo; ZERO in 7B files |
+| **Verification** | Full gate: `mypy: 71 errors (baseline 85)`, **209 passed, EXIT=0** |
+| **Status** | COMPLETE — threshold gate live; next: argon2 401 bug fix, then readiness audit |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
