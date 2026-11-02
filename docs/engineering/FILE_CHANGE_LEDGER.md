@@ -1589,6 +1589,20 @@
 
 ---
 
+### FCL-086 — Phase 7B-6: Independent QA Verification — CONFIRMED WITH EXCEPTIONS
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-086 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7B plan task 7B-6 (qa-reviewer subagent, read-only + test execution) |
+| **File Path** | `docs/backend/PHASE_7B_QA_INDEPENDENT_VERIFICATION.md` (new) |
+| **Verdict** | CONFIRMED WITH EXCEPTIONS — all 9 areas verified with re-executed evidence: 5 commits in order; gitignore fix confirmed (10-file models package tracked); migration cycle INDEPENDENTLY re-run clean on throwaway postgres:17 (canonical DB untouched); backend 9/9 crop-plan tests + full gate 209 passed exit=0; security spot-check clean (authz on every route, source forced USER, no raw SQL/external calls); web 35/35 + build, package.json unchanged; android typecheck/lint exit 0 (static); docs consistent; ZERO dependency-manifest changes in the whole 7B range (zero-cost policy honored) |
+| **Exceptions (flagged)** | Android device QA NOT TESTED (no emulator/jest — static only); mypy \|\| true gate weakness confirmed live (99 errors suppressed incl. 21 in 7B files — gate banner overstates; recommend gate fix in a future phase); cosmetic claim discrepancies (10 vs 9 model files; backend assumptions assertion substring-strength). Playwright crop-planning flows not run (jest+axe covers the surface) |
+| **Status** | COMPLETE — Phase 7B closed with recorded exceptions. Next: 7C (irrigation intelligence) one capability at a time |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
