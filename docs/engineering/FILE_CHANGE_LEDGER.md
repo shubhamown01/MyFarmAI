@@ -1549,6 +1549,20 @@
 
 ---
 
+### FCL-083 — Phase 7B-3: Web Crop-Planning UI
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-083 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7B plan task 7B-3 (frontend-engineer subagent, 2 sessions + orchestrator fixes) |
+| **File Paths** | `web/src/lib/api/types.ts` (7B types), `web/src/lib/api/client.ts` (7 methods: getCropPlans/createCropPlan/getCropPlan/getCropPlanRevisions/addCropPlanTask/updateCropPlanTask/getCropCycles), `web/src/components/Crops/useCropPlans.ts` (new; mirrors useDashboard state machine), `web/src/components/Crops/CropPlanning.tsx` (new; plans list, create form, detail with verbatim assumptions + milestones, soft-cancel tasks visible, revisions toggle), `web/src/app/(app)/crops/page.tsx` (UnavailablePage → planning view), `web/src/__tests__/crop-planning.test.tsx` (new; 10 tests incl. axe) |
+| **Deviations** | 401 falls into generic error state (no web sign-in flow exists — recorded); cycle options show "Season {year} · {status}" (cycle response has no crop name); plan detail auto-opens after create. CardTitle h3→h2 swaps in the two plan cards (axe heading-order) |
+| **Verification** | web/ `npm run typecheck` PASS; `npm test --runInBand --ci` **35/35** (6 suites); `npm run lint` clean; `npm run build` OK — all exit 0 |
+| **Status** | COMPLETE — 7B-3 done; 7B-4 android next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

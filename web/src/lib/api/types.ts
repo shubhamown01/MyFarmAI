@@ -183,3 +183,71 @@ export interface FarmSummary {
   is_active: boolean;
   created_at: string;
 }
+
+// ---------------------------------------------------------------------------
+// Crop planning (Phase 7B) — mirrors backend/app/schemas/crop_plan.py.
+// Milestones are estimates; `assumptions` must be displayed verbatim.
+// ---------------------------------------------------------------------------
+
+export type PlanTaskStatus = 'pending' | 'done' | 'cancelled';
+export type PlanTaskSource = 'user' | 'suggested';
+
+export interface CropPlanTask {
+  id: string;
+  title: string;
+  due_date: string | null;
+  source: PlanTaskSource;
+  status: PlanTaskStatus;
+  created_at: string;
+}
+
+export interface PlanMilestone {
+  title: string;
+  date: string;
+  note: string | null;
+}
+
+export interface CropPlan {
+  id: string;
+  farm_id: string;
+  user_id: string;
+  crop_cycle_id: string | null;
+  variety: string | null;
+  planting_date: string | null;
+  assumptions: string | null;
+  milestones: PlanMilestone[];
+  tasks: CropPlanTask[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CropPlanRevision {
+  id: string;
+  changed_by: string;
+  summary: string;
+  snapshot: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface CropPlanCreatePayload {
+  crop_cycle_id?: string | null;
+  variety?: string | null;
+  planting_date?: string | null;
+  tasks?: { title: string; due_date?: string | null }[];
+}
+
+export interface CropPlanTaskUpdatePayload {
+  title?: string;
+  due_date?: string | null;
+  status?: PlanTaskStatus;
+}
+
+// Minimal shape of GET /farms/{farm_id}/crop-cycles items for plan creation
+// (mirrors backend CropCycleResponse; crop name is not part of the response).
+export interface CropCycleSummary {
+  id: string;
+  season_name: string | null;
+  season_year: number;
+  status: string;
+  planting_date: string | null;
+}

@@ -5,6 +5,12 @@ import {
   HealthResponse,
   DashboardResponse,
   FarmSummary,
+  CropCycleSummary,
+  CropPlan,
+  CropPlanCreatePayload,
+  CropPlanRevision,
+  CropPlanTask,
+  CropPlanTaskUpdatePayload,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
@@ -142,6 +148,55 @@ class ApiClient {
     return this.request<DashboardResponse>(`/dashboard?${params}`);
   }
 
+  // Crop cycles (Phase 5A — listed for plan creation)
+  async getCropCycles(farmId: string) {
+    return this.request<CropCycleSummary[]>(`/farms/${farmId}/crop-cycles`);
+  }
+
+  // Crop plans (Phase 7B)
+  async getCropPlans(farmId: string) {
+    return this.request<CropPlan[]>(`/farms/${farmId}/crop-plans`);
+  }
+
+  async createCropPlan(farmId: string, payload: CropPlanCreatePayload) {
+    return this.request<CropPlan>(`/farms/${farmId}/crop-plans`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getCropPlan(planId: string) {
+    return this.request<CropPlan>(`/crop-plans/${planId}`);
+  }
+
+  async getCropPlanRevisions(planId: string) {
+    return this.request<CropPlanRevision[]>(`/crop-plans/${planId}/revisions`);
+  }
+
+  async addCropPlanTask(
+    planId: string,
+    payload: { title: string; due_date?: string | null }
+  ) {
+    return this.request<CropPlanTask>(`/crop-plans/${planId}/tasks`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateCropPlanTask(
+    planId: string,
+    taskId: string,
+    payload: CropPlanTaskUpdatePayload
+  ) {
+    return this.request<CropPlanTask>(
+      `/crop-plans/${planId}/tasks/${taskId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+
   // Health
   async checkHealth() {
     return this.request<HealthResponse>('/health');
@@ -149,4 +204,17 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
-export type { ChatResponse, WeatherResponse, ResourcesResponse, HealthResponse, DashboardResponse, FarmSummary };
+export type {
+  ChatResponse,
+  WeatherResponse,
+  ResourcesResponse,
+  HealthResponse,
+  DashboardResponse,
+  FarmSummary,
+  CropCycleSummary,
+  CropPlan,
+  CropPlanCreatePayload,
+  CropPlanRevision,
+  CropPlanTask,
+  CropPlanTaskUpdatePayload,
+};
