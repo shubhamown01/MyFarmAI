@@ -502,6 +502,41 @@ No model inference is involved; no invented statistics are returned.
 
 ---
 
+## Crop Plans (P7B)
+
+Crop planning with seasonal milestones and farmer-controlled tasks. All endpoints require authentication; farm members only (denying by default — non-members get `404 FARM_NOT_FOUND`). Errors use the flat ADR-009 envelope. Viewer role is read-only; mutations require `owner` or `member`.
+
+Milestones are **estimates derived locally** from `planting_date` + the crop's generic `growing_days_min`/`growing_days_max` — no external services, no invented data. Every plan response carries `assumptions` (rendered verbatim by clients): *"Milestones are estimates from generic growing-day ranges for the crop — variety, local climate and soil are not accounted for unless data exists."* No fertilizer or chemical quantities exist anywhere in this feature.
+
+**Farmer decisions are never silently overwritten:** tasks created via the API are always `source: "user"` (the system cannot re-attribute or auto-modify them); task "deletion" is a soft cancel (`status: "cancelled"`) — history is preserved; every plan mutation appends an immutable revision recording the plan state **before** the change (`GET .../revisions`, oldest first).
+
+**POST** `/api/v1/farms/{farm_id}/crop-plans`
+
+```json
+{
+  "crop_cycle_id": "optional uuid — must belong to this farm",
+  "variety": "optional, max 100 chars",
+  "planting_date": "2026-06-01",
+  "tasks": [{"title": "Buy seeds", "due_date": "2026-05-25"}]
+}
+```
+
+Returns `201` with the plan. A revision (`"plan created"`) is recorded. `422 CROP_PLAN_INVALID` if `crop_cycle_id` references a cycle on another farm. With a linked cycle + planting date, `milestones` are derived (sowing date + earliest/latest harvest windows); without them, `milestones` is empty — never invented.
+
+**GET** `/api/v1/farms/{farm_id}/crop-plans` — plans for the farm (newest first).
+
+**GET** `/api/v1/crop-plans/{plan_id}` — plan detail (tasks included); `404 CROP_PLAN_NOT_FOUND` for non-members.
+
+**PATCH** `/api/v1/crop-plans/{plan_id}` — partial update of `variety`, `planting_date`, `crop_cycle_id` (must belong to the farm). A revision with a before-change snapshot is appended automatically.
+
+**GET** `/api/v1/crop-plans/{plan_id}/revisions` — append-only history: `[{id, changed_by, summary, snapshot, created_at}]`.
+
+**POST** `/api/v1/crop-plans/{plan_id}/tasks` — `{title, due_date?}` → `201` (source always `user`).
+
+**PATCH** `/api/v1/crop-plans/{plan_id}/tasks/{task_id}` — `{title?, due_date?, status?}` with `status` in `pending | done | cancelled`. `source` is immutable. Task-not-found is indistinguishable from plan-not-found (no existence leak).
+
+---
+
 ## Crop Cycles (P5A-02)
 
 Crop-cycle records (a crop growing season on a farm). All endpoints require authentication; authorization is farm-membership-scoped (deny-by-default, `404 CROP_CYCLE_NOT_FOUND` for non-members). Create/update require `owner` or `member`; viewers read-only.

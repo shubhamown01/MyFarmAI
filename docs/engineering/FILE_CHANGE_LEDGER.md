@@ -1577,6 +1577,18 @@
 
 ---
 
+### FCL-085 — Phase 7B-5: Crop-Planning Documentation (API.md + APP_FLOW)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-085 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7B plan task 7B-5 (document-first policy) |
+| **File Paths** | `docs/backend/API.md` (new "Crop Plans (P7B)" section — contract, auth/404 semantics, milestone-derivation + verbatim-assumptions statement, no-input-quantities statement, farmer-task-protection + soft-cancel + before-change revisions, flat ADR-009 envelope), `docs/product/APP_FLOW.md` (new §3b crop-planning flow: create → derived milestones with assumptions → farmer task control → revision history → web/Android parity) |
+| **Status** | COMPLETE — 7B-5 done; 7B-6 independent QA next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

@@ -74,6 +74,16 @@ The home dashboard renders live farm intelligence from the authenticated backend
 4. A user with no farm sees a friendly empty state pointing to farm creation; a failing request shows an error with retry; offline serves cached data with an offline note.
 5. Web and Android consume the same endpoint and business logic (flow parity, §10).
 
+## 3b. Crop Planning Flow (P7B)
+
+Crop planning lets the farmer record what they intend to grow and when, with seasonal milestones estimated from real data only:
+
+1. From the planning screen the farmer creates a plan for their farm: variety, planting date, optionally linked to an existing crop cycle, and optional first tasks.
+2. Milestones (sowing date, earliest/latest expected harvest) are derived locally from the planting date plus the crop's generic growing-day range; the assumptions text is always displayed verbatim — milestones are estimates, never prescriptions. With no planting date or cycle, no milestones are shown.
+3. The farmer manages their own task list: add tasks, mark done, or cancel. Cancelled tasks remain visible (soft cancel); user tasks are never modified or re-attributed by the system. No fertilizer or chemical quantities are part of this flow.
+4. Every plan change appends to a revision history the farmer can review (what changed and when, with a snapshot before each change).
+5. Web and Android consume the same endpoints and business logic (flow parity, §10); a user with no farm sees the friendly empty state.
+
 
 ## 4. Agricultural Question-and-Answer Flow
 
