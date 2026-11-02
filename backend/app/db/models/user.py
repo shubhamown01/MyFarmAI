@@ -1,19 +1,20 @@
 """User and authentication models."""
 
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, Index, String
+from sqlalchemy import Boolean, DateTime, Index, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
-    from app.db.models.farm import Farm, FarmMember
-    from app.db.models.conversation import Conversation
-    from app.db.models.session import Session, RefreshToken
     from app.db.models.audit import AuditEvent
+    from app.db.models.conversation import Conversation
+    from app.db.models.farm import Farm, FarmMember
+    from app.db.models.session import RefreshToken, Session
 
 
 class UserRole(str, Enum):

@@ -1,27 +1,26 @@
 """Conversation and message models."""
 
 import uuid
-from datetime import datetime, timezone
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    DateTime,
     Enum as SQLEnum,
+)
+from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
     String,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
-    from app.db.models.user import User
     from app.db.models.farm import Farm
+    from app.db.models.user import User
 
 
 class MessageRole(str, PyEnum):
@@ -89,7 +88,9 @@ class Conversation(Base, TimestampMixin, UUIDMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<Conversation(id={self.id}, user_id={self.user_id}, messages={self.message_count})>"
+        return (
+            f"<Conversation(id={self.id}, user_id={self.user_id}, messages={self.message_count})>"
+        )
 
 
 class Message(Base, TimestampMixin):

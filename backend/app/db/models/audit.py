@@ -1,18 +1,20 @@
 """Audit event model for security-sensitive actions."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     Index,
     String,
     Text,
     func,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -130,7 +132,7 @@ class AuditEvent(Base, UUIDMixin):
     # Timestamp
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         server_default=func.now(),
         nullable=False,
         index=True,
@@ -154,5 +156,6 @@ class AuditEvent(Base, UUIDMixin):
 
 
 # Need to import func and uuid
-from sqlalchemy import func  # noqa: E402
 import uuid  # noqa: E402
+
+from sqlalchemy import func  # noqa: E402

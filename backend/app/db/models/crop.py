@@ -1,14 +1,12 @@
 """Crop catalogue and crop cycle models."""
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Date,
-    DateTime,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Index,
@@ -17,13 +15,15 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.db.models.farm import Farm
-    from app.db.models.conversation import Conversation
 
 
 class CropCategory(str, PyEnum):
@@ -76,9 +76,7 @@ class Crop(Base, TimestampMixin, UUIDMixin):
         back_populates="crop",
     )
 
-    __table_args__ = (
-        Index("ix_crops_category_active", "category", "is_active"),
-    )
+    __table_args__ = (Index("ix_crops_category_active", "category", "is_active"),)
 
     def __repr__(self) -> str:
         return f"<Crop(id={self.id}, name={self.name}, category={self.category})>"

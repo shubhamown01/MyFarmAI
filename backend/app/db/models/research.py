@@ -1,13 +1,12 @@
 """Research query, source, and citation models."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Index,
@@ -16,12 +15,15 @@ from sqlalchemy import (
     Text,
     func,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
-    from app.db.models.user import User
+    pass
 
 
 class ResearchQueryStatus(str, PyEnum):
@@ -65,7 +67,7 @@ class ResearchQuery(Base, TimestampMixin, UUIDMixin):
     # Timing
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         server_default=func.now(),
         nullable=False,
     )
@@ -182,9 +184,7 @@ class Citation(Base, TimestampMixin, UUIDMixin):
         back_populates="citations",
     )
 
-    __table_args__ = (
-        Index("ix_citations_query_source", "query_id", "source_id"),
-    )
+    __table_args__ = (Index("ix_citations_query_source", "query_id", "source_id"),)
 
     def __repr__(self) -> str:
         return f"<Citation(id={self.id}, query_id={self.query_id}, source_id={self.source_id})>"

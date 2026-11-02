@@ -15,6 +15,10 @@ from app.db.models import (
     Conversation,
     Crop,
     CropCycle,
+    CropPlan,
+    CropPlanRevision,
+    CropPlanTask,
+    CropPlanTaskSource,
     Farm,
     FarmMember,
     Message,
@@ -869,3 +873,75 @@ class AuditRepository:
             .limit(limit)
         )
         return result.scalars().all()
+
+
+class CropPlanRepository:
+    """Repository for crop-plan operations (P7B). Plans, tasks and the
+    append-only revision history are loaded eagerly (async lazy loads would
+    raise MissingGreenlet)."""
+
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def create(
+        self,
+        user_id: str,
+        farm_id: str,
+        *,
+        crop_cycle_id: str | None = None,
+        variety: str | None = None,
+        planting_date=None,
+        assumptions: str | None = None,
+        tasks: Sequence[dict] = (),
+    ) -> CropPlan:
+        plan = CropPlan(
+            user_id=user_id,
+            farm_id=farm_id,
+            crop_cycle_id=crop_cycle_id,
+            variety=variety,
+            planting_date=planting_date,
+            assumptions=assumptions,
+        )
+        self.session.add(plan)
+        await self.session.flush()
+        for task in tasks:
+            self.session.add(
+                CropPlanTask(
+                    plan_id=plan.id,
+                    title=task["title"],
+                    due_date=task.get("due_date"),
+                    source=CropPlanTaskSource.USER,  # API-created tasks are always the farmer's own
+                )
+            )
+        await self.session.flush()
+        return plan
+
+    async def get_by_id(self, plan_id: str) -> CropPlan | None:
+        result = await self.session.execute(
+            select(CropPlan)
+            .options(selectinload(CropPlan.tasks), selectinload(CropPlan.revisions))
+            .where(CropPlan.id == plan_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_by_farm(self, farm_id: str) -> Sequence[CropPlan]:
+        result = await self.session.execute(
+            select(CropPlan)
+            .options(selectinload(CropPlan.tasks), selectinload(CropPlan.revisions))
+            .where(CropPlan.farm_id == farm_id)
+            .order_by(CropPlan.created_at.desc())
+        )
+        return result.scalars().all()
+
+    async def append_revision(
+        self, plan_id: str, changed_by: str, summary: str, snapshot: dict
+    ) -> CropPlanRevision:
+        revision = CropPlanRevision(
+            plan_id=plan_id,
+            changed_by=changed_by,
+            summary=summary,
+            snapshot=snapshot,
+        )
+        self.session.add(revision)
+        await self.session.flush()
+        return revision

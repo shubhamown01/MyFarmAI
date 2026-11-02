@@ -1,10 +1,10 @@
 """Base model and common mixins for SQLAlchemy 2 models."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, TypeVar
 
-from sqlalchemy import DateTime, func, String, TypeDecorator, CHAR
+from sqlalchemy import CHAR, DateTime, TypeDecorator, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
@@ -20,15 +20,15 @@ class TimestampMixin:
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         server_default=func.now(),
         nullable=False,
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         server_default=func.now(),
-        onupdate=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(UTC),
         server_onupdate=func.now(),
         nullable=False,
     )
@@ -50,7 +50,9 @@ class GUID(TypeDecorator[uuid.UUID]):
         else:
             return dialect.type_descriptor(CHAR(36))
 
-    def process_bind_param(self, value: uuid.UUID | str | None, dialect: Any) -> str | uuid.UUID | None:
+    def process_bind_param(
+        self, value: uuid.UUID | str | None, dialect: Any
+    ) -> str | uuid.UUID | None:
         if value is None:
             return value
         if dialect.name == "postgresql":

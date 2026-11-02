@@ -1534,6 +1534,21 @@
 
 ---
 
+### FCL-082 — Phase 7B-2: Crop-Plan Repository + Service + API + Tests
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-082 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7B plan task 7B-2 |
+| **File Paths** | `backend/app/db/repositories.py` (CropPlanRepository: eager-loaded get/list via selectinload, create with user tasks, append_revision), `backend/app/schemas/crop_plan.py` (new — client cannot set task source), `backend/app/services/crop_plan.py` (new — farm authz via FarmService._authorized_farm, milestones ONLY from planting_date + Crop.growing_days_min/max, ASSUMPTIONS_TEXT verbatim, before-change JSON snapshots as append-only revisions, tasks always source=user, soft-cancel only), `backend/app/api/v1/crop_plans.py` (new — 7 routes, flat ADR-009 envelope, non-member 404 no-leak), `backend/app/api/v1/router.py` (registration), `backend/tests/test_crop_plans.py` (new — 9 tests) |
+| **Drive-by fixes** | ruff format/check applied to the model files surfaced by the gitignore fix (format + import reorg + unused-import cleanup only; behavior unchanged) |
+| **Verification** | `pytest tests/test_crop_plans.py` 9 passed; full gate `bash scripts/check.sh` → **209 passed, EXIT=0** (pytest line + exit code read, banner ignored) |
+| **Semantics recorded** | Revisions snapshot the state BEFORE each change (current state = GET); task-not-found indistinguishable from plan-not-found; no cycle linked → no milestones, never invented |
+| **Status** | COMPLETE — 7B-2 done; 7B-3 web + 7B-4 android next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

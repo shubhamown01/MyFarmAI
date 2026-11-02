@@ -8,18 +8,18 @@ Crop.growing_days_min/max and displays its assumptions verbatim.
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, Date, Enum as SQLEnum, ForeignKey, String, Text
+from sqlalchemy import JSON, Date, ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
-    from app.db.models.farm import Farm
-    from app.db.models.user import User
+    pass
 
 
 class CropPlanTaskSource(str, PyEnum):
@@ -119,7 +119,7 @@ class CropPlanRevision(Base, UUIDMixin):
     snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         nullable=False,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
     )
 
     plan: Mapped["CropPlan"] = relationship(back_populates="revisions")

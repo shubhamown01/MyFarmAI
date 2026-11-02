@@ -1,8 +1,8 @@
 """Database models package."""
 
+from app.db.models.audit import AuditEvent, AuditEventType
 from app.db.models.base import Base, ModelBase, TimestampMixin, UUIDMixin
-from app.db.models.user import User, UserRole
-from app.db.models.farm import Farm, FarmMember, FarmRole
+from app.db.models.conversation import Conversation, Message, MessageRole
 from app.db.models.crop import Crop, CropCategory, CropCycle, CropCycleStatus
 from app.db.models.crop_plan import (
     CropPlan,
@@ -11,10 +11,10 @@ from app.db.models.crop_plan import (
     CropPlanTaskSource,
     CropPlanTaskStatus,
 )
-from app.db.models.conversation import Conversation, Message, MessageRole
-from app.db.models.research import ResearchQuery, ResearchSource, Citation, ResearchQueryStatus
-from app.db.models.audit import AuditEvent, AuditEventType
-from app.db.models.session import Session, RefreshToken
+from app.db.models.farm import Farm, FarmMember, FarmRole
+from app.db.models.research import Citation, ResearchQuery, ResearchQueryStatus, ResearchSource
+from app.db.models.session import RefreshToken, Session
+from app.db.models.user import User, UserRole
 
 __all__ = [
     # Base
