@@ -26,13 +26,17 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    """Verify a password; returns False on mismatch or malformed hash."""
+    """Verify a password; returns False on mismatch or malformed hash.
+
+    A malformed stored hash must surface as a plain login failure (the
+    caller records it and raises InvalidCredentialsError) — never a 500.
+    """
     try:
         return _argon2.verify(password_hash, password)
     except VerifyMismatchError:
         return False
-    except InvalidHashError as e:
-        raise InvalidPasswordHashError("stored password hash is malformed") from e
+    except InvalidHashError:
+        return False
 
 
 def needs_rehash(password_hash: str) -> bool:

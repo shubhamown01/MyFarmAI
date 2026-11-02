@@ -1,12 +1,10 @@
 """Unit tests for security primitives (P3-02/P3-03)."""
 
-import pytest
 from argon2.exceptions import (
     InvalidHashError as _ArgonInvalidHash,  # noqa: F401  (asserts lib present)
 )
 
 from app.core.security import (
-    InvalidPasswordHashError,
     generate_refresh_token,
     generate_session_id,
     hash_password,
@@ -27,9 +25,9 @@ class TestPasswordHashing:
         h = hash_password("secret")
         assert verify_password("wrong", h) is False
 
-    def test_malformed_hash_raises(self) -> None:
-        with pytest.raises(InvalidPasswordHashError):
-            verify_password("x", "not-a-hash")
+    def test_malformed_hash_returns_false(self) -> None:
+        # Malformed stored hash → plain login failure, never a 500.
+        assert verify_password("x", "not-a-hash") is False
 
     def test_needs_rehash_on_weak_params(self) -> None:
         # A hash made with lower time_cost must trigger rehash.

@@ -1617,6 +1617,19 @@
 
 ---
 
+### FCL-088 — Readiness Sprint 2: Malformed Argon2 Hash → Clean 401 (queued bug fixed)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-088 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Owner readiness directive; queued fix from the Phase 6 QA backlog |
+| **File Paths** | `backend/app/core/security.py` (verify_password now returns False on InvalidHashError — matching its own documented contract; the malformed-hash case surfaces as a generic invalid-credentials login failure, never a 500; failed-login accounting still applies via the caller), `backend/tests/test_security.py` (test updated: malformed hash → False) |
+| **Verification** | Direct check: `verify_password('x', 'not-a-hash') is False`; `pytest tests/test_security.py tests/test_auth_api.py` → 25 passed. InvalidPasswordHashError class retained for API stability (no longer raised) |
+| **Status** | COMPLETE — queued bug fixed; next: full verification sweep + readiness audit |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
