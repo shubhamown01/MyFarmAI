@@ -1563,6 +1563,20 @@
 
 ---
 
+### FCL-084 — Phase 7B-4: Android Crop-Planning Screen
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-084 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7B plan task 7B-4 (android-engineer subagent, 2 sessions) |
+| **File Paths** | NEW: `android/src/types/cropPlan.ts`, `android/src/hooks/useCropPlans.ts` (useDashboard status machine), `android/src/components/CropPlanningScreen.tsx`. MODIFIED: `android/src/config/api.ts` (5 endpoints), `android/src/lib/api/client.ts` (7 methods + flat-envelope parsing normalization — shared-path change, superset of old behavior, auth untouched), `android/src/components/DashboardScreen.tsx` (export SignInForm/StateScreen for reuse), `android/src/App.tsx` (CropPlanning screen) |
+| **Deviations** | Date entry = validated YYYY-MM-DD TextInput (date picker would add a dep — forbidden); task editing = status changes only (endpoint supports title/due too); revisions show summary+timestamp, not the raw snapshot blob; NO jest infra (pre-existing) — static checks only; device/emulator NOT TESTED |
+| **Verification** | Orchestrator re-ran: `npm run typecheck` exit=0, `npm run lint` exit=0 |
+| **Status** | COMPLETE — 7B-4 done; 7B-5 docs next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

@@ -294,7 +294,8 @@ export const DashboardScreen: React.FC = () => {
   );
 };
 
-const SignInForm: React.FC<{ onSignIn: (email: string, password: string) => Promise<string | null> }> = ({
+// Shared with CropPlanningScreen — identical signed-out / state visuals.
+export const SignInForm: React.FC<{ onSignIn: (email: string, password: string) => Promise<string | null> }> = ({
   onSignIn,
 }) => {
   const { colors } = useTheme();
@@ -385,7 +386,8 @@ const SignInForm: React.FC<{ onSignIn: (email: string, password: string) => Prom
   );
 };
 
-const StateScreen: React.FC<{
+// Shared with CropPlanningScreen — identical empty/offline/error visuals.
+export const StateScreen: React.FC<{
   title: string;
   description: string;
   actionLabel: string;

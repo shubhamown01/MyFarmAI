@@ -10,6 +10,7 @@ import DashboardScreen from './components/DashboardScreen';
 import ChatInterface from './components/ChatInterface';
 import WeatherCard from './components/WeatherCard';
 import ResourcesList from './components/ResourcesList';
+import CropPlanningScreen from './components/CropPlanningScreen';
 
 const Stack = createStackNavigator();
 
@@ -46,6 +47,11 @@ const App = () => {
                 name="Resources"
                 component={ResourcesScreen}
                 options={{ title: 'Resources' }}
+              />
+              <Stack.Screen
+                name="CropPlanning"
+                component={CropPlanningScreen}
+                options={{ title: 'Crop Planning' }}
               />
             </Stack.Navigator>
           </NavigationContainer>

@@ -5,6 +5,15 @@ import {
   HealthResponse,
 } from '../../types';
 import { DashboardResponse, FarmSummary } from '../../types/dashboard';
+import {
+  CropPlan,
+  CropPlanCreateInput,
+  CropPlanRevision,
+  CropPlanUpdateInput,
+  PlanTask,
+  PlanTaskCreateInput,
+  PlanTaskUpdateInput,
+} from '../../types/cropPlan';
 import { getSessionToken } from '../auth/session';
 
 const REQUEST_TIMEOUT = 120000; // 120s for chat (Ollama can be slow)
@@ -46,10 +55,16 @@ class ApiClient {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
+        // Flat ADR-009 envelope: {detail: {detail, error_code}}. Legacy
+        // {detail: string, error_code: string} bodies are still accepted.
+        const detail =
+          error.detail && typeof error.detail === 'object'
+            ? error.detail
+            : { detail: error.detail, error_code: error.error_code };
         throw new ApiError(
           response.status,
-          error.detail || response.statusText,
-          error.error_code
+          detail.detail || response.statusText,
+          detail.error_code
         );
       }
 
@@ -166,6 +181,76 @@ class ApiClient {
     return this.request<DashboardResponse>(
       `${API_ENDPOINTS.dashboard}?farm_id=${encodeURIComponent(farmId)}`,
       {},
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  // Crop plans (auth-gated, Phase 7B)
+  private static fillPath(
+    template: string,
+    params: Record<string, string>
+  ): string {
+    return Object.entries(params).reduce(
+      (path, [key, value]) => path.replace(`{${key}}`, encodeURIComponent(value)),
+      template
+    );
+  }
+
+  async getCropPlans(farmId: string) {
+    return this.request<CropPlan[]>(
+      ApiClient.fillPath(API_ENDPOINTS.cropPlans, { farm_id: farmId }),
+      {},
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  async createCropPlan(farmId: string, body: CropPlanCreateInput) {
+    return this.request<CropPlan>(
+      ApiClient.fillPath(API_ENDPOINTS.cropPlans, { farm_id: farmId }),
+      { method: 'POST', body: JSON.stringify(body) },
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  async getCropPlan(planId: string) {
+    return this.request<CropPlan>(
+      ApiClient.fillPath(API_ENDPOINTS.cropPlan, { plan_id: planId }),
+      {},
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  async updateCropPlan(planId: string, body: CropPlanUpdateInput) {
+    return this.request<CropPlan>(
+      ApiClient.fillPath(API_ENDPOINTS.cropPlan, { plan_id: planId }),
+      { method: 'PATCH', body: JSON.stringify(body) },
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  async getCropPlanRevisions(planId: string) {
+    return this.request<CropPlanRevision[]>(
+      ApiClient.fillPath(API_ENDPOINTS.cropPlanRevisions, { plan_id: planId }),
+      {},
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  async addCropPlanTask(planId: string, body: PlanTaskCreateInput) {
+    return this.request<PlanTask>(
+      ApiClient.fillPath(API_ENDPOINTS.cropPlanTasks, { plan_id: planId }),
+      { method: 'POST', body: JSON.stringify(body) },
+      DASHBOARD_TIMEOUT
+    );
+  }
+
+  async updateCropPlanTask(planId: string, taskId: string, body: PlanTaskUpdateInput) {
+    return this.request<PlanTask>(
+      ApiClient.fillPath(API_ENDPOINTS.cropPlanTask, {
+        plan_id: planId,
+        task_id: taskId,
+      }),
+      { method: 'PATCH', body: JSON.stringify(body) },
       DASHBOARD_TIMEOUT
     );
   }

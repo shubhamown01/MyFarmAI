@@ -8,6 +8,12 @@ export const API_ENDPOINTS = {
   dashboard: '/api/v1/dashboard',
   login: '/api/v1/auth/login',
   health: '/health',
+  // Phase 7B crop plans — {farm_id}/{plan_id}/{task_id} are filled by the client
+  cropPlans: '/api/v1/farms/{farm_id}/crop-plans',
+  cropPlan: '/api/v1/crop-plans/{plan_id}',
+  cropPlanRevisions: '/api/v1/crop-plans/{plan_id}/revisions',
+  cropPlanTasks: '/api/v1/crop-plans/{plan_id}/tasks',
+  cropPlanTask: '/api/v1/crop-plans/{plan_id}/tasks/{task_id}',
 } as const;
 
 // Base URL must NOT carry the /api/v1 prefix: API_ENDPOINTS already include it,
