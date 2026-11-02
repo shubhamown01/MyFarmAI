@@ -74,6 +74,12 @@ class User(Base, TimestampMixin, UUIDMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+    # E3 verification lifecycle: active (admin-created / no selfie flow),
+    # pending_verification (fresh self-signup), rejected. Wave 1 only
+    # transitions active -> pending_verification at signup activation.
+    verification_status: Mapped[str] = mapped_column(
+        String(20), default="active", nullable=False, server_default="active"
+    )
 
     # Relationships
     owned_farms: Mapped[list["Farm"]] = relationship(

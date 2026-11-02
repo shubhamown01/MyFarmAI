@@ -81,6 +81,11 @@ class TestEmailOtpRegistration:
         assert me.status_code == 200, me.text
         assert me.json()["email"] == EMAIL
 
+        async with db_manager.session() as session:
+            user = (await session.execute(select(User).where(User.email == EMAIL))).scalar_one()
+            # E3: self-signup activation lands in pending_verification.
+            assert user.verification_status == "pending_verification"
+
     async def test_wrong_code_invalid_and_attempts_persist(
         self, async_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:

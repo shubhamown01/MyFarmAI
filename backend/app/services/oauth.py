@@ -322,12 +322,14 @@ async def login_or_signup_oauth(
             # PENDING email-OTP user: safe to claim — provider-verified email.
             user.is_active = True
             user.email_verified = True
+            user.verification_status = "pending_verification"  # E3: self-signup
         else:
             user = User(
                 email=email,
                 password_hash=hash_password(secrets.token_urlsafe(32)),
                 is_active=True,
                 email_verified=True,
+                verification_status="pending_verification",  # E3: self-signup
             )
             session.add(user)
             await session.flush()

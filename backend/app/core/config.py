@@ -197,6 +197,17 @@ class Settings(BaseSettings):
         description="OTP email delivery adapter: dev (log/file, never actually delivers)",
     )
 
+    # Selfie verification (E3): policy version stamped on consent records and
+    # the server-internal storage directory for uploaded selfies (0700 dir,
+    # 0600 files; paths never exposed via the API).
+    selfie_policy_version: str = Field(
+        default="2026-11-01", description="Selfie/liveness consent policy version"
+    )
+    selfie_storage_dir: str = Field(
+        default="/data/myfarmai-selfies",
+        description="Server-internal directory for uploaded selfie files (never exposed)",
+    )
+
     # Database pool settings (PostgreSQL)
     db_pool_size: int = Field(
         default=5,

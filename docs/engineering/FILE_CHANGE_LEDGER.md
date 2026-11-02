@@ -1677,6 +1677,22 @@
 
 ---
 
+### FCL-092 — E3 Wave 1: Selfie Consent + Challenge + Capture Upload (Manual-Review Pending)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-092 |
+| **Date/Time** | 2026-11-02 |
+| **Task Ref** | Directive stage E3; binding spec = E3_SELFIE_SECURITY_REVIEW.md (security-engineer, cf35e36); owner approvals: challenge+manual-review, staged schema |
+| **Files (new)** | `backend/app/services/selfie.py`, `backend/app/api/v1/verification.py`, `backend/tests/test_selfie.py`, `backend/alembic/versions/e3a1b2c3d4e5_selfie_verification_tables_e3.py` |
+| **Files (modified)** | `identity.py` (3 models), `user.py` (verification_status), `models/__init__.py`, `verification.py` + `oauth.py` (Q1: activation → pending_verification), `auth.py` (require_verified_user, unattached), `config.py` (selfie_policy_version, selfie_storage_dir), `router.py`, `pyproject.toml`/`uv.lock` (pillow 13.0.0 — classified in DEPENDENCY_POLICY §2), `docs/backend/API.md` |
+| **Security posture** | Directive §5 + review C-1..C-14: no automated-liveness claims; single-use session-bound 2-action challenges (300s, 10/h/user); magic-byte sniff; 5 MiB; 512–4096 px; re-encode strips ALL EXIF/GPS; storage outside repo/web roots (0700/0600, uuid names); NO path/URL ever returned; upload never changes verification_status; privacy-aware; consent before challenge |
+| **Verification** | isolated-postgres migration cycle (e3a1b2c3d4e5 upgrade→downgrade→upgrade, container destroyed; canonical DB untouched); `pytest tests/test_selfie.py tests/test_email_otp.py tests/test_oauth_api.py -q` → 34 passed; full gate EXIT=0, **243 passed**, mypy 74 ≤ 85 (new files clean); ruff clean |
+| **Known deviations** | >5 MiB uploads hit the global body-size middleware first (413 REQUEST_BODY_TOO_LARGE instead of IMAGE_TOO_LARGE — status code preserved) |
+| **Status** | COMPLETE — wave 2 next: admin review queue + approve/reject + retention deletion + admin streaming endpoint |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

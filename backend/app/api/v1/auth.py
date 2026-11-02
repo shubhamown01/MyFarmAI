@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from app.core.client_ip import client_ip_from
 from app.core.config import Settings
 from app.core.security import hash_token
+from app.db.models.user import User
 from app.db.session import db_manager
 from app.schemas.auth import (
     CreateUserRequest,
@@ -523,5 +524,46 @@ async def get_current_user_id(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"detail": "session invalid or expired", "error_code": "SESSION_INVALID"},
+        )
+    return user.id
+
+
+async def require_verified_user(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> uuid.UUID:
+    """E3 gate: allow only users whose verification_status is 'active'.
+
+    'pending_verification' (fresh self-signups) → 403 USER_NOT_VERIFIED;
+    'rejected' → 403 USER_REJECTED. Admin-created users default to 'active'.
+    NOT attached to any endpoint in E3 wave 1 — wiring is a later wave.
+    """
+    if db_manager._is_async:
+        async with db_manager.session() as session:
+            user = await session.get(User, user_id)
+    else:
+        with db_manager.sync_session() as session:  # type: ignore[union-attr]
+            user = session.get(User, user_id)
+
+    if user is None:
+        raise _unauthenticated()
+    if user.verification_status == "pending_verification":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "detail": "account verification incomplete",
+                "error_code": "USER_NOT_VERIFIED",
+                "verification_status": user.verification_status,
+            },
+        )
+    if user.verification_status == "rejected":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "detail": "account verification rejected",
+                "error_code": "USER_REJECTED",
+                "verification_status": user.verification_status,
+            },
         )
     return user.id

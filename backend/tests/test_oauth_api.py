@@ -170,6 +170,7 @@ class TestOAuthCallback:
         async with db_manager.session() as session:
             user = (await session.execute(select(User).where(User.email == EMAIL))).scalar_one()
             assert user.is_active and user.email_verified
+            assert user.verification_status == "pending_verification"  # E3 self-signup
             links = (
                 (
                     await session.execute(
@@ -244,6 +245,7 @@ class TestOAuthCallback:
         async with db_manager.session() as session:
             user = (await session.execute(select(User).where(User.email == EMAIL))).scalar_one()
             assert user.is_active and user.email_verified
+            assert user.verification_status == "pending_verification"  # E3 self-signup
 
     async def test_tampered_signature_invalid_token(
         self, oauth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch

@@ -84,6 +84,27 @@ Verification per directive §4.1: id_token **signature** (JWKS, cached 1 h), **a
 
 **Dependencies:** `pyjwt` (MIT) + `cryptography` (Apache-2.0) — classified in `docs/engineering/DEPENDENCY_POLICY.md` (CORE-SELF-HOSTED, ₹0).
 
+### Verification — Selfie (E3 wave 1)
+
+Mandatory live-selfie onboarding step (directive §5; binding security requirements in `docs/backend/E3_SELFIE_SECURITY_REVIEW.md`). **No automated liveness is claimed** at 2 GiB VRAM: the server issues a randomized 2-action challenge, the capture is taken during the challenge, and a **human manual-review queue** decides. Accounts created via email-OTP or OAuth signup now carry `verification_status = 'pending_verification'` (sessions work; feature gating via `require_verified_user` arrives with later waves). Admin-created users keep `'active'`.
+
+#### `POST /api/v1/verification/selfie/consent`
+
+Records explicit informed consent (type `selfie_liveness`, policy version, client IP) → `{"status": "granted"}`. **Required before challenge issuance.**
+
+#### `POST /api/v1/verification/selfie/challenge`
+
+- Preconditions: `verification_status == 'pending_verification'` (else **409 `NOT_PENDING`**); consent exists (else **409 `CONSENT_REQUIRED`**); ≤ 10 challenges/hour/user (else **429 `RATE_LIMITED`**).
+- **200** → `{challenge_id, actions: [<2 random actions>], expires_in: 300}` — single-use, session-bound (user-scoped), 5-minute TTL; issuing a new challenge invalidates the previous unconsumed one.
+
+#### `POST /api/v1/verification/selfie/upload` (multipart: `file`, `challenge_id`)
+
+Validation order: pending status (409) → consent (409) → challenge consume (**422 `CHALLENGE_INVALID`** — invalid/expired/replayed/wrong-user) → magic-byte sniff JPEG/PNG (**415 `UNSUPPORTED_MEDIA_TYPE`**) → ≤ 5 MiB (**413**) → dimensions 512–4096 px (**422 `IMAGE_DIMENSIONS`**) → server-side re-encode **stripping all metadata (EXIF/GPS)** → stored **outside the repo and web roots** (0700 directory, uuid filename, 0600 file).
+- **200** → `{"status": "received", "review_state": "pending_review"}` — **no path, filename, or URL is ever returned**; raw bytes are only ever accessible through an authenticated admin streaming endpoint (wave 2).
+- An upload NEVER changes `verification_status` — only manual review (wave 2) does. A failed/abandoned capture keeps the account in `pending_verification` (never silently bypassed).
+
+**Privacy/retention:** EXIF/GPS stripped at ingest; raw file deleted after the review decision (wave 2); only the decision + audit events persist; selfies are never used for training or advertising. `pillow` (HPND/MIT-style, ₹0) classified in DEPENDENCY_POLICY for re-encode/EXIF strip.
+
 ---
 
 ## Endpoints

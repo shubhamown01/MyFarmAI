@@ -52,6 +52,10 @@
 `docs/backend/E3_SELFIE_SECURITY_REVIEW.md` (security-engineer, read-only) reviewed the proposed selfie/liveness flow before implementation. Key binding corrections: separate `verification_status` lifecycle on users (E1/E2 currently activate with `is_active=True` — reusing it would break sessions); single-use session-bound challenges (5-min TTL, randomized combos, pool ≥6); qwen assist = fixed-enum hint only, never decisive; storage outside repo/web roots, 0700/0600, EXIF stripped, image bytes only via authenticated admin streaming (no URLs ever minted); encrypted-volume-at-rest recommendation; 14 testable requirements + 14 mandatory negative tests.
 **Q1 decision (derived from directive §4.2, verbatim text now at docs/governance/FINAL_MASTER_DIRECTIVE_2026-11-01.md):** the §4.2 lifecycle applies to EVERY registration method — OAuth accounts also enter `pending_verification` (selfie mandatory for all); E2 OAuth signup changes from instant-active to pending-verification. Email-OTP accounts likewise stay pending-for-selfie after email verification.
 
+### E3 wave 1 — IMPLEMENTED (FCL-092, 2026-11-02)
+
+Backend selfie pipeline: migration `e3a1b2c3d4e5` (consent_records, selfie_verifications, verification_events, users.verification_status — cycle-verified on isolated postgres); consent → randomized 2-action challenge (single-use, session-bound, 300s, 10/hour cap) → upload with full validation chain (magic-byte sniff, 5 MiB, 512–4096 px, Pillow re-encode stripping ALL metadata, 0700/0600 storage outside repo/web roots) → pending_review. Q1 applied: E1/E2 activation points now set `pending_verification` (is_active/sessions unchanged). NO auto-approval — manual review queue is wave 2 (admin queue + approve/reject + retention deletion + admin streaming endpoint). pillow classified (HPND/MIT-style). Tests: 12 selfie + 22 E1/E2 regression; gate 243 passed / mypy 74 ≤ 85 / EXIT=0.
+
 ## 5. Execution plan (staged, one capability at a time)
 
 | Stage | Scope | Blocked by |

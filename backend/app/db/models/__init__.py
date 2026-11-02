@@ -12,7 +12,13 @@ from app.db.models.crop_plan import (
     CropPlanTaskStatus,
 )
 from app.db.models.farm import Farm, FarmMember, FarmRole
-from app.db.models.identity import AuthenticationAccount, ContactVerification
+from app.db.models.identity import (
+    AuthenticationAccount,
+    ConsentRecord,
+    ContactVerification,
+    SelfieVerification,
+    VerificationEvent,
+)
 from app.db.models.research import Citation, ResearchQuery, ResearchQueryStatus, ResearchSource
 from app.db.models.session import RefreshToken, Session
 from app.db.models.user import User, UserRole
@@ -56,6 +62,10 @@ __all__ = [
     # Identity / verification (E1)
     "AuthenticationAccount",
     "ContactVerification",
+    # Identity / verification (E3 selfie)
+    "ConsentRecord",
+    "SelfieVerification",
+    "VerificationEvent",
     # Session
     "Session",
     "RefreshToken",

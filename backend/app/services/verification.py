@@ -179,6 +179,9 @@ class VerificationService:
         assert user is not None  # FK guarantees the row exists
         user.email_verified = True
         user.is_active = True
+        # E3: fresh self-signups enter the selfie-verification flow; sessions
+        # stay usable (feature gating happens via require_verified_user).
+        user.verification_status = "pending_verification"
         session_id, _ = await self._auth._establish_session(
             user, client_ip=client_ip, user_agent=user_agent, android=False
         )
