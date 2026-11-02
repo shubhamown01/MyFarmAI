@@ -48,6 +48,10 @@
 4. **Liveness: fresh capture + randomized challenge + manual-review queue** — accounts stay pending until human approval; never auto-approve.
 5. **OAuth adapters built now with mocked-IdP tests**; owner creates Google/Microsoft apps in parallel; live verification when credentials exist.
 
+### Security-review gate (E3) — 2026-11-02
+`docs/backend/E3_SELFIE_SECURITY_REVIEW.md` (security-engineer, read-only) reviewed the proposed selfie/liveness flow before implementation. Key binding corrections: separate `verification_status` lifecycle on users (E1/E2 currently activate with `is_active=True` — reusing it would break sessions); single-use session-bound challenges (5-min TTL, randomized combos, pool ≥6); qwen assist = fixed-enum hint only, never decisive; storage outside repo/web roots, 0700/0600, EXIF stripped, image bytes only via authenticated admin streaming (no URLs ever minted); encrypted-volume-at-rest recommendation; 14 testable requirements + 14 mandatory negative tests.
+**Q1 decision (derived from directive §4.2, verbatim text now at docs/governance/FINAL_MASTER_DIRECTIVE_2026-11-01.md):** the §4.2 lifecycle applies to EVERY registration method — OAuth accounts also enter `pending_verification` (selfie mandatory for all); E2 OAuth signup changes from instant-active to pending-verification. Email-OTP accounts likewise stay pending-for-selfie after email verification.
+
 ## 5. Execution plan (staged, one capability at a time)
 
 | Stage | Scope | Blocked by |
