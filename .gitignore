@@ -22,7 +22,7 @@ dist/
 build/
 
 # AI / Models
-models/
+/models/
 *.gguf
 *.safetensors
 *.bin
@@ -40,7 +40,6 @@ backend/data/*
 
 # Model caches
 **/.cache/huggingface/
-**/models/
 
 # Logs
 logs/

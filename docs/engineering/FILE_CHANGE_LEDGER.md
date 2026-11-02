@@ -1519,6 +1519,21 @@
 
 ---
 
+### FCL-081 — Phase 7B-1: Crop-Plan Models + Alembic Migration (owner-approved schema)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-081 |
+| **Date/Time** | 2026-11-01 |
+| **Task Ref** | Phase 7B plan task 7B-1 |
+| **File Paths** | `backend/app/db/models/crop_plan.py` (new), `backend/app/db/models/__init__.py` (registration), `backend/alembic/versions/a7c1e409f2b3_crop_plans_tables_p7b.py` (new) |
+| **Schema** | crop_plans (user/farm/cycle FKs, variety, planting_date, assumptions) + crop_plan_tasks (title, due_date, source user|suggested, status pending|done|cancelled — soft-cancel only) + crop_plan_revisions (append-only: changed_by, summary, JSON snapshot). CASCADE on plan links; cycle FK is SET NULL |
+| **Verification** | Migration cycle on ISOLATED throwaway postgres:17 container (port 55433, no volumes): upgrade 6cd2bffd9881→a7c1e409f2b3 → downgrade → upgrade, all clean; 3 tables present; container destroyed after. Gotcha recorded: gen_random_uuid() server default is Postgres-only — SQLite dev DBs use create_all (same as the initial migration) |
+| **CRITICAL finding (fixed)** | `.gitignore` line 25 `models/` + line 43 `**/models/` (meant for model WEIGHTS) had silently excluded the entire `backend/app/db/models/` source package since inception — a fresh clone could not build the app. Fixed by scoping to `/models/` (root weights dir) and deleting `**/models/` (weights already covered by *.gguf/*.safetensors). The full 9-file models package is committed with this entry |
+| **Status** | COMPLETE — 7B-1 done; 7B-2 repo/service/API+tests next |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |
