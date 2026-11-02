@@ -56,6 +56,8 @@
 
 Backend selfie pipeline: migration `e3a1b2c3d4e5` (consent_records, selfie_verifications, verification_events, users.verification_status — cycle-verified on isolated postgres); consent → randomized 2-action challenge (single-use, session-bound, 300s, 10/hour cap) → upload with full validation chain (magic-byte sniff, 5 MiB, 512–4096 px, Pillow re-encode stripping ALL metadata, 0700/0600 storage outside repo/web roots) → pending_review. Q1 applied: E1/E2 activation points now set `pending_verification` (is_active/sessions unchanged). NO auto-approval — manual review queue is wave 2 (admin queue + approve/reject + retention deletion + admin streaming endpoint). pillow classified (HPND/MIT-style). Tests: 12 selfie + 22 E1/E2 regression; gate 243 passed / mypy 74 ≤ 85 / EXIT=0.
 
+**E3 wave 2 — COMPLETE (FCL-093, 2026-11-03):** admin manual-review queue + approve/reject (decision final, raw file deleted immediately — kept only until decision), admin-only raw streaming (audited), retention purge (30 days, runs at queue-list start; scheduled job deferred to ops). User approval flips `verification_status` → 'verified' (column is plain String(20), no CHECK — closed-enum decision available for owner). Fixed: retention purge visibility under autoflush=False (flush before same-session re-query); argon2 timing-test band widened for host-load jitter (code unchanged). Tests: 41 combined (7 admin + 12 selfie + 22 E1/E2); gate 250 passed / mypy 74 ≤ 85 / EXIT=0. No new migration.
+
 ## 5. Execution plan (staged, one capability at a time)
 
 | Stage | Scope | Blocked by |

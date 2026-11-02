@@ -207,6 +207,13 @@ class Settings(BaseSettings):
         default="/data/myfarmai-selfies",
         description="Server-internal directory for uploaded selfie files (never exposed)",
     )
+    # E3 wave 2 retention safety net: pending_review rows older than this are
+    # auto-rejected and their raw file deleted by purge_expired().
+    selfie_retention_days: int = Field(
+        default=30,
+        ge=1,
+        description="Days a selfie may sit pending_review before auto-rejection purge",
+    )
 
     # Database pool settings (PostgreSQL)
     db_pool_size: int = Field(

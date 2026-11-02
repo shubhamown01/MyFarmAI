@@ -105,6 +105,14 @@ Validation order: pending status (409) → consent (409) → challenge consume (
 
 **Privacy/retention:** EXIF/GPS stripped at ingest; raw file deleted after the review decision (wave 2); only the decision + audit events persist; selfies are never used for training or advertising. `pillow` (HPND/MIT-style, ₹0) classified in DEPENDENCY_POLICY for re-encode/EXIF strip.
 
+#### Wave 2 — Manual review (admin-only; role `admin`, else 403 `ADMIN_REQUIRED`)
+
+- `GET /api/v1/verification/admin/selfies?limit=&offset=` — pending-review queue (oldest first; `{id, user_id, created_at, challenge_completed, vl_hint}` — **never** a storage path). Runs the **retention purge** first: `pending_review` rows older than `selfie_retention_days` (30) are auto-rejected (`retention_expired`), their raw files deleted, users set to `rejected` (a scheduled purge job is deferred to ops hardening — wave 3).
+- `POST /api/v1/verification/admin/selfies/{id}/decision` `{approved: bool, reason?: str}` — **final**: sets the decision (approve → user `verification_status='verified'` + `VERIFICATION_APPROVED`; reject → reason required, **422 `REASON_REQUIRED`** if missing → user `'rejected'` + `VERIFICATION_REJECTED`) and **deletes the raw file immediately** (response `{status, user_verification_status, raw_file_deleted}`). Re-reviewing a decided row → **409 `ALREADY_REVIEWED`**; unknown id → **404 `SELFIE_NOT_FOUND`**.
+- `GET /api/v1/verification/admin/selfies/{id}/raw` — the ONLY path to raw capture bytes; streams the file (no filename headers, audited `REVIEW_VIEWED`); **404 `SELFIE_DELETED`** once deleted.
+
+Retention summary: raw captures exist only between upload and decision (or the 30-day retention purge). After deletion only the decision, reasons, and audit events persist. Selfies are never used for model training or advertising.
+
 ---
 
 ## Endpoints

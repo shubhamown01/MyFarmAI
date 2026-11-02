@@ -1693,6 +1693,23 @@
 
 ---
 
+### FCL-093 — E3 Wave 2: Admin Manual-Review Queue + Decision + Retention
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-093 |
+| **Date/Time** | 2026-11-03 |
+| **Task Ref** | Directive stage E3 wave 2; binding spec E3_SELFIE_SECURITY_REVIEW.md; owner approvals: challenge + manual-review queue (never auto-approve) |
+| **Files (new)** | `backend/app/services/selfie_review.py`, `backend/tests/test_selfie_admin.py` |
+| **Files (modified)** | `backend/app/api/v1/verification.py` (3 admin endpoints + _require_admin + error mapping), `backend/app/core/config.py` (selfie_retention_days=30), `backend/tests/test_security.py` (timing-band jitter only), `docs/backend/API.md` |
+| **Security posture** | Admin-only queue/decision/streaming (403 ADMIN_REQUIRED); raw capture deleted at decision (kept only until decision or 30-day retention purge); decision audited (VERIFICATION_APPROVED/REJECTED) + REVIEW_VIEWED on every raw access; reject requires reason (422); queue NEVER exposes storage paths; only admin streams bytes, audited, 404 after deletion |
+| **Bugs fixed** | Retention purge invisible to same-session queue query under autoflush=False → flush before re-query; argon2 timing test upper band 400 ms → 1 s (host-load jitter 659 ms @ load 3.65; code unchanged since 0fae8b9; lower-bound misconfiguration guard intact) |
+| **Verification** | Combined suite `pytest tests/test_selfie_admin.py tests/test_selfie.py tests/test_email_otp.py tests/test_oauth_api.py -q` → **41 passed**; full gate EXIT=0, **250 passed**, mypy 74 ≤ 85; ruff clean; `graphify update .`; NO migration (wave-1 schema sufficient) |
+| **Note** | Approve sets verification_status='verified' (plain String(20), no CHECK constraint — closed-enum available if owner wants it) |
+| **Status** | COMPLETE — E3 backend done (waves 1+2); client camera/consent UI (web + Android) ships with E4/E5 frontend stages |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

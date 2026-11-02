@@ -19,8 +19,10 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi.responses import FileResponse
 from PIL import Image
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,6 +33,7 @@ from app.db.models.identity import ConsentRecord, SelfieVerification, Verificati
 from app.db.models.user import User
 from app.db.session import db_manager
 from app.services import selfie as selfie_service
+from app.services import selfie_review
 from app.services.selfie import ChallengeInvalidError
 
 router = APIRouter(prefix="/verification", tags=["Verification"])
@@ -238,3 +241,83 @@ async def upload_selfie(
             )
         )
     return {"status": "received", "review_state": "pending_review"}
+
+
+# -- admin manual review (E3 wave 2) ------------------------------------------
+
+
+class DecisionRequest(BaseModel):
+    approved: bool
+    reason: str | None = Field(default=None, max_length=255)
+
+
+async def _require_admin(session: AsyncSession, user_id: uuid.UUID) -> None:
+    """Server-side admin role gate (mirrors auth.py admin route pattern)."""
+    user = await session.get(User, user_id)
+    if user is None or user.role.value != "admin":
+        raise _err(403, "admin role required", "ADMIN_REQUIRED")
+
+
+def _map_review_errors(exc: Exception) -> HTTPException:
+    if isinstance(exc, selfie_review.SelfieNotFoundError):
+        return _err(404, "selfie not found", "SELFIE_NOT_FOUND")
+    if isinstance(exc, selfie_review.AlreadyReviewedError):
+        return _err(409, "selfie already reviewed", "ALREADY_REVIEWED")
+    if isinstance(exc, selfie_review.ReasonRequiredError):
+        return _err(422, "a reason is required to reject", "REASON_REQUIRED")
+    if isinstance(exc, selfie_review.SelfieDeletedError):
+        return _err(404, "selfie raw file has been deleted", "SELFIE_DELETED")
+    raise exc  # pragma: no cover
+
+
+@router.get("/admin/selfies")
+async def admin_queue(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    settings: Settings = Depends(get_settings),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> dict[str, Any]:
+    """Admin manual-review queue (pending rows only; no storage paths).
+
+    Retention safety net: rows pending longer than ``selfie_retention_days``
+    are auto-rejected and their raw files deleted before listing.
+    """
+    async with db_manager.session() as session:
+        await _require_admin(session, user_id)
+        await selfie_review.purge_expired(session, settings.selfie_retention_days)
+        items = await selfie_review.list_queue(session, limit=limit, offset=offset)
+    return {"items": items, "count": len(items)}
+
+
+@router.post("/admin/selfies/{selfie_id}/decision")
+async def admin_decide(
+    selfie_id: uuid.UUID,
+    body: DecisionRequest,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> dict[str, Any]:
+    """Final decision: flips status + user verification state, deletes the raw
+    file immediately (raw captures are kept only until the decision)."""
+    try:
+        async with db_manager.session() as session:
+            await _require_admin(session, user_id)
+            result = await selfie_review.decide(
+                session, user_id, selfie_id, body.approved, body.reason
+            )
+    except Exception as exc:
+        raise _map_review_errors(exc) from None
+    return result
+
+
+@router.get("/admin/selfies/{selfie_id}/raw")
+async def admin_raw(
+    selfie_id: uuid.UUID,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> FileResponse:
+    """Admin-only streaming access to the raw capture (the only such path)."""
+    try:
+        async with db_manager.session() as session:
+            await _require_admin(session, user_id)
+            path, mime_type = await selfie_review.stream_selfie(session, user_id, selfie_id)
+    except Exception as exc:
+        raise _map_review_errors(exc) from None
+    return FileResponse(path, media_type=mime_type)
