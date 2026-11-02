@@ -180,6 +180,13 @@ class Settings(BaseSettings):
         ge=1024,
     )
 
+    # Email/OTP delivery (E1): "dev" writes clearly-marked OTP lines to the
+    # server log + /tmp/opencode/dev_otp_outbox.txt; real providers later.
+    email_delivery_mode: str = Field(
+        default="dev",
+        description="OTP email delivery adapter: dev (log/file, never actually delivers)",
+    )
+
     # Database pool settings (PostgreSQL)
     db_pool_size: int = Field(
         default=5,

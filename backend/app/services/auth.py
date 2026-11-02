@@ -152,6 +152,25 @@ class AuthService:
         if needs_rehash(user.password_hash):
             await self._users.update_password_hash(user.id, hash_password(password))
 
+        session_id, refresh_token = await self._establish_session(
+            user, client_ip=client_ip, user_agent=user_agent, android=android
+        )
+        return user, session_id, refresh_token
+
+    async def _establish_session(
+        self,
+        user: User,
+        *,
+        client_ip: str | None = None,
+        user_agent: str | None = None,
+        android: bool = False,
+    ) -> tuple[str, str | None]:
+        """Create a session (and Android refresh token) for an authenticated user.
+
+        Shared by password login and email-OTP verification — this IS the
+        existing login session/token creation path (last-login touch + audit).
+        Returns (session_id, refresh_token); refresh_token is None for web.
+        """
         session_id = generate_session_id()
         ttl = (
             timedelta(minutes=self._settings.access_token_ttl_minutes)
@@ -187,7 +206,7 @@ class AuthService:
             ip_address=client_ip,
             user_agent=user_agent,
         )
-        return user, session_id, refresh_token
+        return session_id, refresh_token
 
     # -- session validation -----------------------------------------------
 

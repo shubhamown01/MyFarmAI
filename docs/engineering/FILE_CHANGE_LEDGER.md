@@ -1644,6 +1644,23 @@
 
 ---
 
+### FCL-090 — E1: Passwordless Email-OTP Registration (Directive Stage E1)
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-090 |
+| **Date/Time** | 2026-11-02 |
+| **Task Ref** | FINAL MASTER ENGINEERING DIRECTIVE stage E1; owner approvals 2026-11-01 (staged schema no-PostGIS; dev-mode email adapter) |
+| **Files (new)** | `backend/app/db/models/identity.py`, `backend/app/services/delivery.py`, `backend/app/services/verification.py`, `backend/alembic/versions/b3f2a5d1c7e4_identity_tables_e1.py`, `backend/tests/test_email_otp.py` |
+| **Files (modified)** | `backend/app/db/models/__init__.py`, `backend/app/services/auth.py` (`_establish_session` extracted; login delegates), `backend/app/api/v1/auth.py` (2 register routes + DI), `backend/app/schemas/auth.py`, `backend/app/core/config.py` (`email_delivery_mode`), `docs/backend/API.md` |
+| **Schema** | `authentication_accounts` (provider String(50), unique (provider, provider_account_id)), `contact_verifications` (channel, destination, argon2 code_hash, expiry, attempts/max_attempts, single-use consumed_at, index (destination, consumed_at)) — migration `b3f2a5d1c7e4`, down_revision `a7c1e409f2b3` |
+| **Delivery** | `EmailDelivery` protocol + DevModeEmailDelivery (clearly-marked NOT-delivered log + /tmp/opencode/dev_otp_outbox.txt); SmsDelivery/UnavailableSmsDelivery stub for later stages; zero new dependencies |
+| **Security** | 6-digit argon2-hashed codes, 10-min expiry, 5-attempt limit (attempts now PERSIST across error responses — DI-session rollback bug found and fixed), 60s resend cooldown (429 + Retry-After), privacy-aware responses, pending users cannot login, web cookie identical to login |
+| **Verification** | `uv run pytest tests/test_email_otp.py -q` → 7 passed; full gate `bash scripts/check.sh` → EXIT=0, **216 passed**, mypy 71 ≤ 85; migration cycle upgrade→downgrade→upgrade verified on isolated throwaway postgres (pg-mig-e1, destroyed after; canonical DB untouched); ruff format+lint clean |
+| **Status** | COMPLETE — E1 done; next E2 (OAuth adapters) |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

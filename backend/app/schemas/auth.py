@@ -56,3 +56,23 @@ class PreferencesUpdate(BaseModel):
     """User preferences (P5G). Only the authenticated user's own preferences."""
 
     preferred_language: str = Field(..., pattern="^[a-z]{2}$")
+
+
+class EmailOtpRequest(BaseModel):
+    """Passwordless signup: request an OTP code (E1). Response is
+    privacy-aware — identical whether or not the email is known."""
+
+    email: EmailStr
+
+
+class EmailOtpVerifyRequest(BaseModel):
+    """Passwordless signup: verify the OTP code (E1)."""
+
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6, pattern="^[0-9]{6}$")
+
+
+class EmailOtpSentResponse(BaseModel):
+    """Privacy-aware response — identical whether or not the email exists."""
+
+    message: str

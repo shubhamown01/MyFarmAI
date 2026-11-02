@@ -12,6 +12,9 @@ from app.core.security import hash_token
 from app.db.session import db_manager
 from app.schemas.auth import (
     CreateUserRequest,
+    EmailOtpRequest,
+    EmailOtpSentResponse,
+    EmailOtpVerifyRequest,
     LoginRequest,
     LoginResponse,
     PreferencesUpdate,
@@ -25,6 +28,14 @@ from app.services.auth import (
     InvalidCredentialsError,
     RefreshTokenInvalidError,
     SessionInvalidError,
+)
+from app.services.delivery import get_email_delivery
+from app.services.verification import (
+    OTPExpiredError,
+    OTPInvalidError,
+    OTPMaxAttemptsError,
+    OTPResendCooldownError,
+    VerificationService,
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -44,6 +55,14 @@ async def get_auth_service(
     # Repositories await their session calls — sync mode is unsupported for auth.
     async with db_manager.session() as session:
         yield AuthService(session, settings)
+
+
+async def get_verification_service(
+    settings: Settings = Depends(get_settings),
+) -> AsyncIterator[VerificationService]:
+    """VerificationService (E1) — same async-session DI shape as AuthService."""
+    async with db_manager.session() as session:
+        yield VerificationService(session, settings, get_email_delivery(settings))
 
 
 def _presented_session_id(request: Request) -> str | None:
@@ -243,6 +262,84 @@ async def admin_create_user(
             detail={"detail": "email already registered", "error_code": "EMAIL_CONFLICT"},
         ) from None
     return _user_response(user)
+
+
+# -- passwordless email registration (E1) ------------------------------------
+
+
+@router.post("/register/email/request-otp", response_model=EmailOtpSentResponse)
+async def register_request_otp(
+    body: EmailOtpRequest,
+    request: Request,
+    svc: VerificationService = Depends(get_verification_service),
+) -> EmailOtpSentResponse:
+    """Issue an email OTP (creating a pending user if the email is unknown).
+
+    Privacy-aware: the response is identical whether or not the address was
+    known — no account-existence disclosure.
+    """
+    try:
+        await svc.request_email_otp(body.email)
+    except OTPResendCooldownError:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "detail": "A code was recently requested. Try again later.",
+                "error_code": "OTP_RESEND_COOLDOWN",
+            },
+            headers={"Retry-After": "60"},
+        ) from None
+    return EmailOtpSentResponse(
+        message="If the email address is valid, a verification code has been sent."
+    )
+
+
+@router.post("/register/email/verify", response_model=LoginResponse)
+async def register_verify_otp(
+    body: EmailOtpVerifyRequest,
+    request: Request,
+    response: Response,
+    svc: VerificationService = Depends(get_verification_service),
+) -> LoginResponse:
+    """Verify the email OTP, activate the user, and open a web session."""
+    try:
+        user, session_id = await svc.verify_email_otp(
+            body.email,
+            body.code,
+            client_ip=_client_ip(request),
+            user_agent=request.headers.get("user-agent"),
+        )
+    except OTPInvalidError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"detail": "invalid or used code", "error_code": "OTP_INVALID"},
+        ) from None
+    except OTPExpiredError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"detail": "code has expired", "error_code": "OTP_EXPIRED"},
+        ) from None
+    except OTPMaxAttemptsError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "detail": "too many attempts; request a new code",
+                "error_code": "OTP_MAX_ATTEMPTS",
+            },
+        ) from None
+
+    # Web: session ID lives in an HttpOnly cookie, never in the body —
+    # identical to the password-login cookie contract.
+    response.set_cookie(
+        key=SESSION_COOKIE,
+        value=session_id,
+        max_age=svc._settings.session_ttl_hours * 3600,
+        httponly=True,
+        secure=svc._settings.environment == "production",
+        samesite="lax",
+        path="/",
+    )
+    return _login_response(user, None, None)
 
 
 # -- principal resolution for private endpoints (P3-08/P3-09) ---------------

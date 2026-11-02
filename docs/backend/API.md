@@ -21,9 +21,44 @@ All API routes are prefixed with `/api/v1`.
 
 - **Web:** opaque session ID in `HttpOnly, Secure (production), SameSite=Lax` cookie; only the SHA-256 hash is stored server-side
 - **Android:** `Authorization: Bearer <session_id>` + single-use rotating refresh token with reuse detection (reuse revokes the whole chain and all user sessions)
-- Accounts are admin-created (`POST /api/v1/auth/admin/users`); no public registration (MVP per ADR-008)
+- Accounts are admin-created (`POST /api/v1/auth/admin/users`); public self-registration is available via passwordless email OTP (below; introduced E1)
 - Protections: per-IP rate limits (stricter on `/api/v1/auth/*`), trusted-proxy-aware client IP, per-account lockout (5 fails / 15 min → 429), Origin/Referer enforcement on cookie-carrying unsafe requests, Argon2id password hashing
 - See `docs/product/flows/AUTHENTICATION_FLOW.md` for the full flows
+
+### Authentication — Passwordless Email Registration (E1)
+
+Public email signup with one-time-code verification. The user never sets a password; the account activates only after successful verification.
+
+#### `POST /api/v1/auth/register/email/request-otp`
+
+```json
+{ "email": "farmer@example.com" }
+```
+
+- **200** → `{ "message": "If the email address is valid, a verification code has been sent." }` — **privacy-aware**: the response is identical whether or not the address was already registered.
+- If the email is unknown, a **pending user** is created (`is_active=false`, `email_verified=false`, unusable random password) plus an `authentication_accounts` row (`provider='email_otp'`).
+- Code: 6 digits, Argon2id-hashed at rest, 10-minute expiry, single-use (consumed on success), max 5 attempts.
+- Resend cooldown: 60 s per destination.
+- **429** `OTP_RESEND_COOLDOWN` + `Retry-After: 60` header if requested inside the cooldown window (429 chosen over 422 because it is a rate/abuse signal, not a validation error).
+- **422** with FastAPI's default validation body (`{"detail": [...]}` — no `error_code`; the flat envelope applies to HTTPException paths only) for malformed input (invalid email or non-6-digit code).
+
+> **DEV-MODE DELIVERY WARNING:** no email provider is configured yet (owner-approved decision, 2026-11-01). Codes are **not actually delivered** — they are logged (`DEV-MODE OTP — NOT ACTUALLY DELIVERED`) and, best-effort, appended to `/tmp/opencode/dev_otp_outbox.txt`. Swap via `email_delivery_mode` config; never treat dev-mode output as real delivery.
+
+#### `POST /api/v1/auth/register/email/verify`
+
+```json
+{ "email": "farmer@example.com", "code": "123456" }
+```
+
+- **200** → `LoginResponse` (same shape as login) + web session cookie set exactly as login. The user is activated (`email_verified=true`, `is_active=true`) and logged in.
+- **422** `OTP_INVALID` — wrong code or no pending verification for this address (attempts increment; persisted even on the error response).
+- **422** `OTP_EXPIRED` — code older than 10 minutes.
+- **422** `OTP_MAX_ATTEMPTS` — 5 wrong codes consumed; the row can no longer be verified (request a new code after the cooldown).
+- Pending (never-verified) users **cannot** log in via `/login` — activation happens only through verification.
+
+Phone (SMS) registration is **not yet exposed**: the delivery-adapter interface exists (`UnavailableSmsDelivery`) and reports "temporarily unavailable" per the owner-approved plan until an approved provider is configured.
+
+New tables (owner-approved staged schema, migration `b3f2a5d1c7e4`): `authentication_accounts`, `contact_verifications`.
 
 ---
 

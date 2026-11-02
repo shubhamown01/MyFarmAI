@@ -12,6 +12,7 @@ from app.db.models.crop_plan import (
     CropPlanTaskStatus,
 )
 from app.db.models.farm import Farm, FarmMember, FarmRole
+from app.db.models.identity import AuthenticationAccount, ContactVerification
 from app.db.models.research import Citation, ResearchQuery, ResearchQueryStatus, ResearchSource
 from app.db.models.session import RefreshToken, Session
 from app.db.models.user import User, UserRole
@@ -52,6 +53,9 @@ __all__ = [
     # Audit
     "AuditEvent",
     "AuditEventType",
+    # Identity / verification (E1)
+    "AuthenticationAccount",
+    "ContactVerification",
     # Session
     "Session",
     "RefreshToken",

@@ -52,7 +52,7 @@
 
 | Stage | Scope | Blocked by |
 |---|---|---|
-| E1 | Email-OTP verification flow (schema + adapter interface + dev-mode delivery + tests) — phone adapter stub with explicit "temporarily unavailable" | B2 choice, B4 schema approval |
+| E1 | **COMPLETE (FCL-090, 2026-11-02)** — passwordless email-OTP registration: migration b3f2a5d1c7e4 (auth_accounts + contact_verifications), dev-mode delivery adapter, verification service, 2 API routes, 7 tests; gate 216 passed / mypy 71 ≤ 85 / EXIT=0; migration cycle verified on isolated postgres. Phone/SMS stays unexposed (adapter reports "temporarily unavailable") | — |
 | E2 | OAuth (Google/Microsoft) adapters, account linking, tests with mock IdP | B1 credentials for live verification only |
 | E3 | Selfie capture + challenge + manual-review workflow + consent records + retention | B4, B6, B7 |
 | E4 | Geolocation detect + geocoding adapter + map (Leaflet/OSM) + polygon draw/edit + geodesic area + land entities | B4, B5 |
