@@ -53,7 +53,7 @@
 | Stage | Scope | Blocked by |
 |---|---|---|
 | E1 | **COMPLETE (FCL-090, 2026-11-02)** — passwordless email-OTP registration: migration b3f2a5d1c7e4 (auth_accounts + contact_verifications), dev-mode delivery adapter, verification service, 2 API routes, 7 tests; gate 216 passed / mypy 71 ≤ 85 / EXIT=0; migration cycle verified on isolated postgres. Phone/SMS stays unexposed (adapter reports "temporarily unavailable") | — |
-| E2 | OAuth (Google/Microsoft) adapters, account linking, tests with mock IdP | B1 credentials for live verification only |
+| E2 | **COMPLETE (FCL-091, 2026-11-02)** — OIDC authorization-code adapters for Google/Microsoft (signature/audience/issuer/nonce/expiry verified via JWKS + PyJWT), account-linking protection (409 OAUTH_EMAIL_TAKEN — never silently merged; pending users claimed), in-memory single-use state store (single-process limitation documented), mocked-IdP tests with real in-test RSA keypair (zero network); pyjwt+cryptography classified and added; 22 tests; gate 231 passed / EXIT=0. **Live IdP verification deferred until owner creates the OAuth apps** (503 OAUTH_NOT_CONFIGURED until then) | B1 credentials for live verification only |
 | E3 | Selfie capture + challenge + manual-review workflow + consent records + retention | B4, B6, B7 |
 | E4 | Geolocation detect + geocoding adapter + map (Leaflet/OSM) + polygon draw/edit + geodesic area + land entities | B4, B5 |
 | E5 | Farmer profile + onboarding state machine (resume incomplete onboarding) + progressive completion | B4 |

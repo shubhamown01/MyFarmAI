@@ -180,6 +180,16 @@ class Settings(BaseSettings):
         ge=1024,
     )
 
+    # OAuth (E2): a provider is enabled only when BOTH its id and secret are
+    # set (env-based; empty defaults keep OAuth disabled until the owner
+    # creates the Google/Microsoft cloud apps).
+    oauth_google_client_id: str = Field(default="", description="Google OAuth client id")
+    oauth_google_client_secret: str = Field(default="", description="Google OAuth client secret")
+    oauth_microsoft_client_id: str = Field(default="", description="Microsoft OAuth client id")
+    oauth_microsoft_client_secret: str = Field(
+        default="", description="Microsoft OAuth client secret"
+    )
+
     # Email/OTP delivery (E1): "dev" writes clearly-marked OTP lines to the
     # server log + /tmp/opencode/dev_otp_outbox.txt; real providers later.
     email_delivery_mode: str = Field(

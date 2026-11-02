@@ -24,7 +24,7 @@
 
 | Stack | Direct deps (pinned) | Licenses (family) | Cost | Class |
 |---|---|---|---|---|
-| Backend (`backend/pyproject.toml`) | fastapi, uvicorn, httpx, pydantic-settings, aiosqlite, sqlalchemy, asyncpg, alembic, psycopg, argon2-cffi, email-validator, python-multipart | BSD/MIT/Apache-2.0 family; argon2-cffi is CN-CC0/aladdin-style permissive for use | ₹0 | CORE-SELF-HOSTED |
+| Backend (`backend/pyproject.toml`) | fastapi, uvicorn, httpx, pydantic-settings, aiosqlite, sqlalchemy, asyncpg, alembic, psycopg, argon2-cffi, email-validator, python-multipart, pyjwt (E2 OAuth id_token verification), cryptography (JWKS/RSA — pyjwt[crypto]) | BSD/MIT/Apache-2.0 family; argon2-cffi is CN-CC0/aladdin-style permissive for use; PyJWT MIT; cryptography Apache-2.0/BSD-3 | ₹0 | CORE-SELF-HOSTED |
 | Dev backend | pytest, pytest-asyncio, pytest-cov, ruff, mypy | MIT family | ₹0 | OPTIONAL-OPEN-SOURCE |
 | Web (`web/package.json`) | next, react, react-dom, @tanstack/react-query, zustand, clsx, lucide-react, motion, tailwind-merge | MIT family (next/react MIT) | ₹0 | CORE-SELF-HOSTED |
 | Android (`android/package.json`) | expo, expo-router, expo-secure-store, expo-speech, expo-speech-recognition, react-native, react-native-paper, navigation/reanimated/screens, zustand | MIT family (Expo EULA for managed tooling is free for this use) | ₹0 | CORE-SELF-HOSTED |

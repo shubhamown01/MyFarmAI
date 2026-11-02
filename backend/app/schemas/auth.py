@@ -76,3 +76,11 @@ class EmailOtpSentResponse(BaseModel):
     """Privacy-aware response — identical whether or not the email exists."""
 
     message: str
+
+
+class OAuthAuthorizeResponse(BaseModel):
+    """E2: URL the web client redirects the browser to; ``state`` is echoed
+    back as the ``state`` query parameter on the callback."""
+
+    authorize_url: str
+    state: str

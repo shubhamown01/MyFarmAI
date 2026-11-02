@@ -17,11 +17,13 @@ from app.schemas.auth import (
     EmailOtpVerifyRequest,
     LoginRequest,
     LoginResponse,
+    OAuthAuthorizeResponse,
     PreferencesUpdate,
     RefreshRequest,
     SessionUserResponse,
     UserResponse,
 )
+from app.services import oauth as oauth_service
 from app.services.auth import (
     AccountLockedError,
     AuthService,
@@ -30,6 +32,13 @@ from app.services.auth import (
     SessionInvalidError,
 )
 from app.services.delivery import get_email_delivery
+from app.services.oauth import (
+    OAuthEmailTakenError,
+    OAuthInvalidStateError,
+    OAuthInvalidTokenError,
+    OAuthProviderError,
+    OAuthTokenExchangeError,
+)
 from app.services.verification import (
     OTPExpiredError,
     OTPInvalidError,
@@ -336,6 +345,128 @@ async def register_verify_otp(
         max_age=svc._settings.session_ttl_hours * 3600,
         httponly=True,
         secure=svc._settings.environment == "production",
+        samesite="lax",
+        path="/",
+    )
+    return _login_response(user, None, None)
+
+
+# -- OAuth (E2): Google/Microsoft authorization-code login/signup ------------
+
+
+def _oauth_not_configured() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={
+            "detail": "OAuth provider is not configured",
+            "error_code": "OAUTH_NOT_CONFIGURED",
+        },
+    )
+
+
+@router.get("/oauth/{provider}/authorize", response_model=OAuthAuthorizeResponse)
+async def oauth_authorize(
+    provider: str,
+    request: Request,
+    redirect_uri: str,
+    settings: Settings = Depends(get_settings),
+) -> OAuthAuthorizeResponse:
+    """Start the OAuth flow: build the provider authorize URL.
+
+    The state/nonce pair is stored server-side (single-use, 10-min TTL) and
+    the state is returned so the web client passes it back on the callback.
+    """
+    p = oauth_service.get_oauth_provider(provider, settings)
+    if p is None:
+        raise _oauth_not_configured()
+    authorize_url, state = oauth_service.build_authorize_url(p, redirect_uri)
+    return OAuthAuthorizeResponse(authorize_url=authorize_url, state=state)
+
+
+@router.get("/oauth/{provider}/callback", response_model=LoginResponse)
+async def oauth_callback(
+    provider: str,
+    request: Request,
+    response: Response,
+    code: str,
+    state: str,
+    redirect_uri: str,
+    settings: Settings = Depends(get_settings),
+) -> LoginResponse:
+    """Finish the OAuth flow: verify state+id_token, then login/link/signup.
+
+    Account-linking protection: a provider-verified email belonging to an
+    ACTIVE account returns 409 OAUTH_EMAIL_TAKEN (never silently merged); a
+    PENDING email-OTP user is claimed (activated + linked).
+    """
+    p = oauth_service.get_oauth_provider(provider, settings)
+    if p is None:
+        raise _oauth_not_configured()
+    try:
+        nonce = oauth_service.consume_oauth_state(state)
+        claims = await oauth_service.exchange_and_verify(p, code, redirect_uri, nonce)
+    except OAuthInvalidStateError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "detail": "invalid or expired OAuth state; restart the flow",
+                "error_code": "OAUTH_INVALID_STATE",
+            },
+        ) from None
+    except OAuthTokenExchangeError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={
+                "detail": "OAuth token exchange failed",
+                "error_code": "OAUTH_TOKEN_EXCHANGE_FAILED",
+            },
+        ) from None
+    except OAuthInvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "detail": "OAuth id_token failed validation",
+                "error_code": "OAUTH_INVALID_TOKEN",
+            },
+        ) from None
+    except OAuthProviderError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={
+                "detail": "OAuth provider error",
+                "error_code": "OAUTH_PROVIDER_ERROR",
+            },
+        ) from None
+
+    try:
+        async with db_manager.session() as session:
+            user, session_id = await oauth_service.login_or_signup_oauth(
+                session,
+                claims,
+                settings,
+                client_ip=_client_ip(request),
+                user_agent=request.headers.get("user-agent"),
+            )
+    except OAuthEmailTakenError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "detail": (
+                    "This email is already registered. Log in with your "
+                    "existing method to link the provider."
+                ),
+                "error_code": "OAUTH_EMAIL_TAKEN",
+            },
+        ) from None
+
+    # Web: session ID lives in an HttpOnly cookie — identical to the E1
+    # verify route's cookie contract.
+    response.set_cookie(
+        key=SESSION_COOKIE,
+        value=session_id,
+        max_age=settings.session_ttl_hours * 3600,
+        httponly=True,
+        secure=settings.environment == "production",
         samesite="lax",
         path="/",
     )

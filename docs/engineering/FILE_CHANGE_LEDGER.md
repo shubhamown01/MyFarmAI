@@ -1661,6 +1661,22 @@
 
 ---
 
+### FCL-091 — E2: OAuth Adapters (Google/Microsoft) + Account-Linking Protection
+
+| Field | Value |
+|-------|-------|
+| **Change ID** | FCL-091 |
+| **Date/Time** | 2026-11-02 |
+| **Task Ref** | FINAL MASTER ENGINEERING DIRECTIVE stage E2; owner approval: build now with mocked-IdP tests, live-verify when credentials exist |
+| **Files (new)** | `backend/app/services/oauth.py`, `backend/tests/test_oauth_api.py` |
+| **Files (modified)** | `backend/pyproject.toml` + `uv.lock` (pyjwt[crypto] — pyjwt 2.15.1 MIT, cryptography 50.0.2 Apache-2.0), `docs/engineering/DEPENDENCY_POLICY.md` (classified BEFORE install), `backend/app/core/config.py` (4 OAuth settings, default ""), `backend/app/api/v1/auth.py` (authorize + callback routes, flat-envelope error mapping), `backend/app/schemas/auth.py` (OAuthAuthorizeResponse), `docs/backend/API.md` |
+| **Security design** | id_token signature via JWKS (cached 1 h) + audience + issuer (Google exact; Microsoft tenant predicate) + single-use state/nonce (10-min TTL, in-memory — single-process limitation documented in API.md); linking protection: 409 OAUTH_EMAIL_TAKEN for active accounts (NEVER silently merged), pending email-OTP users claimed, new users active+verified; session via shared _establish_session path |
+| **Verification** | `uv run pytest tests/test_oauth_api.py tests/test_email_otp.py -q` → 22 passed; full gate `bash scripts/check.sh` → EXIT=0, **231 passed**, mypy ≤ 85 (new files mypy-clean after fixture annotation fix); ruff format+lint clean; NO migration (in-memory state store — approved path) |
+| **Known gap** | OAuth failure outcomes are not audit-logged (only LOGIN_SUCCESS via _establish_session); live IdP verification deferred until owner creates Google/Microsoft apps (503 OAUTH_NOT_CONFIGURED until then) |
+| **Status** | COMPLETE — E2 done; next E3 (selfie + challenge + manual review; security-engineer review mandatory pre-implementation) |
+
+---
+
 ### FCL-021 — P3-05/P3-09: Ownership Predicates and Auth-Gated Chat with Real User Attribution
 
 | Field | Value |

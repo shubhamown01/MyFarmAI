@@ -60,6 +60,30 @@ Phone (SMS) registration is **not yet exposed**: the delivery-adapter interface 
 
 New tables (owner-approved staged schema, migration `b3f2a5d1c7e4`): `authentication_accounts`, `contact_verifications`.
 
+### Authentication — OAuth (E2)
+
+OIDC authorization-code login/signup for **Google** and **Microsoft**. Providers are **disabled until the owner creates the OAuth apps** (client id/secret via env: `oauth_google_client_id/secret`, `oauth_microsoft_client_id/secret`) — both endpoints then return **503 `OAUTH_NOT_CONFIGURED`**.
+
+#### `GET /api/v1/auth/oauth/{provider}/authorize?redirect_uri=...`
+
+- **200** → `{"authorize_url": "...", "state": "..."}` — redirect the user to `authorize_url`. The server generates `state` + `nonce` (`secrets.token_urlsafe(32)`); nonce is embedded in the authorize URL and stored server-side keyed by state (10-min TTL, single use).
+- **503** `OAUTH_NOT_CONFIGURED` — unknown or unconfigured provider.
+- **Single-process limitation:** state/nonce live in an in-memory store; restarting the backend mid-flow invalidates pending OAuth attempts. Acceptable for the single-process deployment; revisit for multi-worker/multi-node.
+
+#### `GET /api/v1/auth/oauth/{provider}/callback?code=&state=&redirect_uri=...`
+
+Verification per directive §4.1: id_token **signature** (JWKS, cached 1 h), **audience** (`client_id`), **issuer** (Google exact match; Microsoft tenant-varying predicate), **nonce** (consumed with the state), expiry.
+
+- **200** → `LoginResponse` + web session cookie (same as login/verify). Account resolution with **linking protection**:
+  - Existing `(provider, subject)` link → login (must be active).
+  - Email matches an **active** account → **409 `OAUTH_EMAIL_TAKEN`** — the account is NEVER silently merged; the user logs in with their existing method.
+  - Email matches a **pending** email-OTP user → claimed: activated, `email_verified=true`, linked (provider-verified email).
+  - No match → new active, verified user + link.
+- Errors (flat envelope): **422** `OAUTH_INVALID_STATE` (unknown/expired/replayed state), **422** `OAUTH_INVALID_TOKEN` (signature/audience/issuer/nonce/exp failure), **502** `OAUTH_TOKEN_EXCHANGE_FAILED` (token endpoint non-200), **502** `OAUTH_PROVIDER_ERROR` (JWKS/transport).
+- **Mocked-IdP tests:** the full signature-verification path is tested against an in-test RSA keypair over `httpx.MockTransport` — zero network; live IdP verification is deferred until owner credentials exist.
+
+**Dependencies:** `pyjwt` (MIT) + `cryptography` (Apache-2.0) — classified in `docs/engineering/DEPENDENCY_POLICY.md` (CORE-SELF-HOSTED, ₹0).
+
 ---
 
 ## Endpoints
