@@ -32,7 +32,7 @@
 | IP spoofing to evade limits | X-Forwarded-For honored only from configured trusted proxies; peer address otherwise authoritative |
 | Cross-user data access (IDOR) | Ownership predicates in SQL at repository layer; 404 semantics; tested at service and API levels |
 | Privilege escalation | Admin endpoints check role server-side; no role-change endpoint; non-admin → 403, anonymous → 401 |
-| Resource exhaustion | Body-size limit (10 MB cap incl. chunked-encoding rejection), bounded rate-limit counters, AI-request semaphore (`ai_max_concurrent_requests=2`), DB-level request limits |
+| Resource exhaustion | Body-size limit (10 MB cap, stream-enforced — chunked bodies are capped with early abort, not blanket-rejected: AppSail's edge proxy rewrites POSTs to chunked, so the 2026-10-29 outright-rejection exit-gate was superseded 2026-11-06 per security review PASS-with-fixes; memory bounded at ~cap + one chunk), bounded rate-limit counters, AI-request semaphore (`ai_max_concurrent_requests=2`), DB-level request limits |
 | SQL injection | SQLAlchemy ORM, parameterized queries throughout |
 | Secrets in audit logs | Audit payloads limited to ids, categories, generic descriptions, IP, UA |
 
