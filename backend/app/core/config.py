@@ -308,6 +308,11 @@ class Settings(BaseSettings):
         env = Environment(self.environment)
         defaults = get_profile_defaults(env)
         for key, default_value in defaults.items():
+            # Explicitly set values (env var or constructor kwarg) always win,
+            # even when set to "" — e.g. OLLAMA_BASE_URL="" disables the local
+            # model server on hosts without one (cloud staging).
+            if key in self.model_fields_set:
+                continue
             current = getattr(self, key, None)
             # Only apply if current value matches the class default (i.e., not explicitly set via env)
             # This is a heuristic; explicit env vars take precedence

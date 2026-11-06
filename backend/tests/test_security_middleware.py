@@ -176,15 +176,37 @@ class TestCsrfOrigin:
 
 
 class TestBodyLimits:
-    async def test_chunked_transfer_encoding_rejected(self, temp_db_path):
-        """Exit-gate condition: chunked bodies bypass Content-Length checks."""
+    async def test_chunked_body_within_limit_passes(self, temp_db_path):
+        """Chunked bodies (e.g. AppSail edge proxy rewrites POSTs to chunked)
+        are stream-enforced against the cap, not blanket-rejected."""
         s = _settings(temp_db_path)
         app = await _make_app(s)
         try:
             async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
                 resp = await c.post(
                     "/api/v1/chat",
-                    content=b"x" * 10,
+                    content=b'{"message": "hi"}',
+                    headers={
+                        "Content-Type": "application/json",
+                        "Transfer-Encoding": "chunked",
+                    },
+                )
+                # Body passed the limit middleware and reached the route:
+                # valid JSON parses, then the auth gate runs.
+                assert resp.status_code == 401
+                assert resp.json()["error_code"] == "NOT_AUTHENTICATED"
+        finally:
+            await _teardown_app()
+
+    async def test_chunked_body_over_limit_rejected(self, temp_db_path):
+        """Chunked bodies cannot bypass the size cap (security review 2026-10-29)."""
+        s = _settings(temp_db_path)
+        app = await _make_app(s)
+        try:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+                resp = await c.post(
+                    "/api/v1/chat",
+                    content=b"x" * (s.max_request_body_size + 1),
                     headers={"Transfer-Encoding": "chunked"},
                 )
                 assert resp.status_code == 413

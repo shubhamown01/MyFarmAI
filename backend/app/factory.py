@@ -34,19 +34,43 @@ class RequestBodyLimitMiddleware(BaseHTTPMiddleware):
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         content_length = request.headers.get("content-length")
-        # Exit-gate condition (security review 2026-10-29): chunked uploads
-        # have no Content-Length and would bypass the limit; bodies here are
-        # small JSON, so reject rather than stream-enforce.
-        if request.headers.get("transfer-encoding", "").lower() == "chunked":
-            return JSONResponse(
-                status_code=413,
-                content={
-                    "detail": "Chunked request bodies are not accepted.",
-                    "error_code": "REQUEST_BODY_TOO_LARGE",
-                },
-                headers={"Retry-After": "60"},
-            )
-        if content_length and int(content_length) > self.max_size:
+        # Security review 2026-10-29 originally rejected chunked outright
+        # (no Content-Length → limit bypass). Zoho AppSail's edge proxy
+        # converts every POST to chunked, which broke all write endpoints in
+        # staging, so the cap is now stream-enforced instead: the body is
+        # consumed with the limit applied, preserving the no-bypass
+        # guarantee (security review 2026-11-06: PASS-with-fixes applied).
+        if content_length:
+            try:
+                declared = int(content_length)
+            except ValueError:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "detail": "Invalid Content-Length header.",
+                        "error_code": "INVALID_CONTENT_LENGTH",
+                    },
+                )
+            if declared > self.max_size:
+                return JSONResponse(
+                    status_code=413,
+                    content={
+                        "detail": f"Request body too large. Maximum size is {self.max_size} bytes.",
+                        "error_code": "REQUEST_BODY_TOO_LARGE",
+                    },
+                    headers={"Retry-After": "60"},
+                )
+            return await call_next(request)
+        # No Content-Length (chunked): accumulate with an early-abort cap so
+        # memory stays bounded at ~max_size + one chunk per request.
+        body = b""
+        too_large = False
+        async for chunk in request.stream():
+            body += chunk
+            if len(body) > self.max_size:
+                too_large = True
+                break
+        if too_large:
             return JSONResponse(
                 status_code=413,
                 content={
@@ -55,6 +79,9 @@ class RequestBodyLimitMiddleware(BaseHTTPMiddleware):
                 },
                 headers={"Retry-After": "60"},
             )
+        # Cache the buffered body so downstream handlers re-read it (same
+        # mechanism Starlette's own Request.body() uses).
+        request._body = body
         return await call_next(request)
 
 
@@ -92,7 +119,11 @@ def create_app(custom_settings: Settings | None = None, *, test_mode: bool = Fal
     is_test = test_mode and app_settings.database_path.startswith("sqlite")
 
     if not db_manager.is_initialized:
-        init_db_manager(app_settings.database_path, async_mode=not is_test)
+        # No URL argument: session.py builds the SQLAlchemy URL from
+        # database_path (sqlite file paths get the sqlite+aiosqlite prefix).
+        # Passing the raw path here crashed bare-container starts (AppSail)
+        # with "Could not parse SQLAlchemy URL from string 'data/app.db'".
+        init_db_manager(async_mode=not is_test)
         # Redact credentials before logging the DSN (password must never hit logs).
         _safe_dsn = urlsplit(app_settings.database_path)
         _netloc = (
@@ -280,6 +311,8 @@ def create_app(custom_settings: Settings | None = None, *, test_mode: bool = Fal
 
         Reports 503 with per-dependency status when any dependency is
         unreachable; 200 only when the database and Ollama are both reachable.
+        Setting ``OLLAMA_BASE_URL=""`` disables the Ollama check for hosts
+        without a local model server (e.g. cloud staging).
         """
         from sqlalchemy import text
 
@@ -290,14 +323,18 @@ def create_app(custom_settings: Settings | None = None, *, test_mode: bool = Fal
             db_ok = True
         except Exception:
             logger.warning("Readiness check: database unreachable")
-        try:
-            ollama_ok = await ollama_client.health_check()
-        except Exception:
-            logger.warning("Readiness check: ollama unreachable")
+        ollama_disabled = not default_settings.ollama_base_url
+        if ollama_disabled:
+            ollama_ok = True
+        else:
+            try:
+                ollama_ok = await ollama_client.health_check()
+            except Exception:
+                logger.warning("Readiness check: ollama unreachable")
 
         deps: dict[str, str] = {
             "database": "ok" if db_ok else "unreachable",
-            "ollama": "ok" if ollama_ok else "unreachable",
+            "ollama": "disabled" if ollama_disabled else ("ok" if ollama_ok else "unreachable"),
         }
         status = "ok" if db_ok and ollama_ok else "degraded"
         return JSONResponse(

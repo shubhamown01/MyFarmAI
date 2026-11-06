@@ -17,10 +17,12 @@ COPY alembic ./alembic
 COPY alembic.ini ./
 RUN uv sync --frozen --no-dev
 
-# Non-root runtime user
+# Non-root runtime user — chown only the writable data dir; the venv and
+# code stay root-owned (read-only for the app). A `chown -R /app` here would
+# duplicate the whole venv into a new image layer (~120 MB).
 RUN useradd --system --uid 10001 --no-create-home appuser \
     && mkdir -p /app/data \
-    && chown -R appuser:appuser /app
+    && chown appuser:appuser /app/data
 USER appuser
 
 EXPOSE 8000

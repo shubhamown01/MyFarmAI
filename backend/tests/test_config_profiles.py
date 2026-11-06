@@ -1,5 +1,6 @@
 """Production-settings validation (6C audit M2: allowed_hosts must be explicit)."""
 
+from app.core.config import Settings
 from app.core.config_profiles import validate_production_settings
 
 
@@ -28,3 +29,18 @@ def test_production_explicit_allowed_hosts_passes() -> None:
 
 def test_non_production_skips_checks() -> None:
     assert validate_production_settings({"environment": "development"}) == []
+
+
+def test_profile_defaults_do_not_override_explicit_empty_ollama_url() -> None:
+    """OLLAMA_BASE_URL="" must stay empty after apply_profile_defaults — it
+    disables the local model server on hosts without one (cloud staging)."""
+    s = Settings(environment="development", ollama_base_url="", database_path=":memory:")
+    s.apply_profile_defaults()
+    assert s.ollama_base_url == ""
+
+
+def test_profile_defaults_still_fill_unset_values() -> None:
+    """Unset values still receive their profile defaults."""
+    s = Settings(environment="development", database_path=":memory:")
+    s.apply_profile_defaults()
+    assert s.ollama_base_url == "http://localhost:11434"
