@@ -15,6 +15,10 @@
         "type": "remote",
         "url": "https://mcp.atlassian.com/v2/mcp"
       },
+      "catalyst": {
+        "type": "remote",
+        "url": "https://catalyst.zohomcp.in/mcp/message"
+      },
       "linear": {
         "type": "local",
         "command": [

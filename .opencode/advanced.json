@@ -169,16 +169,12 @@
     "sequential-thinking",
     "git",
     "sentry",
-    "axiom",
-    "postgres",
     "sqlite",
     "redis",
-    "aws",
     "kubernetes",
     "vercel",
     "puppeteer",
     "atlassian",
-    "linear",
     "figma"
   ]
 }

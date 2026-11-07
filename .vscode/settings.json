@@ -1,12 +1,24 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
-  "editor.formatOnSave": true,
+  "files.exclude": {
+    "node_modules": true,
+    "**/__pycache__": true,
+    "web/.next": true,
+    "logs": false
+  },
+  "files.associations": {
+    "*.sh": "shellscript"
+  },
   "search.exclude": {
     "**/node_modules": true,
     "**/.next": true,
     "**/graphify-out": true,
+    "**/backend/.venv": true,
     "**/.mypy_cache": true,
     "**/.pytest_cache": true,
-    "**/.ruff_cache": true
-  }
+    "**/.ruff_cache": true,
+    "logs": true
+  },
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+  "editor.formatOnSave": true,
+  "typescript.tsdk": "web/node_modules/typescript/lib"
 }

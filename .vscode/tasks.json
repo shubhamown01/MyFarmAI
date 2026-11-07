@@ -2,21 +2,94 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Backend: full quality gate",
+      "label": "MyFarmAI: Start complete application",
+      "type": "shell",
+      "command": "./RUN_MYFARMAI.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": false,
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "MyFarmAI: Start (open browser)",
+      "type": "shell",
+      "command": "./RUN_MYFARMAI.sh --open-browser",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "MyFarmAI: Stop application",
+      "type": "shell",
+      "command": "./STOP_MYFARMAI.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "MyFarmAI: Restart application",
+      "type": "shell",
+      "command": "./RESTART_MYFARMAI.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "MyFarmAI: Service status",
+      "type": "shell",
+      "command": "./STATUS_MYFARMAI.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Logs: Backend (docker)",
+      "type": "shell",
+      "command": "docker compose logs -f backend",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Logs: Frontend (web-dev.log)",
+      "type": "shell",
+      "command": "tail -f logs/web-dev.log",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Logs: Docker (all services)",
+      "type": "shell",
+      "command": "docker compose logs -f",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Tests: Backend (pytest)",
+      "type": "shell",
+      "command": "./.venv/bin/python -m pytest -q",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: full quality gate (check.sh)",
       "type": "shell",
       "command": "./scripts/check.sh",
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": []
     },
     {
-      "label": "Web: check (type + lint + test)",
+      "label": "Tests: Web (typecheck + lint + jest)",
       "type": "shell",
       "command": "npm run typecheck && npm run lint && npm test -- --runInBand",
       "options": { "cwd": "${workspaceFolder}/web" },
       "problemMatcher": []
     },
     {
-      "label": "Android: check (type + lint)",
+      "label": "Tests: Android (typecheck + lint)",
       "type": "shell",
       "command": "npm run typecheck && npm run lint",
       "options": { "cwd": "${workspaceFolder}/android" },
