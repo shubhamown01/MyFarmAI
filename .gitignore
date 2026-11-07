@@ -93,3 +93,24 @@ backend/file:test
 *.keystore
 *.jks
 *.pem
+
+# Vendor-installed agent skills (tooling-managed, reinstallable)
+.agents/skills/catalyst-*/
+
+# Orchestrator worktree/state directory
+.orchestrator/
+
+# Tool-managed resources bundle
+resources/
+
+# OpenCode timestamped config backups (opencode.json itself stays tracked)
+opencode.json.backup*
+
+# Scratch / one-off verification artifacts at repo root
+/test-*.js
+/*-evidence.png
+/zoho-onboarding-*.png
+
+# npx side-effect from running zcatalyst-cli at repo root (no root JS project)
+/package.json
+/package-lock.json
