@@ -24,8 +24,11 @@ npm install @tanstack/react-query zustand lucide-react clsx tailwind-merge
 ### `.env.local`
 
 ```env
-# Development
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
+# Development — RELATIVE on purpose: the client calls stay same-origin with the
+# Next.js proxy so the backend's Set-Cookie (session) is not dropped by the
+# browser's SameSite=Lax policy. An absolute http://localhost:8000 URL is
+# cross-origin from localhost:3000 and breaks the login session in dev.
+NEXT_PUBLIC_API_BASE_URL=/api/v1
 
 # Production
 # NEXT_PUBLIC_API_BASE_URL=https://api.myfarmai.example.com/api/v1
@@ -33,20 +36,20 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
 
 ### `next.config.js`
 
-```javascript
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/api/v1/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,
-      },
-    ],
-  },
-};
+The rewrite target is a SERVER-side variable (`MYFARMAI_API_ORIGIN`), never
+`NEXT_PUBLIC_API_BASE_URL` (which may be relative for the client):
 
-module.exports = nextConfig;
+```javascript
+async rewrites() {
+  return [
+    {
+      source: '/api/v1/:path*',
+      destination: `${
+        process.env.MYFARMAI_API_ORIGIN || 'http://localhost:8000/api/v1'
+      }/:path*`,
+    },
+  ],
+}
 ```
 
 ## API Client

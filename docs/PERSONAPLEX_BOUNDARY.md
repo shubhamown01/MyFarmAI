@@ -76,10 +76,15 @@ PersonaPlex is **not part of** the MyFarmAI OpenCode agent team. It remains an i
 ## Current Voice Service (`ai/voice/`)
 
 - **STT only**: faster-whisper, Hindi/English
-- **Port**: 8001 (published on `0.0.0.0:8001` — **security finding S-03**)
-- **Auth**: None — **security finding S-03**
+- **Port**: 8001 — **loopback-bounded: CMD binds `127.0.0.1:8001`** (contained 2026-11-03, owner-approved; Phase 0 finding S-03 partially remediated at the network layer). The service is not in `docker-compose.yml` and port 8001 is verified not listening — finding not live.
+- **Auth**: None — **security finding S-03** (still open: do not expose or wire into the backend before the Phase 3 auth pattern)
 - **Upload**: Unbounded — **security finding S-03**
 - **Container**: Runs as root — **security finding S-12**
+
+**Containment note (2026-11-03)**: If the voice service is ever added to
+Compose, a loopback bind inside the container blocks cross-container reach
+too — that is intentional for an unauthenticated service. Wiring it up
+requires S-03 remediation (backend-side auth proxy, upload limits) first.
 
 ## Remediation Required Before Voice Integration
 

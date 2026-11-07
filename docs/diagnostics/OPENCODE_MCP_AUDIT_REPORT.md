@@ -91,8 +91,8 @@ Legend: PASS = verified initialize+tools(+safe call where meaningful) · PENDING
 |---|---|---|---|---|---|---|---|
 | `21st` | global (remote) | remote | DEGRADED / AUTH_REQUIRED | `TWENTY_FIRST_API_KEY` unset; direct test: `Not authenticated` (-32001) | none (needs key) | connects; 51 tools listed | **YOU:** set `TWENTY_FIRST_API_KEY` |
 | `atlassian` | project | remote | PASS | – | – | connected | – |
-| `aws` | project | local | DISABLED | intentional | confirmed already `disabled: true` | left as-is | – |
-| `axiom` | project | local | DISABLED | intentional; token also unset | confirmed `disabled: true` | left as-is | set token if ever enabled |
+| `aws` | project | local | REMOVED | `@aws/mcp` does not exist on npm (E404); `disabled` was ignored on config hot-reload | entry deleted | no longer listed | re-add only with a real package |
+| `axiom` | project | local | REMOVED | `@axiomhq/mcp-server-axiom` does not exist on npm (E404); token also unset | entry deleted | no longer listed | re-add with real package + token if needed |
 | `context7` | global+project | remote | PASS (after dedupe) | project dup shadowed global credentials | duplicate removed from project config | connected | consider env-based key (§11) |
 | `fetch` | global | local | PASS | – | – | connected; fetch verified in session | – |
 | `figma` | global | remote | PASS | – | – | connected; OAuth active | – |
@@ -102,11 +102,11 @@ Legend: PASS = verified initialize+tools(+safe call where meaningful) · PENDING
 | `github` | global | local (docker) | PENDING-SVC (was PASS) | transient: Docker Desktop restart killed ephemeral container (exit 125) | none needed | wrapper verified standalone (`starting server` … `session initialized`) | reconnects on next session start |
 | `graphify` | global | local | PASS | – | – | connected | – |
 | `kubernetes` | project | local | PENDING-SVC | corrupt npx cache: missing `@opentelemetry/context-async-hooks` | removed `/data/.cache/npm/_npx/92668d6008b43da4` (approved) | fresh install handshake OK, 23 tools incl. `kubectl_get`, `helm`… | reconnect on restart (raised startup limit helps) |
-| `linear` | project | local | AUTH_REQUIRED | `LINEAR_API_KEY` unset → exit 1 | none (needs key) | failure reproduced (`opencode mcp list`) | **YOU:** set `LINEAR_API_KEY` or disable |
+| `linear` | project | local | REMOVED | `LINEAR_API_KEY` unset → exit 1; `disabled` was ignored on config hot-reload | entry deleted | no longer listed | re-add with a real key if needed |
 | `MCP_DOCKER` | global | local | PASS (was TIMEOUT) | gateway init ~2m21s > 120 s startup limit | `mcp.timeout.startup` → 300 000 ms | connected live; handshake OK; 40 tools live | – |
 | `memory` | global | local | PASS | – | – | connected | – |
 | `playwright` | global | local | PASS | – | – | connected | – |
-| `postgres` | project | local | AUTH_REQUIRED | `DATABASE_URL` unset → `{env:…}` expands empty → `ERR_INVALID_URL` crash | none (needs URL) | crash reproduced | **YOU:** set `DATABASE_URL` or disable |
+| `postgres` | project | local | RESOLVED (entry removed) | `DATABASE_URL` unset → `{env:…}` expands empty → `ERR_INVALID_URL` crash | entry deleted from project config | `opencode mcp list` no longer lists it; no failure reported | restore only with a host-reachable DSN (`postgresql://`, not `postgresql+asyncpg://`) |
 | `puppeteer` | project | local | PASS | – | – | connected | – |
 | `redis` | project | local | PASS (was ECONNREFUSED) | no Redis instance reachable on localhost:6379 | `mcp-redis` container created (approved) | live-connected, 4 tools; `PONG` verified | note: container is ephemeral-data (§10) |
 | `searxng` | global | local | PASS | – | – | connected | – |
@@ -129,6 +129,12 @@ Legend: PASS = verified initialize+tools(+safe call where meaningful) · PENDING
 3. `~/.docker/desktop/settings-store.json` — added `FileSharingDirectories: ["/data", "/home/mrknight"]`; Docker Desktop restarted. Docker Desktop persisted the key internally as `FilesharingDirectories` after restart.
 4. Cache: removed `/data/.cache/npm/_npx/92668d6008b43da4` (only the corrupt entry; 29 other entries untouched).
 5. Container: created `mcp-redis` (`redis:7-alpine`, `127.0.0.1:6379`, `--restart unless-stopped`).
+6. `/data/MyFarmAI/opencode.json` — removed `postgres`, `linear`, `aws`, `axiom`.
+   - `postgres` crash root cause: empty `{env:DATABASE_URL}` → `ERR_INVALID_URL`.
+   - `aws`/`axiom` point at npm packages that do not exist (E404).
+   - `linear` has no `LINEAR_API_KEY`.
+   - **OpenCode v2.2.5 defect observed:** `disabled: true` is honored on a cold service start but ignored when the config is hot-reloaded after an edit — disabled servers spawn immediately. That is how the death entries kept resurfacing between restarts. Deleting them is the durable fix; editing config then restarting the service is the workaround for entries worth keeping.
+   - Verified after edits: `opencode mcp list` → 24/24 connected, 0 failed (kubernetes/puppeteer/redis were re-enabled by the same hot-reload defect and still carry `disabled: true`; a cold restart returns them to disabled).
 
 **Backups (rollback points, copy to restore):**
 - `/tmp/opencode/mcp-audit/backup/global-opencode.json.bak` (pre-edit global config)

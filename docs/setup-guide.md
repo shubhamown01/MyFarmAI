@@ -35,6 +35,10 @@ ollama pull qwen3:4b
 
 ## Run (development)
 
+**One command (recommended):** `./RUN_MYFARMAI.sh` — see docs/runner-guide.md.
+
+Manual equivalent:
+
 ```bash
 # Backend — loopback only (until Phase 3 auth exists)
 cd backend && uv run uvicorn app.main:app --host 127.0.0.1 --reload
@@ -57,6 +61,35 @@ cd android && npm start
 | rate limiting, trusted proxy CIDRs, body limits, log level | see `.env.example` | |
 
 Client API bases: web uses `NEXT_PUBLIC_API_BASE_URL` (falls back to `/api/v1`); Android uses `EXPO_PUBLIC_API_BASE_URL` (falls back to localhost emulator alias — see `android/src/config/api.ts`).
+
+## OAuth login (blocker B1 — owner action)
+
+The Google/Microsoft sign-in flow is fully implemented, but the buttons return an
+honest "not configured" message until you register the two provider apps (free):
+
+1. **Google**: console.cloud.google.com → APIs & Services → Credentials → create an
+   OAuth client ID (type *Web application*). Add authorized redirect URI:
+   `http://localhost:3000/auth/callback?provider=google`.
+2. **Microsoft**: entra.microsoft.com → App registrations → New registration.
+   Under *Redirect URI*, add `http://localhost:3000/auth/callback?provider=microsoft`.
+3. Put the credentials into `backend/.env` (or the Compose `backend.environment:` section):
+
+   | Var | Purpose |
+   |-----|---------|
+   | `OAUTH_GOOGLE_CLIENT_ID` / `OAUTH_GOOGLE_CLIENT_SECRET` | Google client credentials |
+   | `OAUTH_MICROSOFT_CLIENT_ID` / `OAUTH_MICROSOFT_CLIENT_SECRET` | Microsoft client credentials |
+
+4. Restart the backend (`./RESTART_MYFARMAI.sh`). No code changes are needed — the
+   buttons go live. Production URIs (blocker E6, domain/TLS) must also be registered
+   in each console before public exposure.
+
+**Google — DONE (2026-11-03)**: client credentials live in `backend/.env`
+(git-ignored; injected into the backend container via the compose `env_file`).
+Testing mode: only listed test users can sign in (`sb95146@gmail.com`); add users
+under *Audience → Test users* or publish the app for public access. Note the
+claim rule: Google-verified email links the provider row to an E1 OTP-verified
+account instead of refusing it — accounts with full `active`/`rejected` status
+are never merged.
 
 ## Verify installation
 

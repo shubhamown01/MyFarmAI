@@ -29,10 +29,22 @@ services:
     environment:
       DATABASE_PATH: postgresql://myfarmai@postgres:5432/myfarmai
       DATABASE_PASSWORD_FILE: /run/secrets/pg_password
-      # Host Ollama binds 127.0.0.1 only; a socat forwarder on the docker-bridge
-      # gateway (172.22.0.1:11434 -> 127.0.0.1:11434) bridges container traffic.
-      # NOTE: the bridge gateway IP can change if the compose network is recreated.
-      OLLAMA_BASE_URL: http://172.22.0.1:11434
+      # Host Ollama binds 127.0.0.1 only; scripts/ollama-bridge.sh forwards the
+      # docker0 gateway IP -> host loopback. host.docker.internal (extra_hosts
+      # host-gateway below) is stable across compose-network recreation.
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      # Dev OTP outbox on the bind-mounted data volume → readable on the host
+      # at backend/data/dev_otp_outbox.txt (email_delivery_mode=dev sends NO
+      # real email until the owner configures a provider — blocker B2).
+      OTP_OUTBOX_PATH: /app/data/dev_otp_outbox.txt
+    # Owner credentials (OAuth client secrets, SMTP) live in the git-ignored
+    # backend/.env. environment: values still take precedence over this file.
+    env_file:
+      - ./backend/.env
+    # Loopback-only host exposure for the local web dev server (proxy target).
+    # Never publish beyond 127.0.0.1 until the Phase 6/9 deployment gates pass.
+    ports:
+      - "127.0.0.1:8000:8000"
     # Bridge to the host loopback so the container can reach host-run Ollama.
     extra_hosts:
       - "host.docker.internal:host-gateway"

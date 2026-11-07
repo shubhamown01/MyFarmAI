@@ -44,13 +44,24 @@ MyFarmAI is a multi-platform application providing:
 
 ## Quick Start
 
+### One command (recommended)
+
+```bash
+./RUN_MYFARMAI.sh              # preflight → postgres → migrations → backend → web → AI smoke test
+./STOP_MYFARMAI.sh             # safe stop (data preserved)
+./RESTART_MYFARMAI.sh          # restart with health checks
+./STATUS_MYFARMAI.sh           # health dashboard
+```
+
+From VS Code: `Terminal → Run Task…` (start/stop/restart/status/logs/tests are preconfigured in `.vscode/tasks.json`). Full guide: **docs/runner-guide.md**.
+
 ### Prerequisites
 - Node.js 20+
 - Python 3.12+ (backend uses `uv` + `uv.lock`)
 - Docker & Docker Compose
 - Ollama (for LLM inference): `ollama pull qwen3:4b`
 
-### Development Setup
+### Manual Setup (equivalent)
 
 ```bash
 # Clone and enter
@@ -64,7 +75,7 @@ cd web
 npm install
 npm run dev          # http://localhost:3000
 
-# Android app (separate terminal)
+# Android app (separate terminal — own lifecycle, not started by the runner)
 cd android
 npm install
 npm start            # Expo dev server
