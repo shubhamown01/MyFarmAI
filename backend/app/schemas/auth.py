@@ -73,9 +73,15 @@ class EmailOtpVerifyRequest(BaseModel):
 
 
 class EmailOtpSentResponse(BaseModel):
-    """Privacy-aware response — identical whether or not the email exists."""
+    """Privacy-aware response — identical whether or not the email exists.
+
+    ``delivery_mode`` tells the client HOW the code was delivered so the UI
+    can be honest: ``dev`` means no real email is sent in this environment
+    (the code is in the server outbox / log); ``provider`` means real email.
+    """
 
     message: str
+    delivery_mode: str = "dev"
 
 
 class OAuthAuthorizeResponse(BaseModel):

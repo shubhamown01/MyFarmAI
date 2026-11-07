@@ -11,6 +11,13 @@ import {
   CropPlanRevision,
   CropPlanTask,
   CropPlanTaskUpdatePayload,
+  LoginResponse,
+  OnboardingStatus,
+  FarmerProfile,
+  FarmerProfilePayload,
+  Plot,
+  PolygonPoint,
+  HomeLocationSave,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
@@ -201,6 +208,110 @@ class ApiClient {
   async checkHealth() {
     return this.request<HealthResponse>('/health');
   }
+
+  // ── Auth (Phase 3 / E1-E2) ── cookie-based sessions via same-origin proxy
+
+  async login(email: string, password: string) {
+    return this.request<LoginResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async logout() {
+    return this.request<void>('/auth/logout', { method: 'POST' });
+  }
+
+  async getMe() {
+    return this.request<LoginResponse['user']>('/auth/me');
+  }
+
+  async requestEmailOtp(email: string) {
+    return this.request<{ message: string; delivery_mode?: string }>(
+      '/auth/register/email/request-otp',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      }
+    );
+  }
+
+  async verifyEmailOtp(email: string, code: string) {
+    return this.request<LoginResponse>('/auth/register/email/verify', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+  }
+
+  async getOAuthAuthorizeUrl(provider: string, redirectUri: string) {
+    return this.request<{ authorize_url: string; state: string }>(
+      `/auth/oauth/${provider}/authorize?redirect_uri=${encodeURIComponent(redirectUri)}`
+    );
+  }
+
+  /** Finishes OAuth: backend validates code+state and sets the session cookie. */
+  async oauthCallback(provider: string, code: string, state: string, redirectUri: string) {
+    const params = new URLSearchParams({ code, state, redirect_uri: redirectUri });
+    return this.request<LoginResponse>(`/auth/oauth/${provider}/callback?${params}`);
+  }
+
+  // ── Onboarding (E5) ──
+
+  async getOnboardingStatus() {
+    return this.request<OnboardingStatus>('/me/onboarding');
+  }
+
+  async getFarmerProfile() {
+    return this.request<FarmerProfile>('/me/farmer-profile');
+  }
+
+  async saveFarmerProfile(payload: FarmerProfilePayload) {
+    return this.request<FarmerProfile>('/me/farmer-profile', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // ── Land registration (E4) ──
+
+  async createFarm(name: string) {
+    return this.request<FarmSummary>('/farms', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async createPlot(farmId: string, name: string, landType: string) {
+    return this.request<Plot>(`/farms/${farmId}/plots`, {
+      method: 'POST',
+      body: JSON.stringify({ name, land_type: landType }),
+    });
+  }
+
+  async listPlots(farmId: string) {
+    return this.request<Plot[]>(`/farms/${farmId}/plots`);
+  }
+
+  async saveBoundary(farmId: string, plotId: string, polygon: PolygonPoint[], source: 'map_drawn' | 'manual_entry') {
+    return this.request<Plot>(`/farms/${farmId}/plots/${plotId}/boundary`, {
+      method: 'PUT',
+      body: JSON.stringify({ polygon, source }),
+    });
+  }
+
+  async saveHomeLocation(payload: HomeLocationSave) {
+    return this.request<unknown>('/me/home-location', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async saveManualArea(farmId: string, plotId: string, value: number, unit: string) {
+    return this.request<unknown>(`/farms/${farmId}/plots/${plotId}/area`, {
+      method: 'POST',
+      body: JSON.stringify({ area_value: value, area_unit: unit, confirm: true }),
+    });
+  }
 }
 
 export const apiClient = new ApiClient();
@@ -217,4 +328,9 @@ export type {
   CropPlanRevision,
   CropPlanTask,
   CropPlanTaskUpdatePayload,
-};
+  LoginResponse,
+  OnboardingStatus,
+  FarmerProfile,
+  Plot,
+  PolygonPoint,
+} from './types';

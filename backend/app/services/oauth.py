@@ -313,9 +313,16 @@ async def login_or_signup_oauth(
     else:
         user = (await session.execute(select(User).where(User.email == email))).scalar_one_or_none()
         if user is not None:
-            if user.is_active:
-                # Account-takeover protection: an ACTIVE account (password or
-                # another provider) must never be silently linked.
+            # Claimable = email control already proven or not required yet:
+            #  - inactive (pre-activation E1 signup), OR
+            #  - pending_verification (E1 OTP-verified, awaiting the E3 selfie
+            #    gate). The provider-verified email matches the account's
+            #    identity; linking adds the provider row without touching
+            #    other credentials.
+            claimable = not user.is_active or user.verification_status == "pending_verification"
+            if not claimable:
+                # Account-takeover protection: ACTIVE accounts with a real
+                # lifecycle status (active/rejected) are never linked.
                 raise OAuthEmailTakenError(
                     "email already registered; log in with your existing method"
                 )

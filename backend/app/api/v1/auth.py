@@ -300,7 +300,8 @@ async def register_request_otp(
             headers={"Retry-After": "60"},
         ) from None
     return EmailOtpSentResponse(
-        message="If the email address is valid, a verification code has been sent."
+        message="If the email address is valid, a verification code has been sent.",
+        delivery_mode=svc._settings.email_delivery_mode,
     )
 
 

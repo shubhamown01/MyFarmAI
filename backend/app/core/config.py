@@ -133,6 +133,24 @@ class Settings(BaseSettings):
         ge=0,
     )
 
+    # §10 cloud-AI quota (CLOUD_COST_AND_QUOTA_POLICY §3.1). The counter is
+    # inactive until cloud AI is wired — flag-off = zero behavior change for
+    # the local-Ollama path.
+    cloud_ai_enabled: bool = Field(
+        default=False,
+        description="Enable the cloud-AI generation path (turns the §10 per-user quota counter on)",
+    )
+    cloud_ai_quota_limit: int = Field(
+        default=20,
+        description="§10: max successful cloud-AI queries per user per quota window",
+        ge=1,
+    )
+    cloud_ai_quota_window_hours: int = Field(
+        default=10,
+        description="§10: quota window length in hours (aligned UTC buckets)",
+        ge=1,
+    )
+
     # Trusted proxy for rate limiting (comma-separated CIDR ranges)
     trusted_proxy_cidrs: str = Field(
         default="",
@@ -195,6 +213,12 @@ class Settings(BaseSettings):
     email_delivery_mode: str = Field(
         default="dev",
         description="OTP email delivery adapter: dev (log/file, never actually delivers)",
+    )
+    # Where the dev adapter writes OTPs. In Compose this points at the
+    # bind-mounted backend/data volume so the code is readable on the host.
+    otp_outbox_path: str = Field(
+        default="/tmp/opencode/dev_otp_outbox.txt",
+        description="Dev-mode OTP outbox file path",
     )
 
     # Selfie verification (E3): policy version stamped on consent records and

@@ -12,6 +12,7 @@ from app.core.config import Settings
 from app.db.session import db_manager, get_db_session_sync
 from app.schemas.chat import ChatRequest, ChatResponse, ErrorResponse
 from app.services.chat import generate_chat_response
+from app.services.ai_quota import aconsume_slot, consume_slot
 from app.services.context import FarmContextService
 from app.services.farm import FarmNotFoundError, FarmService
 from app.services.weather import weather_client
@@ -44,9 +45,13 @@ def get_db_session_optional() -> Generator[Session | None, None, None]:
     responses={
         400: {"model": ErrorResponse, "description": "Invalid request"},
         404: {"model": ErrorResponse, "description": "Conversation not found"},
+        429: {
+            "model": ErrorResponse,
+            "description": "§10 cloud-AI quota exhausted for the current window (error_code=AI_QUOTA_EXCEEDED; only active when cloud_ai_enabled)",
+        },
         503: {
             "model": ErrorResponse,
-            "description": "AI service unavailable or overloaded (error_code=AI_BUSY when the queue depth limit is exceeded)",
+            "description": "AI service unavailable or overloaded: error_code=AI_BUSY when the queue depth limit is exceeded, error_code=AI_QUOTA_UNAVAILABLE when the quota counter cannot be reached (fail-closed, cloud mode only)",
         },
         504: {"model": ErrorResponse, "description": "AI service timeout"},
     },
@@ -93,6 +98,45 @@ async def chat(
 
     # Check if we're in test mode (synchronous database)
     is_test = settings.environment == "test" and settings.database_path.startswith("sqlite")
+
+    # §10 cloud-AI quota (CLOUD_COST_AND_QUOTA_POLICY §3.1): consume a slot
+    # before any generation. Flag-off = no-op (local Ollama path unchanged).
+    # Fail-closed: a quota-path DB error must never allow an uncounted
+    # cloud call.
+    if settings.cloud_ai_enabled:
+        try:
+            if db is not None:
+                allowed = consume_slot(
+                    db,
+                    user_id,
+                    limit=settings.cloud_ai_quota_limit,
+                    window_hours=settings.cloud_ai_quota_window_hours,
+                )
+            else:
+                async with db_manager.transaction() as quota_db:
+                    allowed = await aconsume_slot(
+                        quota_db,
+                        user_id,
+                        limit=settings.cloud_ai_quota_limit,
+                        window_hours=settings.cloud_ai_quota_window_hours,
+                    )
+        except Exception:
+            logger.exception("AI quota counter unavailable — failing closed")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "detail": "quota service unavailable",
+                    "error_code": "AI_QUOTA_UNAVAILABLE",
+                },
+            ) from None
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "detail": "AI quota exceeded for the current window",
+                    "error_code": "AI_QUOTA_EXCEEDED",
+                },
+            )
 
     try:
         if is_test:

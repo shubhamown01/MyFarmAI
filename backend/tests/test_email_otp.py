@@ -174,3 +174,21 @@ class TestEmailOtpRegistration:
         )
         assert resp.status_code == 401, resp.text
         assert resp.json()["error_code"] == "INVALID_CREDENTIALS"
+
+
+# -- dev outbox regression ---------------------------------------------------
+
+
+async def test_dev_outbox_writes_code(tmp_path) -> None:
+    """Real send_otp must write to a string-configured path (E6 compose passes str)."""
+    import tempfile
+    from pathlib import Path as P
+
+    from app.services.delivery import DevModeEmailDelivery
+
+    outbox = P(str(tmp_path / "sub" / "dev_otp_outbox.txt"))
+    delivery = DevModeEmailDelivery(outbox_path=str(outbox))
+    await delivery.send_otp("farmer@example.com", "123456")
+    assert outbox.exists()
+    assert "farmer@example.com" in outbox.read_text(encoding="utf-8")
+    assert "123456" in outbox.read_text(encoding="utf-8")

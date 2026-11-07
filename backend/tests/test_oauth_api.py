@@ -135,8 +135,30 @@ class TestOAuthAuthorize:
         assert resp.status_code == 200, resp.text
         assert "response_type=code" in resp.json()["authorize_url"]
 
-    async def test_unconfigured_provider_503(self, async_client: AsyncClient) -> None:
-        resp = await async_client.get(AUTHORIZE_URL, params={"redirect_uri": REDIRECT_URI})
+    async def test_unconfigured_provider_503(
+        self, async_initialized_db: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Hermetic against backend/.env (owner credentials may be present).
+        for f in (
+            "oauth_google_client_id",
+            "oauth_google_client_secret",
+            "oauth_microsoft_client_id",
+            "oauth_microsoft_client_secret",
+        ):
+            from app.factory import create_app
+
+        settings = async_initialized_db.model_copy(
+            update={
+                "oauth_google_client_id": "",
+                "oauth_google_client_secret": "",
+                "oauth_microsoft_client_id": "",
+                "oauth_microsoft_client_secret": "",
+            }
+        )
+        app = create_app(settings, test_mode=True)
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            resp = await ac.get(AUTHORIZE_URL, params={"redirect_uri": REDIRECT_URI})
         assert resp.status_code == 503, resp.text
         assert resp.json()["error_code"] == "OAUTH_NOT_CONFIGURED"
 
@@ -171,18 +193,42 @@ class TestOAuthCallback:
             user = (await session.execute(select(User).where(User.email == EMAIL))).scalar_one()
             assert user.is_active and user.email_verified
             assert user.verification_status == "pending_verification"  # E3 self-signup
+
+
+    async def test_otp_verified_user_claimed(
+        self, oauth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """E1 OTP-verified user (active + pending_verification + random password)
+        must be CLAIMED, not 409 — the provider-verified email proves the same
+        identity (regression: is_active alone mislabeled these users 'taken')."""
+        async with db_manager.session() as session:
+            session.add(
+                User(
+                    email=EMAIL,
+                    password_hash=hash_password("random-generated-not-user-known"),
+                    is_active=True,
+                    email_verified=True,
+                    verification_status="pending_verification",
+                )
+            )
+            await session.commit()
+
+        state, nonce = await _start_flow(oauth_client)
+        _patch_http(monkeypatch, _fake_transport(id_token=_id_token(nonce=nonce)))
+        resp = await oauth_client.get(
+            CALLBACK_URL, params={"code": "c", "state": state, "redirect_uri": REDIRECT_URI}
+        )
+        assert resp.status_code == 200, resp.text
+
+        async with db_manager.session() as session:
             links = (
-                (
-                    await session.execute(
-                        select(AuthenticationAccount).where(
-                            AuthenticationAccount.user_id == user.id
-                        )
+                await session.execute(
+                    select(AuthenticationAccount).where(
+                        AuthenticationAccount.provider == "google"
                     )
                 )
-                .scalars()
-                .all()
-            )
-        assert len(links) == 1
+            ).scalars().all()
+        assert len(links) == 1  # provider linked, nothing else merged
 
     async def test_repeat_login_same_subject_same_user(
         self, oauth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch

@@ -1,5 +1,6 @@
 """Database models package."""
 
+from app.db.models.ai_quota import AiQuotaCounter
 from app.db.models.audit import AuditEvent, AuditEventType
 from app.db.models.base import Base, ModelBase, TimestampMixin, UUIDMixin
 from app.db.models.conversation import Conversation, Message, MessageRole
@@ -12,6 +13,8 @@ from app.db.models.crop_plan import (
     CropPlanTaskStatus,
 )
 from app.db.models.farm import Farm, FarmMember, FarmRole
+from app.db.models.land import FarmAreaMeasurement, FarmBoundary, FarmPlot, HomeLocation
+from app.db.models.profile import FarmerProfile
 from app.db.models.identity import (
     AuthenticationAccount,
     ConsentRecord,
@@ -69,4 +72,13 @@ __all__ = [
     # Session
     "Session",
     "RefreshToken",
+    # Land registration (E4)
+    "HomeLocation",
+    "FarmPlot",
+    "FarmBoundary",
+    "FarmAreaMeasurement",
+    # Farmer profile / onboarding (E5)
+    "FarmerProfile",
+    # §10 cloud-AI quota (C-Q01)
+    "AiQuotaCounter",
 ]

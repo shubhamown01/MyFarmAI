@@ -38,6 +38,9 @@ class DevModeEmailDelivery:
     outbox append is best-effort (read-only filesystem → log-only).
     """
 
+    def __init__(self, outbox_path: Path | None = None) -> None:
+        self._outbox = Path(outbox_path) if outbox_path else _OTP_OUTBOX
+
     async def send_otp(self, destination: str, code: str) -> None:
         logger.warning(
             "DEV-MODE OTP — NOT ACTUALLY DELIVERED: destination=%s code=%s",
@@ -45,7 +48,10 @@ class DevModeEmailDelivery:
             code,
         )
         try:
-            with _OTP_OUTBOX.open("a", encoding="utf-8") as f:
+            # The parent directory may not exist (fresh container) — create it
+            # instead of silently dropping the code (fail-open hid this once).
+            self._outbox.parent.mkdir(parents=True, exist_ok=True)
+            with self._outbox.open("a", encoding="utf-8") as f:
                 f.write(
                     f"DEV-MODE OTP — NOT ACTUALLY DELIVERED destination={destination} code={code}\n"
                 )
@@ -85,6 +91,6 @@ def get_email_delivery(settings: "Settings") -> EmailDelivery:
     """
     mode = settings.email_delivery_mode
     if mode == "dev":
-        return DevModeEmailDelivery()
+        return DevModeEmailDelivery(outbox_path=getattr(settings, "otp_outbox_path", None))
     logger.warning("Unknown email_delivery_mode '%s' — falling back to dev-mode delivery", mode)
-    return DevModeEmailDelivery()
+    return DevModeEmailDelivery(outbox_path=getattr(settings, "otp_outbox_path", None))

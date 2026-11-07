@@ -251,3 +251,95 @@ export interface CropCycleSummary {
   status: string;
   planting_date: string | null;
 }
+// ── Auth (Phase 3 / E1-E2) ─────────────────────────────────────────────────
+
+export interface SessionUser {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+}
+
+export interface LoginResponse {
+  user: SessionUser;
+  access_token?: string | null;
+  refresh_token?: string | null;
+  token_type: string;
+}
+
+// ── Onboarding (E5) ────────────────────────────────────────────────────────
+
+export interface OnboardingStep {
+  step: 'contact_verified' | 'verification' | 'location' | 'land' | 'profile';
+  complete: boolean;
+  detail?: string | null;
+}
+
+export interface OnboardingStatus {
+  verification_status: string;
+  steps: OnboardingStep[];
+  next_step: string | null;
+  complete: boolean;
+}
+
+export interface FarmerProfile {
+  id: string;
+  full_name: string | null;
+  farming_type: string | null;
+  preferred_language: string | null;
+  farming_experience_years: number | null;
+  existing_crops: string[] | null;
+  intended_crops: string[] | null;
+  soil_info: string | null;
+  water_availability: string | null;
+  growing_season: string | null;
+  profile_completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FarmerProfilePayload {
+  full_name?: string;
+  farming_type?: string;
+  preferred_language?: string;
+  farming_experience_years?: number;
+  existing_crops?: string[];
+  intended_crops?: string[];
+  soil_info?: string;
+  water_availability?: string;
+  growing_season?: string;
+}
+
+// ── Land registration (E4) ─────────────────────────────────────────────────
+
+export interface PolygonPoint {
+  lat: number;
+  lon: number;
+}
+
+export interface AreaMeasurement {
+  id: string;
+  area_sq_m: number;
+  area_unit: string;
+  source: string;
+  user_confirmed: boolean;
+  conversions: Record<string, number>;
+}
+
+export interface Plot {
+  id: string;
+  farm_id: string;
+  name: string;
+  land_type: string;
+  notes: string | null;
+  boundary: { polygon: PolygonPoint[]; source: string; point_count: number } | null;
+  latest_measurement: AreaMeasurement | null;
+}
+
+export interface HomeLocationSave {
+  name?: string;
+  latitude: number;
+  longitude: number;
+  accuracy_m?: number;
+  source: 'auto_detected' | 'manual_entry' | 'map_pin';
+}

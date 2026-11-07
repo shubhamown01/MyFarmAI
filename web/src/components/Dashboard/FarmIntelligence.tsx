@@ -97,6 +97,18 @@ function WeatherCardContent({ weather }: { weather: WeatherBlock }) {
         {weather.conditions || 'No condition reported'}
         {weather.windspeed !== null ? ` · Wind ${Math.round(weather.windspeed)} km/h` : ''}
       </p>
+      <p className="mt-2 text-[12px] text-on-surface-variant">
+        Weather data by{' '}
+        <a
+          href="https://open-meteo.com/"
+          target="_blank"
+          rel="noreferrer"
+          className="underline decoration-outline underline-offset-2 hover:text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          Open-Meteo
+        </a>{' '}
+        (CC-BY 4.0)
+      </p>
     </div>
   );
 }
