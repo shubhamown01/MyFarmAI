@@ -3,8 +3,10 @@
 Companion: `ANDROID_TESTING_MASTER_PLAN.md` (phases + strategy),
 `ANDROID_DEVICE_COMPATIBILITY.md` (device matrix).
 
-Evidence baseline: commit `213fe80` — typecheck ✅, lint ✅, jest **6/6 ✅**,
-`npx expo export --platform android` → Hermes bundle ~4.6 MB ✅.
+Evidence baseline: commits `213fe80`, `0db8281` — typecheck ✅, lint ✅,
+jest **16/16 ✅** (API contract, makeId, friendlyChatError),
+`npx expo export --platform android` → Hermes bundle **3.9 MB** ✅
+(4.6 MB before the 5-dep prune).
 On-device runtime verification NOT YET PERFORMED (no SDK/emulator; JDK is
 JRE-only): everything below marked "static/unit" explicitly carries that
 limitation.
