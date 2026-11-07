@@ -14,10 +14,10 @@ English experiences, offline access to saved data, and no silent failure.
 
 | Tooling | State |
 |---|---|
-| Android SDK (`ANDROID_HOME=/data/Android/Sdk`) | **MISSING** (directory absent) — no adb, no sdkmanager, no emulator |
+| Android SDK (`ANDROID_HOME=/data/Android/Sdk`) | **INSTALLED 2026-11-08** — cmdline-tools, platform-tools 37.0.1, platforms;android-34, build-tools;34.0.0 (458 MB, `/data` HDD). adb + aapt2 verified; no devices attached |
 | JDK | OpenJDK 25 **JRE-only** (no javac) — local `gradle` builds impossible |
 | Node / npm | v24.22.1 / 11.19.1 ✅ (Metro/Expo tooling runs) |
-| Emulator | **BLOCKED** — no SDK images AND host has ~1.9 GiB free RAM (emulator typically needs 2–4 GiB) |
+||Emulator | **BLOCKED** — host has ~1.9 GiB free RAM (emulator typically needs 2–4 GiB); system images not installed |
 | Physical device | None connected / none assumed |
 | EAS cloud build | Viable path (profiles exist in `eas.json`) — requires owner's Expo account authorization |
 

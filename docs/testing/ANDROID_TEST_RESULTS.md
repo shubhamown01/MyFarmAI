@@ -54,8 +54,8 @@ backend ADR-008 admin-created accounts; onboarding belongs to the web app.
 ## Open items
 
 1. AND-012 location decision (owner).
-2. SDK install decision for Phase C/H (owner; HDD policy allows
-   `/data/Android/Sdk`; RAM makes local emulation impractical — prefer
-   EAS cloud builds or a physical device).
+2. SDK install landed 2026-11-08 (`/data/Android/Sdk`, 458 MB — see
+   `ACCOUNT_SETUP_LOG.md`); remaining Phase C gates: a physical device or
+   emulator (RAM-blocked), and a JDK for Gradle builds (SSD permission gate).
 3. On-device pass: boot, login, chat incl. 429/refresh paths, voice
    permissions, restart persistence.

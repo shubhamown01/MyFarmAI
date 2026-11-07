@@ -1,3 +1,28 @@
+## 2026-11-08 — Android SDK installed to /data (HDD policy) — COMPLETE (adb/aapt2 verified)
+
+Installed the Android SDK command-line toolchain to `/data/Android/Sdk`
+(`ANDROID_HOME` env var already pointed there; the directory was absent).
+HDD-First Policy compliant: all bytes on `/dev/sda2` (`/data`, 100 GB free),
+zero SSD writes, no emulator images (see blocked note below).
+
+- `commandlinetools-linux-11076708_latest.zip` (147 MB, Google dl) →
+  `/data/Android/Sdk/cmdline-tools/latest/`
+- Licenses accepted (`yes | sdkmanager --sdk_root=/data/Android/Sdk --licenses`)
+- Installed: `platform-tools 37.0.1`, `platforms;android-34 rev 3`,
+  `build-tools;34.0.0` — **458 MB total**
+- Verified: `adb --version` → 1.0.41 (37.0.1-15733141); `aapt2 version` →
+  2.19-10229193; `sdkmanager --list_installed` shows all three packages;
+  `adb devices` → NONE attached (no phone connected; expected)
+- Paths used: downloads/packages all under `/data/Android/Sdk`;
+  scratch zip in `/tmp/opencode` (removed after extract)
+
+Still blocked after this install (unchanged):
+- **Gradle/local APK builds**: host JDK is JRE-only (no `javac`);
+  `apt install openjdk-17-jdk` writes to the SSD root → SSD permission gate,
+  awaiting explicit owner approval.
+- **Emulator**: no system-images installed AND host free RAM ~1.9 GiB rules
+  out a practical AVD even with the SDK present.
+
 ## 2026-11-06 — Neon staging wiring — COMPLETE (DB verified; final readiness pending redeploy)
 
 - **Root cause of startup crash found and fixed**: SQLAlchemy's asyncpg dialect passes URL query params as `connect()` kwargs — Neon's `?sslmode=require&channel_binding=require` suffix raises `TypeError: connect() got an unexpected keyword argument 'sslmode'`. Raw asyncpg tolerates the params; SQLAlchemy does not. Fix: use the clean URL (no query params) — asyncpg negotiates TLS automatically with Neon (verified: "PostgreSQL 18.6").
