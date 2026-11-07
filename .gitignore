@@ -114,3 +114,6 @@ opencode.json.backup*
 # npx side-effect from running zcatalyst-cli at repo root (no root JS project)
 /package.json
 /package-lock.json
+
+# expo prebuild output (generated native project, regenerate via npx expo prebuild)
+android/android/
