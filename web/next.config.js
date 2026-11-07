@@ -11,7 +11,10 @@ const nextConfig = {
       {
         source: '/api/v1/:path*',
         destination: `${
-          process.env.MYFARMAI_API_ORIGIN || 'http://localhost:8000/api/v1'
+          process.env.MYFARMAI_API_ORIGIN ||
+          (process.env.NODE_ENV === 'production'
+            ? 'https://myfarmai-backend-50047414881.development.catalystappsail.in/api/v1'
+            : 'http://localhost:8000/api/v1')
         }/:path*`,
       },
     ];
