@@ -11,8 +11,8 @@ import { ChatMessage, ChatContext } from '../types/chat';
 
 // Chat error mapping (TEST-AUDIT High-5): codes observed on the deployed
 // API (staging verification 2026-11) plus defensive fall-through. Farmer
-// language, no internal jargon.
-const friendlyChatError = (error: unknown): string => {
+// language, no internal jargon. Exported for unit testing.
+export const friendlyChatError = (error: unknown): string => {
   if (error instanceof ApiError) {
     switch (error.code) {
       case 'NETWORK_ERROR':
