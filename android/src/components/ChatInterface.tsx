@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const {
     messages,
     isLoading,
+    error,
+    clearError,
     sendMessage,
     clearConversation,
   } = useChat();
@@ -34,13 +36,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     useSpeechRecognition('hi-IN');
   const { speak } = useSpeechSynthesis();
   const { colors } = useTheme();
+  const [ttsEnabled, setTtsEnabled] = useState(false);
 
   const lastMessage = messages[messages.length - 1];
-  React.useEffect(() => {
-    if (lastMessage?.role === 'assistant') {
+  useEffect(() => {
+    if (ttsEnabled && lastMessage?.role === 'assistant') {
       speak(lastMessage.content, 'hi-IN');
     }
-  }, [lastMessage, speak]);
+  }, [lastMessage, ttsEnabled, speak]);
 
   const handleSubmit = () => {
     if (input.trim()) {
@@ -92,6 +95,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
         <Text style={styles.headerTitle}>MyFarm AI</Text>
+        <TouchableOpacity
+          onPress={() => setTtsEnabled((v) => !v)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            ttsEnabled ? 'Disable spoken replies' : 'Enable spoken replies'
+          }
+          accessibilityState={{ selected: ttsEnabled }}
+        >
+          <Text style={styles.headerAction}>{ttsEnabled ? '🔊 On' : '🔇 Off'}</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => Alert.alert('Clear conversation?', '', [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Clear', style: 'destructive', onPress: clearConversation },
@@ -123,6 +136,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </View>
       )}
 
+      {error && (
+        <TouchableOpacity
+          style={[styles.errorBanner, { backgroundColor: colors.errorContainer }]}
+          onPress={clearError}
+          accessibilityRole="button"
+          accessibilityLabel={`Chat error: ${error}. Tap to dismiss.`}
+          accessibilityLiveRegion="polite"
+        >
+          <Text style={[styles.errorText, { color: colors.onErrorContainer }]}>
+            {error}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <View style={[styles.inputContainer, { backgroundColor: colors.surfaceContainer, borderTopColor: colors.outline }]}>
         <View style={styles.inputRow}>
           <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceContainerLow }]}>
@@ -144,6 +171,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               ]}
               onPress={handleVoiceInput}
               disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isListening ? 'Stop voice input' : 'Start voice input'
+              }
+              accessibilityState={{ selected: isListening }}
             >
               <Text style={[styles.voiceButtonText, { color: isListening ? colors.onPrimary : colors.onPrimaryContainer }]}>
                 {isListening ? '●' : '🎤'}
@@ -159,6 +191,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             ]}
             onPress={handleSubmit}
             disabled={isLoading || !input.trim()}
+            accessibilityRole="button"
+            accessibilityLabel="Send message"
           >
             <Text style={[styles.sendButtonText, { color: colors.onPrimary }]}>Send</Text>
           </TouchableOpacity>
@@ -243,6 +277,16 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
   },
+  errorBanner: {
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
   inputContainer: {
     padding: 16,
     borderTopWidth: 1,
@@ -267,9 +311,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   voiceButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -277,9 +321,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },

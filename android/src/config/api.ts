@@ -8,6 +8,8 @@ export const API_ENDPOINTS = {
   dashboard: '/api/v1/dashboard',
   login: '/api/v1/auth/login',
   health: '/health',
+  // ADR-008 rotation endpoint (used by the 401 auto-refresh in ApiClient)
+  refreshToken: '/api/v1/auth/token/refresh',
   // Phase 7B crop plans — {farm_id}/{plan_id}/{task_id} are filled by the client
   cropPlans: '/api/v1/farms/{farm_id}/crop-plans',
   cropPlan: '/api/v1/crop-plans/{plan_id}',

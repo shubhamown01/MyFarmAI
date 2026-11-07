@@ -2,12 +2,10 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-config.resolver.assetExts = config.resolver.assetExts.filter(ext => ext !== 'svg');
-config.resolver.sourceExts = [...config.resolver.sourceExts, 'svg', 'svg.tsx'];
-
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve('react-native-svg-transformer'),
-};
+// svg-transformer block removed (TEST-AUDIT Critical-1): the package was
+// never installed and nothing in src/ uses SVG, so Metro crashed at
+// startup for every bundle. The assetExt/sourceExt svg filtering above is
+// harmless to keep; restore the transformer only if SVGs are introduced
+// (with react-native-svg added to package.json).
 
 module.exports = config;

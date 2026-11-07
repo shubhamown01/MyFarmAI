@@ -14,7 +14,14 @@ import {
   PlanTaskCreateInput,
   PlanTaskUpdateInput,
 } from '../../types/cropPlan';
-import { getSessionToken } from '../auth/session';
+import {
+  getSessionToken,
+  setSessionToken,
+  getRefreshToken,
+  setRefreshToken,
+  clearSessionTokens,
+} from '../auth/session';
+import { makeId } from '../../utils/id';
 
 const REQUEST_TIMEOUT = 120000; // 120s for chat (Ollama can be slow)
 const WEATHER_TIMEOUT = 30000; // 30s for weather
@@ -28,9 +35,10 @@ class ApiClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    timeout = REQUEST_TIMEOUT
+    timeout = REQUEST_TIMEOUT,
+    _allowRefresh = true
   ): Promise<T> {
-    const requestId = crypto.randomUUID();
+    const requestId = makeId();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     const sessionToken = await getSessionToken();
@@ -52,6 +60,15 @@ class ApiClient {
       });
 
       clearTimeout(timeoutId);
+
+      if (response.status === 401 && _allowRefresh) {
+        const refreshed = await this.tryRefresh();
+        if (refreshed) {
+          // Single retry with the new session token; refresh disabled so
+          // a failing retry propagates instead of looping.
+          return this.request<T>(endpoint, options, timeout, false);
+        }
+      }
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
@@ -76,6 +93,40 @@ class ApiClient {
         throw new ApiError(408, 'Request timeout', 'TIMEOUT');
       }
       throw new ApiError(0, 'Network error', 'NETWORK_ERROR');
+    }
+  }
+
+  // Refresh-token rotation (ADR-008; TEST-AUDIT High-7): on any 401 try
+  // once to exchange the stored refresh token for a new session. Never
+  // called for refresh/login requests themselves (endpoints guard below),
+  // and on failure the session is cleared so the UI falls back to
+  // sign-in.
+  private async tryRefresh(): Promise<boolean> {
+    const refreshToken = await getRefreshToken();
+    if (!refreshToken) return false;
+    try {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.refreshToken}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      if (!response.ok) {
+        await clearSessionTokens();
+        return false;
+      }
+      const body = (await response.json()) as {
+        access_token: string | null;
+        refresh_token: string | null;
+      };
+      if (!body.access_token) {
+        await clearSessionTokens();
+        return false;
+      }
+      await setSessionToken(body.access_token);
+      if (body.refresh_token) await setRefreshToken(body.refresh_token);
+      return true;
+    } catch {
+      return false;
     }
   }
 
