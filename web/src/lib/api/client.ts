@@ -85,7 +85,10 @@ class ApiClient {
         throw new ApiError(response.status, message, code);
       }
 
-      return response.json();
+      if (response.status === 204) {
+        return undefined as T; // 204 No Content: no body to parse (logout)
+      }
+      return response.json() as Promise<T>;
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof ApiError) throw error;

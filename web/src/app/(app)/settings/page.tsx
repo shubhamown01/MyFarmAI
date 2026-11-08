@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, MapPin, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Check, LogOut, MapPin, User } from 'lucide-react';
+import { apiClient } from '@/lib/api/client';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/providers';
 import { cn } from '@/lib/utils';
@@ -18,12 +20,27 @@ const inputClass =
 export default function SettingsPage() {
   const { profile, updateProfile } = useProfile();
   const { mode, setTheme } = useTheme();
+  const router = useRouter();
   const [name, setName] = useState(profile.name);
   const [locationLabel, setLocationLabel] = useState(profile.locationLabel);
   const [latitude, setLatitude] = useState(String(profile.latitude));
   const [longitude, setLongitude] = useState(String(profile.longitude));
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    setLogoutError(null);
+    try {
+      await apiClient.logout(); // 204; clears the session cookie
+      router.push('/auth/login');
+    } catch {
+      setLogoutError('Could not log out. Check your connection and retry.');
+      setLoggingOut(false);
+    }
+  };
 
   useEffect(() => {
     setName(profile.name);
@@ -206,6 +223,34 @@ export default function SettingsPage() {
               </p>
             )}
           </div>
+        </section>
+
+        <section
+          className="rounded-2xl border border-outline bg-surface p-5 sm:p-6"
+          aria-labelledby="account-heading"
+        >
+          <div className="flex items-center gap-2">
+            <LogOut className="h-5 w-5 text-primary" aria-hidden="true" />
+            <h2 id="account-heading" className="text-[17px] font-semibold text-on-surface">
+              Account
+            </h2>
+          </div>
+          <p className="mt-1 text-[13px] text-on-surface-variant">
+            End the session on this device and return to the login page.
+          </p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-outline bg-surface px-4 text-[14px] font-semibold text-on-surface transition-colors hover:border-outline-strong hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loggingOut ? 'Logging out…' : 'Log out'}
+          </button>
+          {logoutError && (
+            <p role="alert" className="mt-4 rounded-lg bg-error-container px-3 py-2 text-[13px] text-on-error-container">
+              {logoutError}
+            </p>
+          )}
         </section>
 
         <section

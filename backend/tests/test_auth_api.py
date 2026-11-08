@@ -57,6 +57,9 @@ class TestWebCookieFlow:
         assert (await async_client.get("/api/v1/auth/me")).status_code == 200
         resp = await async_client.post("/api/v1/auth/logout")
         assert resp.status_code == 204
+        # Regression 2026-11-08: returning a fresh Response discarded the
+        # delete_cookie header, so browsers kept the session cookie.
+        assert "myfarmai_session=" in resp.headers.get("set-cookie", "")
         assert (await async_client.get("/api/v1/auth/me")).status_code == 401
 
     async def test_bearer_token_also_accepted(self, async_client: AsyncClient) -> None:

@@ -178,7 +178,11 @@ async def logout(
         httponly=True,
         samesite="lax",
     )
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    # Mutate and RETURN the injected Response: returning a new Response
+    # instance here discards the delete_cookie header (browsers then keep
+    # the session cookie after logout; observed live 2026-11-08).
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @router.get("/me", response_model=UserResponse)
