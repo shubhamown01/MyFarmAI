@@ -117,3 +117,5 @@ opencode.json.backup*
 
 # expo prebuild output (generated native project, regenerate via npx expo prebuild)
 android/android/
+# ignore injected public artifacts (APK binaries — never committed)
+backend/public/app-release.apk

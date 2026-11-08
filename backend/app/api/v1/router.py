@@ -7,6 +7,7 @@ from app.api.v1.conversations import router as conversations_router
 from app.api.v1.crop_cycles import router as crop_cycles_router
 from app.api.v1.crop_plans import router as crop_plans_router
 from app.api.v1.dashboard import router as dashboard_router
+from app.api.v1.downloads import router as downloads_router
 from app.api.v1.farms import router as farms_router
 from app.api.v1.land import router as land_router
 from app.api.v1.health import router as health_router
@@ -37,3 +38,4 @@ api_router.include_router(weather_router)
 api_router.include_router(resources_router)
 api_router.include_router(verification_router)
 api_router.include_router(admin_quota_router)
+api_router.include_router(downloads_router)

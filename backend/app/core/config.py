@@ -71,6 +71,13 @@ class Settings(BaseSettings):
         description="Comma-separated list of allowed CORS origins",
     )
 
+    # Public artifact directory (B-3): empty disables /api/downloads/*.
+    # Injection is done at image build time; the dir is NOT a git artifact.
+    public_dir: str = Field(
+        default="",
+        description="Directory holding public artifact files (e.g. APK); empty disables downloads",
+    )
+
     @property
     def cors_allowed_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
