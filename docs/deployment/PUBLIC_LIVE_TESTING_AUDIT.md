@@ -26,6 +26,15 @@ vision analyze (`vision.py:48`). Web pages: `/auth/login`, `/auth/register`,
 `/onboarding`, `/` dashboard, `/assistant` chat, `/crops`, `/weather`,
 `/history`, `/settings`, others.
 
+### Gap status updates (2026-11-08, later work)
+
+- **Logout: CLOSED** — backend now actually clears the session cookie
+  (fix `71737f5`: `logout()` returned a fresh `Response`, discarding
+  `delete_cookie`; regression test asserts the `Set-Cookie` header;
+  290/290 tests). Web Account section wired to `POST /auth/logout`
+  (`client.ts` 204-safe), deployed to Slate, live `204` verified through the
+  public URL.
+
 Gaps for §5/§7 of the master prompt (must add before external testers):
 
 1. **No public landing page** — `/` is the auth-gated dashboard.

@@ -54,3 +54,16 @@ Still blocked after this install (unchanged):
 - **Verification**: `curl https://myfarmai-backend-50047414881.development.catalystappsail.in/health/ready` → expect HTTP 200 and `{"status":"ok","service":"backend","check_type":"readiness"}`.
 - **Docs updated**: `ACCOUNT_SETUP_LOG.md` (full entry), `CLOUD_ACCOUNT_INVENTORY.md` (Neon row added), `MYFARMAI_FINAL_PHASE_STATUS.md` (Phase 9 updated), `CHANGELOG.md` (new entry).
 EOF
+## 2026-11-08 — Backend redeploy with logout cookie fix (commit 71737f5)
+
+- **Why**: live `curl -D -` showed the backend's 204 logout never sent the
+  `Set-Cookie` clearing `myfarmai_session` — `logout()` returned a fresh
+  `Response` instead of the header-mutated injected one.
+- **Image**: `myfarmai-backend:c71737f5` built via `docker build
+  --platform linux/amd64 -f Dockerfile .` from `/data/MyFarmAI/backend`,
+  saved to `/tmp/opencode/backend-image.tar` (93 MiB). `.dockerignore`
+  verified to exclude `.env`, `.env.*`, `data/`.
+- **Deploy (detached)**: from `deploy/catalyst-staging`,
+  `NODE_OPTIONS=--dns-result-order=ipv4first setsid nohup timeout 4500\n  npx -y zcatalyst-cli deploy appsail --name myfarmai-backend --source\n  docker-archive:///tmp/opencode/backend-image.tar --port 8000 >\n  /tmp/opencode/appsail-deploy.log 2>&1 < /dev/null &`
+- **Post-deploy verification plan**: `/health/live` + `/health/ready` 200;
+  `POST /api/v1/auth/logout -D -` must show `set-cookie: myfarmai_session=`(cleared) in the 204; Slate proxy still 200/204 through `onslate.in`.
