@@ -67,3 +67,24 @@ EOF
   `NODE_OPTIONS=--dns-result-order=ipv4first setsid nohup timeout 4500\n  npx -y zcatalyst-cli deploy appsail --name myfarmai-backend --source\n  docker-archive:///tmp/opencode/backend-image.tar --port 8000 >\n  /tmp/opencode/appsail-deploy.log 2>&1 < /dev/null &`
 - **Post-deploy verification plan**: `/health/live` + `/health/ready` 200;
   `POST /api/v1/auth/logout -D -` must show `set-cookie: myfarmai_session=`(cleared) in the 204; Slate proxy still 200/204 through `onslate.in`.
+
+## 2026-11-08 — Production-mode backend + public APK + landing/legal pages
+
+- **Image**: `prod-4b1acc5` built as a derived layer on `c4b1acc5`
+  (downloads route) with `ENVIRONMENT=production`, `ALLOWED_HOSTS`,
+  `CORS_ALLOWED_PRE-CHECKED` (Slate origin), `TRUSTED_PROXY_CIDRS=10/8,172.16/12,192.168/16`,
+  `PUBLIC_DIR=/app/public` + 65 MB release APK baked into the image (never
+  committed to git; ignored by `.gitignore`).
+- **Pre-deploy smoke**: `validate_for_environment() == []` executed inside
+  the image before deploy (pydantic venv path `/app/.venv/bin/python`).
+- **Deploy**: detached AppSail deploy pid 55705 → DEPLOYMENT SUCCESSFUL.
+- **Live verification (all observed)**:
+  - `/health/live` 200; `/health/ready` 200 `database: ok, ollama: disabled`
+  - logout 204 with `myfarmai_session=…; SameSite=lax; Secure` (prod flag on)
+  - preflight OPTIONS 200 (no ACAO — app is same-origin via web proxy)
+  - `/api/v1/downloads/app-release.apk` 200, 65,007,414 bytes, `cmp` byte-identical
+  - `/api/v1/downloads/app-release.apk` via Slate proxy → 200
+- **Web deploy (#4)**: Slate redeploy after landing/legal → `/landing`,
+  `/legal/privacy`, `/legal/terms`, `/auth/login` all 200 publicly.
+- **Docs added**: DEPLOYMENT_RUNBOOK.md, ROLLBACK_PLAN.md, TEST_RESULTS.md,
+  PUBLIC_TESTER_GUIDE.md, REAL_DEVICE_TEST_PLAN.md.
