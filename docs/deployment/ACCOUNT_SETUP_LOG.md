@@ -88,3 +88,24 @@ EOF
   `/legal/privacy`, `/legal/terms`, `/auth/login` all 200 publicly.
 - **Docs added**: DEPLOYMENT_RUNBOOK.md, ROLLBACK_PLAN.md, TEST_RESULTS.md,
   PUBLIC_TESTER_GUIDE.md, REAL_DEVICE_TEST_PLAN.md.
+
+## 2026-11-09 — Feedback migration applied to Neon production DB (gate I)
+
+- **Forked-head bug fixed**: feedback migration reused revision id
+  `f4b2c3d4e5a6` (E4 land tables) as its down_revision → two heads. Re-chained
+  to true head `c8d9e0f1a2b3` with unique revision id
+  `f4b2c3d4e5a7_fb_feedback1` (≤32 chars — first attempt
+  `f4b2c3d4e5a7_fb_feedback_tables_1` was 35 chars and exceeded
+  `alembic_version.version_num` varchar(32); transactional DDL rolled back
+  cleanly, no partial state).
+- **FK fix**: list-form `ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='SET NULL')`
+  + explicit `id` GUID PK column (mirrors `c8d9e0f1a2b3` ai_quota migration style).
+- **Applied**: `DATABASE_URL` (Neon pooler, ap-southeast-1) → `alembic upgrade head`
+  → `c8d9e0f1a2b3 -> f4b2c3d4e5a7_fb_feedback1`. Connection string was fetched
+  from AppSail env (`DATABASE_PATH`) via Catalyst MCP, never printed, and the
+  temporary file was deleted after use.
+- **Verified in Neon**: table `feedback` (id uuid PK; user_id uuid FK→users.id
+  ON DELETE SET NULL; email/category/message/app_version; timestamptz
+  created/updated; `pk_feedback` + `ix_feedback_user_id`); round-trip
+  insert/read/delete succeeded and left 0 rows.
+- **Tests**: full backend suite 305/305 pass after the migration change.

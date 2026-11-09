@@ -14,7 +14,7 @@ Updated: **2026-11-09**. Evidence-first: every claim links to an observed output
 | F. APK install & launch | **NOT TESTED** | APK built & hosted; needs owner phone pairing |
 | G. Mobile browser | **NOT TESTED** | Responsive by design; external phone pending |
 | H. HTTPS & security | **PASS with conditions** | Cookie `Secure` now PRODUCTION-LIVE; CORS explicit; CSRF middleware; rate limits; checklist doc created |
-| I. Backup & recovery | **NOT DONE** | Requires Neon creds (console) + owner approval |
+| I. Backup & recovery | **PASS (migration)** | Feedback migration applied to Neon prod branch (2026-11-09): `f4b2c3d4e5a7_fb_feedback1`, table `feedback` verified (uuid PK, FK→users.id ON DELETE SET NULL, ix_feedback_user_id); round-trip insert/read/delete succeeded. pg_dump full backup still pending owner console access |
 | J. External tester workflow | **BLOCKED** | New user registration needs OTP (dev-mode) → needs real SMTP or provisioned test account |
 
 ## Feature verification - feedback endpoint (E1)
@@ -38,4 +38,4 @@ Updated: **2026-11-09**. Evidence-first: every claim links to an observed output
 4. **On-device testing** — APK built & hosted; needs owner phone pairing (USB debugging or `adb pair`).
 5. **AI on staging** — cloud-mediated only; local Ollama never exposed publicly (policy).
 
-**All production code changes are committed (`9abb2d6`). The feedback feature is implemented, tested, and ready for owner approval on DB backup and migration.**
+**All production code changes are committed (`9abb2d6`, feedback at `e97a800`, migration fix commit below). The feedback schema is now LIVE in the Neon production database (2026-11-09). Remaining: a new backend image must be built/deployed so the running AppSail serves `/api/v1/feedback/*` (current prod image `prod-4b1acc5` predates the route and returns 404); pg_dump full backup needs owner Neon console access.**
