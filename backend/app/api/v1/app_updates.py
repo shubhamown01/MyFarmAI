@@ -15,27 +15,34 @@ router = APIRouter(prefix="/app-updates", tags=["AppUpdates"])
 
 # VERSION file (repo root, canonical) may not be present in the container
 # image; pyproject.toml always is — both are kept in sync manually.
-_VERSION_FILE = Path(__file__).resolve().parents[4] / "VERSION"
-_PYPROJECT = Path(__file__).resolve().parents[4] / "backend" / "pyproject.toml"
+_VERSION_FILE = "VERSION"
 _RELEASES_URL = "https://github.com/shubhamown01/MyFarmAI/releases"
 _UNKNOWN = "unknown"
 
+# Path depth differs between the source tree (repo/backend/app/api/v1/…)
+# and the container image (app/app/api/v1/…) — probe both bases.
+_FILE = Path(__file__).resolve()
+_CANDIDATE_BASES = (_FILE.parents[4], _FILE.parents[3], _FILE.parents[2])
+
 
 def _read_version() -> str:
-    if _VERSION_FILE.is_file():
-        v = _VERSION_FILE.read_text().strip()
-        if v:
-            return v
-    if _PYPROJECT.is_file():
-        try:
-            import tomllib
+    import tomllib
 
-            data = tomllib.loads(_PYPROJECT.read_text())
-            v = str(data.get("project", {}).get("version", "")).strip()
+    for base in _CANDIDATE_BASES:
+        vfile = base / _VERSION_FILE
+        if vfile.is_file():
+            v = vfile.read_text().strip()
             if v:
                 return v
-        except (OSError, ValueError, KeyError):
-            pass
+        pyproject = base / "pyproject.toml"
+        if pyproject.is_file():
+            try:
+                data = tomllib.loads(pyproject.read_text())
+                v = str(data.get("project", {}).get("version", "")).strip()
+                if v:
+                    return v
+            except (OSError, ValueError, KeyError):
+                pass
     return _UNKNOWN
 
 
