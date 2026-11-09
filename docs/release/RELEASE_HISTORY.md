@@ -1,0 +1,26 @@
+# Release History
+
+## v1.0.0 — first stable public release
+
+- **Date:** 2026-11-09 (candidate; publishing pending owner approval)
+- **Tag:** `v1.0.0` (created after all gates pass + owner approval)
+- **Application ID:** `com.myfarmai.android`
+- **versionName / versionCode:** `1.0.0` / `1`
+- **Backend/web release:** image prod-4558529 → app release metadata version `1.0.0`
+
+### Highlights
+- Auth: email-OTP registration/login, opaque session cookies (Argon2id, refresh rotation) — first version published publicly.
+- Farmer profile, farms/land plots, crop plans, weather (Open-Meteo), research (SearXNG, AGPL-3.0 reviewed).
+- AI chat (Qwen via per-user quota-gated cloud metadata; only production HTTPS API exposed — local Ollama never public).
+- Public APK download from the backend route and (after publication) GitHub Releases (`/releases`).
+- Feedback (bug/feature/question/praise) — anonymous submission, optional reply email; schema live in Neon prod (migration `f4b2c3d4e5a7_fb_feedback1`).
+- Update-check endpoint (`GET /api/v1/app-updates/latest`) for the Android in-app "Check for updates" flow.
+- Security: ENVIRONMENT=production, ALLOWED_HOSTS/CORS/Secure-cookie, `TRUSTED_PROXY_CIDRS`, rate limits, CSRF middleware.
+
+### Known limitations
+- Google Play publication not done (owner decision; Play registration fee is NOT ₹0).
+- OTP delivery for new-user registration currently requires dev-mode SMTP gating (test accounts); real SMTP pending owner's decision.
+- On-device (F/G real-phone) verification pending owner phone pairing as of v1.0.0 RC-1.
+- Full pg_dump backup automation pending; documented manual procedure only.
+
+See `../testing/TEST_RESULTS.md` for per-gate evidence.
