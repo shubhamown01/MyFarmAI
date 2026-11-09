@@ -1,0 +1,101 @@
+name: Release
+
+# Tag-triggered release pipeline: validates version consistency, builds the
+# release APK, verifies the signature, generates checksums, and prepares a
+# DRAFT GitHub Release. Publication always stays a manual, owner-approved
+# step (no auto-publish of production releases).
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+  checks: read
+
+jobs:
+  version-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: VERSION file matches tag
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          FILE=$(tr -d ' \n' < VERSION)
+          echo "tag=$TAG version=$FILE"
+          test "$TAG" = "$FILE" || { echo "VERSION file does not match tag"; ls; exit 1; }
+      - name: Android manifests match tag
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          EXP=$(node -e "console.log(require('./android/app.json').expo.version)")
+          GN=$(grep -oP 'versionName "\K[0-9.]+' android/android/app/build.gradle)
+          test "$EXP" = "$TAG" && test "$GN" = "$TAG"
+      - name: Web manifest matches tag
+        run: test "$(node -e "console.log(require('./web/package.json').version)")" = "${GITHUB_REF_NAME#v}"
+      - name: Backend manifest matches tag
+        run: test "$(grep -oP '^version = "\K[^"]+' backend/pyproject.toml)" = "${GITHUB_REF_NAME#v}"
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { python-version: "3.12" }
+      - name: Lint + tests
+        working-directory: backend
+        run: |
+          uv sync
+          uv run ruff format --check .
+          uv run ruff check app tests --exclude app/orchestrator
+          uv run pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm, cache-dependency-path: web/package-lock.json }
+      - name: Typecheck + test + lint + build
+        working-directory: web
+        run: |
+          npm ci
+          npm run typecheck
+          npm test -- --runInBand --ci
+          npm run lint
+          npm run build
+
+  android-build:
+    runs-on: ubuntu-latest
+    needs: [version-consistency, backend, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm, cache-dependency-path: android/package-lock.json }
+      - name: Install JS deps
+        working-directory: android
+        run: npm ci
+      - name: Bundle release JS
+        working-directory: android/android
+        run: ./gradlew :app:bundleReleaseJsAndAssets
+      # NOTE: production signing happens on the owner machine with the
+      # protected keystore (docs/release/ANDROID_SIGNING_AND_KEY_RECOVERY.md).
+      # CI produces the UNSIGNED release artifact + checksum of the unsigned
+      # bundle; the owner machine signs, verifies certs, and uploads assets.
+      - name: Assemble unsigned release
+        working-directory: android/android
+        run: ./gradlew :app:assembleRelease
+      - name: Stage artifacts
+        run: |
+          mkdir -p /tmp/assets
+          cp android/android/app/build/outputs/apk/release/app-release.apk /tmp/assets/
+          sha256sum /tmp/assets/app-release.apk > /tmp/assets/app-release.apk.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: /tmp/assets/*
+          if-no-files-found: error
