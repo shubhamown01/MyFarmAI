@@ -41,7 +41,10 @@ class FeedbackService:
         if len(message) < 5 or len(message) > 2000:
             raise FeedbackCreateError(422, "message must be 5–2000 chars")
         row = FeedbackModel(
-            user_id=uuid.uuid4(),
+            # anonymous submissions carry no user — a random uuid would violate
+            # the user_id FK on Postgres (SQLite does not enforce it, which is
+            # why tests passed without this).
+            user_id=None,
             email=email or "",
             category=category,
             message=message,
