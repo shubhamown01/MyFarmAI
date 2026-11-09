@@ -13,15 +13,30 @@ from fastapi import APIRouter
 
 router = APIRouter(prefix="/app-updates", tags=["AppUpdates"])
 
-_VERSION_FILE = Path(__file__).resolve().parents[3] / "VERSION"
+# VERSION file (repo root, canonical) may not be present in the container
+# image; pyproject.toml always is — both are kept in sync manually.
+_VERSION_FILE = Path(__file__).resolve().parents[4] / "VERSION"
+_PYPROJECT = Path(__file__).resolve().parents[4] / "backend" / "pyproject.toml"
 _RELEASES_URL = "https://github.com/shubhamown01/MyFarmAI/releases"
+_UNKNOWN = "unknown"
 
 
 def _read_version() -> str:
-    try:
-        return _VERSION_FILE.read_text().strip()
-    except OSError:
-        return "unknown"
+    if _VERSION_FILE.is_file():
+        v = _VERSION_FILE.read_text().strip()
+        if v:
+            return v
+    if _PYPROJECT.is_file():
+        try:
+            import tomllib
+
+            data = tomllib.loads(_PYPROJECT.read_text())
+            v = str(data.get("project", {}).get("version", "")).strip()
+            if v:
+                return v
+        except (OSError, ValueError, KeyError):
+            pass
+    return _UNKNOWN
 
 
 @router.get("/latest", include_in_schema=True)

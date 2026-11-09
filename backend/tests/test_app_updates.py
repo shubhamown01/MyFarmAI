@@ -13,8 +13,11 @@ class TestLatestRelease:
         assert "release_notes_url" in body
         assert "download_url" in body
         assert "github.com/shubhamown01/MyFarmAI" in body["download_url"]
-        # latest_version always looks MAJOR.MINOR.PATCH-ish (or 'unknown' if unreadable)
-        assert body["latest_version"] == "unknown" or '"."' not in body["latest_version"]
+        # source tree reads VERSION; container falls back to pyproject —
+        # both must yield a semantic version
+        import re
+
+        assert re.fullmatch(r"\d+\.\d+\.\d+", body["latest_version"]), body["latest_version"]
 
     @pytest.mark.asyncio
     async def test_no_auth_required(self, async_client) -> None:
