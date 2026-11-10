@@ -150,6 +150,32 @@ manifest with `tools:node="remove"`; the release APK was rebuilt with
 
 ---
 
+## R-06 — Pin GitHub Actions to commit SHAs (SEC-011, Medium)
+
+**Files**
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/release.yml`
+
+**Change**
+
+All 16 `uses:` entries now reference full commit SHAs for `actions/checkout`,
+`actions/setup-node`, `actions/setup-java`, `actions/upload-artifact`, and
+`astral-sh/setup-uv`; the original tag is kept in a trailing comment.
+
+**Verification**
+
+- Each SHA resolves to a commit on the upstream repository (GitHub API 200).
+- Both workflow files parse with PyYAML.
+- No mutable `@vN` references remain.
+
+**Note**
+
+Restricting `permissions:` and requiring review for workflow changes are
+repository-settings decisions and remain owner actions.
+
+---
+
 ## Documentation updated
 
 - `docs/security/SECURITY_AUDIT_PLAN.md`
@@ -191,4 +217,3 @@ manifest with `tools:node="remove"`; the release APK was rebuilt with
 - FastAPI 0.162/Starlette 1.3.x major upgrade (SEC-002 residual).
 - Next 16 upgrade / PostCSS override (SEC-013).
 - OAuth redirect allowlist and Microsoft claim hardening (SEC-003/004).
-- CI action SHA pinning (SEC-011).

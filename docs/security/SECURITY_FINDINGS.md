@@ -10,7 +10,7 @@
 |---|---:|---:|---:|---:|---:|
 | Critical | 0 | 0 | 0 | 0 | 0 |
 | High | 2 | 2 | 0 | 0 | 0 |
-| Medium | 13 | 4 | 9 | 0 | 0 |
+| Medium | 13 | 5 | 8 | 0 | 0 |
 | Low | 12 | 0 | 6 | 2 | 4 |
 | Info | 3 | 0 | 0 | 0 | 3 |
 
@@ -149,11 +149,15 @@ is closed in a running environment.
 
 - **Component:** CI/CD
 - **File:** `.github/workflows/ci.yml`, `.github/workflows/release.yml` (16 `uses:` entries)
-- **Severity:** Medium · **Confidence:** Confirmed · **Status:** `OPEN`
-- **Details:** Actions use `@v4`/`@v5` tags. A compromised or retagged action could execute with repository token permissions (release workflow has `contents: write`).
+- **Severity:** Medium · **Confidence:** Confirmed · **Status:** `FIXED`
+- **Details:** Actions used `@v4`/`@v5` tags. A compromised or retagged action could execute with repository token permissions (release workflow has `contents: write`).
 - **Impact:** Supply-chain compromise of CI/release artifacts.
-- **Repair:** Pin each action to a full commit SHA (Dependabot can keep them updated), restrict workflow permissions, and require review for workflow changes.
-- **Verification:** Static review of both workflows; no runtime test.
+- **Repair:** Pinned all 16 `uses:` entries to full commit SHAs
+  (`actions/checkout`, `setup-node`, `setup-java`, `upload-artifact`,
+  `astral-sh/setup-uv`) with the original tag in a comment. Workflow
+  permissions and review requirements remain a repo-settings decision.
+- **Verification:** Each SHA resolves to a commit on the upstream repository
+  (GitHub API 200); both workflow files parse as YAML.
 
 ### SEC-012 — Rate limiting is in-process only
 

@@ -27,7 +27,7 @@ locally. Residual risks below require owner acknowledgement.
 | 4 | Auth/authz tests passing | **PASS** | 310 backend tests pass, including new anonymous 401 / non-admin 403 / admin 200 feedback tests. Login, logout, OTP, OAuth state, CSRF, and admin gates covered |
 | 5 | User isolation verified | **PASS** | Ownership checks return 404 for cross-user access; covered by `test_farms_api.py::test_cross_user_patch_404`, `test_land_api.py::test_cross_user_plot_404`, `test_crop_cycles_api.py::test_cross_user_cycle_404`, `test_p5g_conversations.py::test_cross_user_conversation_404`, `test_conversation_ownership.py::test_user_isolation_in_listing` |
 | 6 | HTTPS | **PASS (caveat)** | Provider certs + HSTS on both origins; deployed image sets `ENVIRONMENT=production` and `validate_for_environment() == []`, so session cookies are `Secure`. Live `Set-Cookie` was not re-captured (no live credentials used) |
-| 7 | Dependencies/containers reviewed | **CONDITIONAL** | `pip-audit`, `npm audit`, Trivy, OSV, Bandit, Semgrep run; results in `DEPENDENCY_AUDIT.md`. Residuals: Starlette 0.46.2 advisories (Medium/Low), Android EOL Expo 51/RN 0.74 (SEC-010), PostCSS build chain (SEC-013), voice container root/no healthcheck (SEC-014) |
+| 7 | Dependencies/containers reviewed | **CONDITIONAL** | `pip-audit`, `npm audit`, Trivy, OSV, Bandit, Semgrep run; results in `DEPENDENCY_AUDIT.md`. CI actions are SHA-pinned (SEC-011). Residuals: Starlette 0.46.2 advisories (Medium/Low), Android EOL Expo 51/RN 0.74 (SEC-010), PostCSS build chain (SEC-013), voice container root/no healthcheck (SEC-014) |
 | 8 | Android release checks | **PASS (caveat)** | `expo prebuild` emitted `tools:node="remove"`; APK rebuilt, signed by `CN=MyFarmAI Release`, no `SYSTEM_ALERT_WINDOW`, hosted copy byte-identical. Residual owner decisions: SEC-027 debug fallback, SEC-009 `allowBackup`, SEC-017 storage permissions, SEC-018 API host |
 | 9 | Backup/recovery verified | **BLOCKED** | Dockerized Postgres backup verified 2026-11-10 (80K dump, `pg_restore --list` clean). A full Neon `pg_dump`/restore drill still needs database credentials not available locally |
 | 10 | Regression tests pass | **PASS** | Backend `./scripts/check.sh` → 310 passed + ruff/mypy baseline; web typecheck/lint + 40/40 tests; Android typecheck/lint pass |
@@ -46,8 +46,8 @@ locally. Residual risks below require owner acknowledgement.
 5. **DONE** — `expo prebuild` + release rebuild; APK signed
    `CN=MyFarmAI Release`, no `SYSTEM_ALERT_WINDOW`, hosted copy identical.
 6. **OWNER DECISION** — SEC-003 OAuth redirect allowlist, SEC-004 Microsoft
-   verified-email claim, SEC-009 `allowBackup`, SEC-011 CI action SHA pinning,
-   SEC-027 release signing guard, and the FastAPI 0.162/Next 16 major upgrades.
+   verified-email claim, SEC-009 `allowBackup`, SEC-027 release signing guard,
+   and the FastAPI 0.162/Next 16 major upgrades.
 
 ## Accepted residual risk (owner acknowledgement required)
 
