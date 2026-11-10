@@ -119,3 +119,7 @@ opencode.json.backup*
 android/android/
 # ignore injected public artifacts (APK binaries — never committed)
 backend/public/app-release.apk
+
+# transient DB connection notes — never persist
+/data/MyFarmAI/data/neon_conn.txt
+data/neon_conn.txt
