@@ -26,13 +26,17 @@ jobs:
           FILE=$(tr -d ' \n' < VERSION)
           echo "tag=$TAG version=$FILE"
           test "$TAG" = "$FILE" || { echo "VERSION file does not match tag"; ls; exit 1; }
-      - name: Android manifests match tag
+      - name: Android manifest matches tag
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME#v}"
           EXP=$(node -e "console.log(require('./android/app.json').expo.version)")
-          GN=$(grep -oP 'versionName "\K[0-9.]+' android/android/app/build.gradle)
-          test "$EXP" = "$TAG" && test "$GN" = "$TAG"
+          echo "tag=$TAG expo.version=$EXP"
+          test "$EXP" = "$TAG"
+          # NOTE: versionName/versionCode live in the generated, gitignored
+          # android/android/ tree (expo prebuild output). They are verified
+          # on the owner machine at sign time via apksigner/outputs; CI
+          # cannot read untracked files.
       - name: Web manifest matches tag
         run: test "$(node -e "console.log(require('./web/package.json').version)")" = "${GITHUB_REF_NAME#v}"
       - name: Backend manifest matches tag
