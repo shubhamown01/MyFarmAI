@@ -2,11 +2,14 @@
 
 ## v1.0.0 — first stable public release
 
-- **Date:** 2026-11-09 (candidate; publishing pending owner approval)
-- **Tag:** `v1.0.0` (created after all gates pass + owner approval)
+- **Date:** 2026-11-10 (published)
+- **Tag:** `v1.0.0` — created 2026-11-10T16:53:56Z, release is public (`isDraft: false`),
+  assets: `app-release.apk` (67,884,524 B, SHA-256
+  `631112beed79db3154db46a8118f3003b93c85a5255f96de46b2ed7fda35e112`),
+  `app-release.apk.sha256`, `v1.0.0.sha256`. Anonymous download verified.
 - **Application ID:** `com.myfarmai.android`
 - **versionName / versionCode:** `1.0.0` / `1`
-- **Backend/web release:** image prod-4558529 → app release metadata version `1.0.0`
+- **Backend deployment:** `prod-c63d3963-v2` (version-fix + signed APK; live-verified)
 
 ### Highlights
 - Auth: email-OTP registration/login, opaque session cookies (Argon2id, refresh rotation) — first version published publicly.

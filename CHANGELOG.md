@@ -4,9 +4,9 @@ All notable changes to MyFarmAI are documented here. Format is
 [Keep a Changelog](https://keepachangelog.com/) and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] — 2026-11-09 — first stable public release (candidate)
+## [1.0.0] — 2026-11-10 — first stable public release
 
-Pending owner publication approval. Tag will be `v1.0.0` on `main`.
+Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`; official page: https://github.com/shubhamown01/MyFarmAI/releases/tag/v1.0.0
 
 ### Added
 - Email-OTP authentication, opaque session cookies (Argon2id, refresh rotation, reuse detection).
