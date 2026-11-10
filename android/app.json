@@ -27,6 +27,9 @@
         "backgroundColor": "#2E7D32"
       },
       "package": "com.myfarmai.android",
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.RECORD_AUDIO",

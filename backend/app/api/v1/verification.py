@@ -192,14 +192,20 @@ async def upload_selfie(
 
         try:
             img = Image.open(io.BytesIO(data))
-            img.load()
             width, height = img.size
+            if not (_MIN_DIM <= width <= _MAX_DIM and _MIN_DIM <= height <= _MAX_DIM):
+                raise _err(
+                    422,
+                    f"image dimensions must be {_MIN_DIM}-{_MAX_DIM}px",
+                    "IMAGE_DIMENSIONS",
+                )
+            img.load()  # decode only after the dimension gate (memory-DoS guard)
+        except HTTPException:
+            raise
         except Exception:
             raise _err(
                 status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "unreadable image", "UNSUPPORTED_MEDIA_TYPE"
             ) from None
-        if not (_MIN_DIM <= width <= _MAX_DIM and _MIN_DIM <= height <= _MAX_DIM):
-            raise _err(422, f"image dimensions must be {_MIN_DIM}-{_MAX_DIM}px", "IMAGE_DIMENSIONS")
 
         # Re-encode to strip ALL metadata (EXIF/GPS/ICC) — nothing from the
         # camera is copied into the stored file.

@@ -212,3 +212,25 @@ async def async_client(async_app) -> AsyncGenerator[AsyncClient, None]:
     transport = ASGITransport(app=async_app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+
+@pytest.fixture(scope="function")
+async def admin_async_client(async_client: AsyncClient) -> AsyncGenerator[AsyncClient, None]:
+    """Async client logged in as an admin user (session cookie set)."""
+    from app.core.security import hash_password
+    from app.db.models.user import User, UserRole
+
+    async with db_manager.session() as session:
+        session.add(
+            User(
+                email="admin@example.com",
+                password_hash=hash_password("Admin-pass-1!"),
+                role=UserRole.ADMIN,
+            )
+        )
+    resp = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@example.com", "password": "Admin-pass-1!"},
+    )
+    assert resp.status_code == 200, resp.text
+    yield async_client

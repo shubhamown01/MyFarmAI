@@ -305,6 +305,25 @@ class TestSelfieVerification:
         assert resp.status_code == 422, resp.text
         assert resp.json()["error_code"] == "IMAGE_DIMENSIONS"
 
+    async def test_oversized_dimensions_rejected(
+        self,
+        async_client: AsyncClient,
+        monkeypatch: pytest.MonkeyPatch,
+        clean_challenges,
+        selfie_dir,
+    ) -> None:
+        email = "e3-huge@verifytest.com"
+        await _signup_pending_user(async_client, monkeypatch, email)
+        await async_client.post(CONSENT_URL)
+        cid = (await async_client.post(CHALLENGE_URL)).json()["challenge_id"]
+        resp = await async_client.post(
+            UPLOAD_URL,
+            files={"file": ("huge.jpg", _jpeg(4097, 4097), "image/jpeg")},
+            data={"challenge_id": cid},
+        )
+        assert resp.status_code == 422, resp.text
+        assert resp.json()["error_code"] == "IMAGE_DIMENSIONS"
+
     async def test_exif_stripped(
         self,
         async_client: AsyncClient,

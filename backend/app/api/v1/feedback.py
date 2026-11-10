@@ -6,11 +6,14 @@ passwords, OTPs, private farm data, or unnecessary PII are stored beyond
 the masked category + message + optional app version.
 """
 
+import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.api.v1.auth import get_current_user_id
+from app.db.models.user import User
 from app.db.session import db_manager
 from app.schemas.feedback import FeedbackRequest
 from app.services.feedback import FeedbackCreateError, FeedbackService
@@ -60,11 +63,11 @@ async def list_feedback(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     service: FeedbackService = Depends(get_feedback_service),
+    user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> dict[str, Any]:
-    """Admin/owner view of all feedback submissions (read-only aggregation).
-
-    Not authenticated — should be toggled behind admin auth before production
-    release (see ADR-009 §6 for the intended flagging of this route).
-    """
+    """Admin/owner view of all feedback submissions (read-only aggregation)."""
+    user = await service.session.get(User, user_id)
+    if user is None or user.role.value != "admin":
+        raise _err(403, "admin role required", "ADMIN_REQUIRED")
     items, total = await service.list_all(limit=limit, offset=offset)
     return {"items": items, "count": total}
