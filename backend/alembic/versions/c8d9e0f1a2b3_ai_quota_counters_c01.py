@@ -10,30 +10,33 @@ Revision ID: c8d9e0f1a2b3
 Revises: a5b6c7d8e9f0
 Create Date: 2026-11-04
 """
-from typing import Sequence, Union
 
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = 'c8d9e0f1a2b3'
-down_revision: Union[str, None] = 'a5b6c7d8e9f0'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "c8d9e0f1a2b3"
+down_revision: str | None = "a5b6c7d8e9f0"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.create_table('ai_quota_counters',
-    sa.Column('user_id', sa.UUID(), nullable=False),
-    sa.Column('window_start', sa.DateTime(timezone=True), nullable=False),
-    sa.Column('used_count', sa.Integer(), server_default=sa.text('0'), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('user_id', 'window_start')
+    op.create_table(
+        "ai_quota_counters",
+        sa.Column("user_id", sa.UUID(), nullable=False),
+        sa.Column("window_start", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("used_count", sa.Integer(), server_default=sa.text("0"), nullable=False),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("user_id", "window_start"),
     )
-    op.create_index(op.f('ix_ai_quota_counters_user_id'), 'ai_quota_counters', ['user_id'], unique=False)
+    op.create_index(
+        op.f("ix_ai_quota_counters_user_id"), "ai_quota_counters", ["user_id"], unique=False
+    )
 
 
 def downgrade() -> None:
-    op.drop_index(op.f('ix_ai_quota_counters_user_id'), table_name='ai_quota_counters')
-    op.drop_table('ai_quota_counters')
+    op.drop_index(op.f("ix_ai_quota_counters_user_id"), table_name="ai_quota_counters")
+    op.drop_table("ai_quota_counters")

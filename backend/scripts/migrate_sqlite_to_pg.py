@@ -32,7 +32,7 @@ import hashlib
 import json
 import sqlite3
 import sys
-from datetime import timezone
+from datetime import UTC
 from pathlib import Path
 from uuid import UUID
 
@@ -47,7 +47,7 @@ def _parse_utc(value: str) -> str:
     """Parse a naive legacy timestamp and render it as UTC ISO-8601."""
     from datetime import datetime
 
-    dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
     return dt.isoformat()
 
 
@@ -88,8 +88,7 @@ def cmd_export(db: Path, out: Path) -> None:
                 "created_at": _parse_utc(row[4]),
             }
             for row in con.execute(
-                "SELECT id, conversation_id, role, content, created_at "
-                "FROM messages ORDER BY id"
+                "SELECT id, conversation_id, role, content, created_at FROM messages ORDER BY id"
             )
         ]
     finally:
@@ -165,9 +164,7 @@ def cmd_load(export: Path, dsn: str) -> None:
 
     with psycopg.connect(dsn) as conn:
         with conn.cursor() as cur:
-            existing = cur.execute(
-                "SELECT COUNT(*) FROM conversations"
-            ).fetchone()
+            existing = cur.execute("SELECT COUNT(*) FROM conversations").fetchone()
             assert existing is not None
             if existing[0] > 0:
                 sys.exit(
@@ -219,7 +216,11 @@ def cmd_load(export: Path, dsn: str) -> None:
                             str(m["id"]),
                             m["conversation_id"],
                             m["role"],
-                            m["content"].replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r"),
+                            m["content"]
+                            .replace("\\", "\\\\")
+                            .replace("\t", "\\t")
+                            .replace("\n", "\\n")
+                            .replace("\r", "\\r"),
                             "\\N",
                             "\\N",
                             "\\N",
@@ -242,8 +243,10 @@ def cmd_load(export: Path, dsn: str) -> None:
                 "COALESCE((SELECT MAX(id) FROM messages), 1))"
             )
         conn.commit()
-    print(f"Loaded {len(conversations)} conversations, {len(messages)} messages "
-          f"(source sha256 {manifest['source_sha256'][:16]}...)")
+    print(
+        f"Loaded {len(conversations)} conversations, {len(messages)} messages "
+        f"(source sha256 {manifest['source_sha256'][:16]}...)"
+    )
 
 
 def cmd_validate(export: Path, dsn: str) -> None:
@@ -292,9 +295,11 @@ def cmd_validate(export: Path, dsn: str) -> None:
         "roles_valid": bad_roles == 0,
         "per_conversation_counts_match": per_conv_db == per_conv,
     }
-    print(f"users(legacy)={n_users} conversations={n_conv} (expect {expected_conv}) "
-          f"messages={n_msg} (expect {expected_msg}) orphans={orphans} "
-          f"bad_message_count={bad_counts} bad_roles={bad_roles}")
+    print(
+        f"users(legacy)={n_users} conversations={n_conv} (expect {expected_conv}) "
+        f"messages={n_msg} (expect {expected_msg}) orphans={orphans} "
+        f"bad_message_count={bad_counts} bad_roles={bad_roles}"
+    )
     for name, ok in checks.items():
         print(f"  {'PASS' if ok else 'FAIL'}  {name}")
     if not all(checks.values()):

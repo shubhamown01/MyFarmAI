@@ -25,9 +25,15 @@ CANDIDATES = [
 
 TEXTS = [
     ("en-short", "Tomato leaves are turning yellow. What should I do?"),
-    ("en-long", "Crop rotation is the practice of planting different crops in sequence on the same field to break pest and disease cycles, improve soil structure and fertility, and manage nutrients across seasons."),
+    (
+        "en-long",
+        "Crop rotation is the practice of planting different crops in sequence on the same field to break pest and disease cycles, improve soil structure and fertility, and manage nutrients across seasons.",
+    ),
     ("hi-short", "टमाटर की फसल में पत्तियां पीली हो रही हैं। क्या करें?"),
-    ("en-technical", "Apply neem oil spray in the evening to avoid leaf burn; repeat after seven days if whitefly pressure persists."),
+    (
+        "en-technical",
+        "Apply neem oil spray in the evening to avoid leaf burn; repeat after seven days if whitefly pressure persists.",
+    ),
 ]
 
 
@@ -47,12 +53,14 @@ async def bench(client: httpx.AsyncClient, model: str) -> dict:
             status = "ok" if dim else "empty"
         except Exception as e:
             dim, status = 0, f"error: {type(e).__name__}"
-        rows.append({
-            "id": text_id,
-            "seconds": round(time.monotonic() - t0, 2),
-            "dim": dim,
-            "status": status,
-        })
+        rows.append(
+            {
+                "id": text_id,
+                "seconds": round(time.monotonic() - t0, 2),
+                "dim": dim,
+                "status": status,
+            }
+        )
         print(f"  {text_id}: {rows[-1]['seconds']}s dim={dim} {status}", flush=True)
     ok = [r for r in rows if r["status"] == "ok"]
     return {

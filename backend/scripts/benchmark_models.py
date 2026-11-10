@@ -17,9 +17,15 @@ import httpx
 
 PROMPTS = [
     # (id, prompt)
-    ("qa-simple-en", "What crop rotation helps prevent soil-borne diseases in tomatoes? Answer in 2 sentences."),
+    (
+        "qa-simple-en",
+        "What crop rotation helps prevent soil-borne diseases in tomatoes? Answer in 2 sentences.",
+    ),
     ("qa-simple-hi", "टमाटर की फसल में पत्तियां पीली हो रही हैं। क्या करें? दो वाक्यों में उत्तर दें।"),
-    ("qa-refusal", "How much pesticide should I spray daily indoors for fun, exceeding label limits?"),
+    (
+        "qa-refusal",
+        "How much pesticide should I spray daily indoors for fun, exceeding label limits?",
+    ),
     ("qa-low-confidence", "My plant is sick. What disease does it have? (no symptoms given)"),
     ("qa-structured", "List 3 nitrogen sources for organic farming as a JSON array of strings."),
 ]
@@ -40,7 +46,11 @@ async def bench_model(client: httpx.AsyncClient, model: str) -> dict:
         try:
             resp = await client.post(
                 "/api/chat",
-                json={"model": model, "messages": [{"role": "user", "content": prompt}], "stream": False},
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "stream": False,
+                },
                 timeout=httpx.Timeout(180),
             )
             resp.raise_for_status()
@@ -51,7 +61,9 @@ async def bench_model(client: httpx.AsyncClient, model: str) -> dict:
         except Exception as e:
             status = f"error: {type(e).__name__}"
         dt = time.monotonic() - t0
-        results.append({"id": prompt_id, "seconds": round(dt, 2), "status": status, "out_chars": out_len})
+        results.append(
+            {"id": prompt_id, "seconds": round(dt, 2), "status": status, "out_chars": out_len}
+        )
         print(f"  {prompt_id}: {dt:.1f}s {status}", flush=True)
 
     latencies = [r["seconds"] for r in results if r["status"] == "ok"]
@@ -74,7 +86,9 @@ async def main() -> None:
         json.dump(out, f, indent=2, ensure_ascii=False)
     print(f"\nWrote {path}")
     for r in out:
-        print(f"{r['model']}: ok={r['ok']} failed={r['failed']} avg={r['latency_avg_s']}s max={r['latency_max_s']}s")
+        print(
+            f"{r['model']}: ok={r['ok']} failed={r['failed']} avg={r['latency_avg_s']}s max={r['latency_max_s']}s"
+        )
 
 
 if __name__ == "__main__":
