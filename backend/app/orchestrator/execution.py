@@ -32,6 +32,7 @@ from .registry import CapabilityRegistry
 
 class ExecutionPhase(Enum):
     """Phases of task execution."""
+
     PREPARING = "preparing"
     DELEGATING = "delegating"
     EXECUTING = "executing"
@@ -44,6 +45,7 @@ class ExecutionPhase(Enum):
 @dataclass
 class ExecutionContext:
     """Context for a single task execution."""
+
     task: Task
     phase: ExecutionPhase = ExecutionPhase.PREPARING
     started_at: datetime = field(default_factory=datetime.now)
@@ -77,8 +79,8 @@ class CheckpointManager:
                 return {k: serialize(v) for k, v in obj.items()}
             elif isinstance(obj, list):
                 return [serialize(v) for v in obj]
-            elif hasattr(obj, 'model_dump'):
-                return serialize(obj.model_dump(mode='json'))
+            elif hasattr(obj, "model_dump"):
+                return serialize(obj.model_dump(mode="json"))
             return obj
 
         data = {
@@ -128,12 +130,14 @@ class CheckpointManager:
         for file in self.checkpoint_dir.glob("*.json"):
             try:
                 data = json.loads(file.read_text())
-                checkpoints.append({
-                    "task_id": data.get("task_id"),
-                    "phase": data.get("phase"),
-                    "saved_at": data.get("saved_at"),
-                    "retry_count": data.get("retry_count", 0),
-                })
+                checkpoints.append(
+                    {
+                        "task_id": data.get("task_id"),
+                        "phase": data.get("phase"),
+                        "saved_at": data.get("saved_at"),
+                        "retry_count": data.get("retry_count", 0),
+                    }
+                )
             except Exception:
                 pass
         return checkpoints
@@ -155,7 +159,9 @@ class ExecutionManager:
         registry: CapabilityRegistry,
         memory: ProjectMemory,
         core: OrchestratorCore,
-        delegation_executor: Callable[[AgentAssignment, HandoffProtocol], Awaitable[dict[str, Any]]],
+        delegation_executor: Callable[
+            [AgentAssignment, HandoffProtocol], Awaitable[dict[str, Any]]
+        ],
         verification_executor: Callable[[Task], Awaitable[VerificationGate]],
         integration_executor: Callable[[list[Task]], Awaitable[dict[str, Any]]],
     ):
@@ -228,12 +234,14 @@ class ExecutionManager:
                 self.checkpoint_manager.save_checkpoint(context)
 
                 # Record failure
-                self.memory.add_history(TaskHistoryEntry(
-                    task_id=task.id,
-                    event=TaskEventType.FAILED,
-                    details={"error": str(e), "phase": context.phase.value},
-                    evidence_refs=[self.checkpoint_manager.checkpoint_dir / f"{task.id}.json"]
-                ))
+                self.memory.add_history(
+                    TaskHistoryEntry(
+                        task_id=task.id,
+                        event=TaskEventType.FAILED,
+                        details={"error": str(e), "phase": context.phase.value},
+                        evidence_refs=[self.checkpoint_manager.checkpoint_dir / f"{task.id}.json"],
+                    )
+                )
 
                 raise
 
@@ -262,19 +270,23 @@ class ExecutionManager:
             task.blockers = checkpoint.get("task_blockers", [])
             task.evidence = checkpoint.get("task_evidence", {})
 
-            self.memory.add_history(TaskHistoryEntry(
-                task_id=task.id,
-                event=TaskEventType.UNBLOCKED if task.status == TaskStatus.BLOCKED else TaskEventType.STARTED,
-                details={"resumed_from_checkpoint": True, "phase": context.phase.value}
-            ))
+            self.memory.add_history(
+                TaskHistoryEntry(
+                    task_id=task.id,
+                    event=TaskEventType.UNBLOCKED
+                    if task.status == TaskStatus.BLOCKED
+                    else TaskEventType.STARTED,
+                    details={"resumed_from_checkpoint": True, "phase": context.phase.value},
+                )
+            )
         else:
             # Fresh execution
             context = ExecutionContext(task=task)
-            self.memory.add_history(TaskHistoryEntry(
-                task_id=task.id,
-                event=TaskEventType.STARTED,
-                details={"fresh_execution": True}
-            ))
+            self.memory.add_history(
+                TaskHistoryEntry(
+                    task_id=task.id, event=TaskEventType.STARTED, details={"fresh_execution": True}
+                )
+            )
 
         self.active_contexts[task.id] = context
         return context
@@ -313,14 +325,18 @@ class ExecutionManager:
             return False
 
         # Check model slots
-        needs_model = any("model" in c.lower() or "ai" in c.lower() or "inference" in c.lower()
-                         for c in task.constraints)
+        needs_model = any(
+            "model" in c.lower() or "ai" in c.lower() or "inference" in c.lower()
+            for c in task.constraints
+        )
         if needs_model and self.core.active_models >= budget.max_concurrent_models:
             return False
 
         # Check docker build slots
-        needs_docker = any("docker" in c.lower() or "container" in c.lower() or "build" in c.lower()
-                          for c in task.constraints)
+        needs_docker = any(
+            "docker" in c.lower() or "container" in c.lower() or "build" in c.lower()
+            for c in task.constraints
+        )
         if needs_docker and self.core.active_docker_builds >= budget.max_concurrent_docker_builds:
             return False
 
@@ -335,15 +351,22 @@ class ExecutionManager:
         """Create a git worktree for isolated task execution."""
         try:
             worktree_name = f"task-{task.id}-{int(time.time())}"
-            worktree_path = Path(self.config.project_root) / ".orchestrator" / "worktrees" / worktree_name
+            worktree_path = (
+                Path(self.config.project_root) / ".orchestrator" / "worktrees" / worktree_name
+            )
             worktree_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Use git worktree
             proc = await asyncio.create_subprocess_exec(
-                "git", "worktree", "add", str(worktree_path), "-b", f"task/{task.id}",
+                "git",
+                "worktree",
+                "add",
+                str(worktree_path),
+                "-b",
+                f"task/{task.id}",
                 cwd=self.config.project_root,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
 
@@ -370,7 +393,7 @@ class ExecutionManager:
             verification_criteria=task.verification_criteria,
             findings=task.findings,
             unresolved_blockers=task.blockers,
-            context_refs=self._get_context_refs(task)
+            context_refs=self._get_context_refs(task),
         )
 
         # Create assignment
@@ -379,7 +402,7 @@ class ExecutionManager:
             agent_name=task.assigned_agent or task.owner,
             scope=task.files_involved,
             parallel_group=task.parallel_group,
-            handoff=handoff.model_dump()
+            handoff=handoff.model_dump(),
         )
 
         context.assigned_agent = assignment.agent_name
@@ -429,7 +452,7 @@ class ExecutionManager:
             task.evidence["verification"] = {
                 "overall_passed": gate.overall_passed,
                 "failed_checks": gate.failed_checks,
-                "results": [r.model_dump() for r in gate.results]
+                "results": [r.model_dump() for r in gate.results],
             }
 
             if gate.overall_passed:
@@ -460,7 +483,9 @@ class ExecutionManager:
 
             if integration_result.get("conflicts"):
                 task.status = TaskStatus.BLOCKED
-                task.blockers.extend([f"Integration conflict: {c}" for c in integration_result["conflicts"]])
+                task.blockers.extend(
+                    [f"Integration conflict: {c}" for c in integration_result["conflicts"]]
+                )
                 context.phase = ExecutionPhase.FAILED
                 raise RuntimeError("Integration conflicts detected")
 
@@ -478,10 +503,12 @@ class ExecutionManager:
         try:
             # Get current branch
             proc = await asyncio.create_subprocess_exec(
-                "git", "branch", "--show-current",
+                "git",
+                "branch",
+                "--show-current",
                 cwd=worktree_path,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
             stdout, _ = await proc.communicate()
             branch = stdout.decode().strip()
@@ -489,18 +516,25 @@ class ExecutionManager:
             if branch and branch != "main":
                 # Merge to main
                 proc = await asyncio.create_subprocess_exec(
-                    "git", "checkout", "main",
+                    "git",
+                    "checkout",
+                    "main",
                     cwd=self.config.project_root,
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
+                    stderr=asyncio.subprocess.PIPE,
                 )
                 await proc.communicate()
 
                 proc = await asyncio.create_subprocess_exec(
-                    "git", "merge", "--no-ff", branch, "-m", f"Merge task {task_id}",
+                    "git",
+                    "merge",
+                    "--no-ff",
+                    branch,
+                    "-m",
+                    f"Merge task {task_id}",
                     cwd=self.config.project_root,
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
+                    stderr=asyncio.subprocess.PIPE,
                 )
                 stdout, stderr = await proc.communicate()
 
@@ -509,19 +543,25 @@ class ExecutionManager:
 
                 # Clean up worktree
                 proc = await asyncio.create_subprocess_exec(
-                    "git", "worktree", "remove", worktree_path,
+                    "git",
+                    "worktree",
+                    "remove",
+                    worktree_path,
                     cwd=self.config.project_root,
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
+                    stderr=asyncio.subprocess.PIPE,
                 )
                 await proc.communicate()
 
                 # Delete branch
                 proc = await asyncio.create_subprocess_exec(
-                    "git", "branch", "-d", branch,
+                    "git",
+                    "branch",
+                    "-d",
+                    branch,
                     cwd=self.config.project_root,
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
+                    stderr=asyncio.subprocess.PIPE,
                 )
                 await proc.communicate()
 
@@ -536,16 +576,22 @@ class ExecutionManager:
         task.updated_at = datetime.now()
 
         # Record completion
-        self.memory.add_history(TaskHistoryEntry(
-            task_id=task.id,
-            event=TaskEventType.COMPLETED if task.status == TaskStatus.PASSED else TaskEventType.FAILED,
-            details={
-                "status": task.status.value,
-                "duration_ms": int((task.completed_at - task.started_at).total_seconds() * 1000) if task.started_at else 0,
-                "retry_count": context.retry_count,
-            },
-            evidence_refs=list(context.outputs.keys())
-        ))
+        self.memory.add_history(
+            TaskHistoryEntry(
+                task_id=task.id,
+                event=TaskEventType.COMPLETED
+                if task.status == TaskStatus.PASSED
+                else TaskEventType.FAILED,
+                details={
+                    "status": task.status.value,
+                    "duration_ms": int((task.completed_at - task.started_at).total_seconds() * 1000)
+                    if task.started_at
+                    else 0,
+                    "retry_count": context.retry_count,
+                },
+                evidence_refs=list(context.outputs.keys()),
+            )
+        )
 
         # Release agent
         if context.assigned_agent:
@@ -563,17 +609,21 @@ class ExecutionManager:
         """Get relevant context references for a task."""
         refs = []
         if any("backend" in f for f in task.files_involved):
-            refs.extend([
-                "docs/product/TRD.md",
-                "docs/backend/ARCHITECTURE.md",
-                "docs/roadmaps/MyFarmAI_Backend_Roadmap.md"
-            ])
+            refs.extend(
+                [
+                    "docs/product/TRD.md",
+                    "docs/backend/ARCHITECTURE.md",
+                    "docs/roadmaps/MyFarmAI_Backend_Roadmap.md",
+                ]
+            )
         if any("web" in f or "frontend" in f for f in task.files_involved):
-            refs.extend([
-                "docs/product/UI_UX_DESIGN_SYSTEM.md",
-                "docs/frontend/DESIGN_SYSTEM.md",
-                "docs/roadmaps/MyFarmAI_Frontend_Dashboard_Roadmap.md"
-            ])
+            refs.extend(
+                [
+                    "docs/product/UI_UX_DESIGN_SYSTEM.md",
+                    "docs/frontend/DESIGN_SYSTEM.md",
+                    "docs/roadmaps/MyFarmAI_Frontend_Dashboard_Roadmap.md",
+                ]
+            )
         if any("android" in f for f in task.files_involved):
             refs.append("docs/integration/ANDROID_INTEGRATION.md")
         return refs
@@ -584,21 +634,24 @@ class ExecutionManager:
             raise RuntimeError(f"Task {task.id} exceeded max retries ({task.max_retries})")
 
         # Calculate backoff delay
-        delay = min(self.base_retry_delay * (2 ** task.retry_count), self.max_retry_delay)
+        delay = min(self.base_retry_delay * (2**task.retry_count), self.max_retry_delay)
 
         # Add jitter
         import random
+
         delay += random.uniform(0, 1)
 
         task.retry_count += 1
         task.status = TaskStatus.READY
         task.blockers.append(f"Retry {task.retry_count}/{task.max_retries} after {delay:.1f}s")
 
-        self.memory.add_history(TaskHistoryEntry(
-            task_id=task.id,
-            event=TaskEventType.RETRIED,
-            details={"retry_count": task.retry_count, "delay_seconds": delay}
-        ))
+        self.memory.add_history(
+            TaskHistoryEntry(
+                task_id=task.id,
+                event=TaskEventType.RETRIED,
+                details={"retry_count": task.retry_count, "delay_seconds": delay},
+            )
+        )
 
         # Wait before retry
         await asyncio.sleep(delay)
@@ -619,11 +672,11 @@ class ExecutionManager:
             if context.assigned_agent:
                 self.core.active_agents.discard(context.assigned_agent)
 
-        self.memory.add_history(TaskHistoryEntry(
-            task_id=task.id,
-            event=TaskEventType.CANCELLED,
-            details={"reason": reason}
-        ))
+        self.memory.add_history(
+            TaskHistoryEntry(
+                task_id=task.id, event=TaskEventType.CANCELLED, details={"reason": reason}
+            )
+        )
 
         # Clean up checkpoint
         self.checkpoint_manager.delete_checkpoint(task.id)

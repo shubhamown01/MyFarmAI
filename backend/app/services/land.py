@@ -8,9 +8,8 @@ manual entries are stored as ``user_reported`` and never silently upgraded
 to map-measured.
 """
 
-from datetime import UTC, datetime
-
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,7 +24,7 @@ from app.db.models.land import (
 )
 from app.db.repositories import AuditRepository
 from app.services.farm import FarmNotFoundError, FarmPermissionError, FarmService
-from app.services.geometry import area_in_all_units, polygon_area_sq_m, validate_polygon
+from app.services.geometry import polygon_area_sq_m, validate_polygon
 
 __all__ = [
     "FarmNotFoundError",
@@ -107,7 +106,9 @@ class LandService:
         await self._authorized_farm(user_id, farm_id)
         return await self._get_plot(farm_id, plot_id)
 
-    async def update_plot(self, user_id: str, farm_id: str, plot_id: str, **kwargs: object) -> FarmPlot:
+    async def update_plot(
+        self, user_id: str, farm_id: str, plot_id: str, **kwargs: object
+    ) -> FarmPlot:
         await self._authorized_farm(user_id, farm_id, write=True)
         plot = await self._get_plot(farm_id, plot_id)
         for key, value in kwargs.items():
@@ -126,7 +127,12 @@ class LandService:
     # ------------------------------------------------------------- boundary
 
     async def save_boundary(
-        self, user_id: str, farm_id: str, plot_id: str, polygon: list[tuple[float, float]], source: str
+        self,
+        user_id: str,
+        farm_id: str,
+        plot_id: str,
+        polygon: list[tuple[float, float]],
+        source: str,
     ) -> tuple[FarmBoundary, FarmAreaMeasurement]:
         """Replace the plot's boundary and record a fresh area measurement.
 

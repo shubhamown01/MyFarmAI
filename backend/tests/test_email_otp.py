@@ -181,7 +181,6 @@ class TestEmailOtpRegistration:
 
 async def test_dev_outbox_writes_code(tmp_path) -> None:
     """Real send_otp must write to a string-configured path (E6 compose passes str)."""
-    import tempfile
     from pathlib import Path as P
 
     from app.services.delivery import DevModeEmailDelivery

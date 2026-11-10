@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.auth import get_current_user_id
 from app.api.v1.chat import get_settings

@@ -21,7 +21,6 @@ Limitations (documented per owner approval):
 """
 
 import math
-
 from typing import Final
 
 # Point as (lat, lon) in decimal degrees.
@@ -112,9 +111,7 @@ def validate_polygon(polygon: list[Point]) -> list[str]:
         span = max(lats) - min(lats)
         span_lon = max(lons) - min(lons)
         if max(span, span_lon) > MAX_BBOX_SPAN_DEGREES:
-            errors.append(
-                f"polygon bounding box spans more than {MAX_BBOX_SPAN_DEGREES} degrees"
-            )
+            errors.append(f"polygon bounding box spans more than {MAX_BBOX_SPAN_DEGREES} degrees")
 
         area = polygon_area_sq_m(polygon)
         if area < MIN_AREA_SQ_M:

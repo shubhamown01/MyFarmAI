@@ -8,16 +8,13 @@ map_measured; manual entries stay user_reported.
 """
 
 import uuid
-
 from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.v1.auth import require_verified_user
 from app.core.config import Settings
-from app.services.geometry import area_in_all_units, to_sq_m
-
-from app.db.models.land import FarmAreaMeasurement, FarmBoundary, FarmPlot, HomeLocation
+from app.db.models.land import FarmAreaMeasurement, FarmBoundary, FarmPlot
 from app.db.session import db_manager
 from app.schemas.land import (
     AreaMeasurementResponse,
@@ -32,6 +29,7 @@ from app.schemas.land import (
     UserReportedArea,
 )
 from app.services.farm import FarmNotFoundError, FarmPermissionError
+from app.services.geometry import area_in_all_units, to_sq_m
 from app.services.land import InvalidPolygonError, LandService
 
 router = APIRouter(tags=["Land"])
@@ -96,7 +94,9 @@ def _plot_response(plot: FarmPlot, measurement: FarmAreaMeasurement | None) -> P
     )
 
 
-@router.post("/farms/{farm_id}/plots", response_model=PlotResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/farms/{farm_id}/plots", response_model=PlotResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_plot(
     farm_id: uuid.UUID,
     data: PlotCreate,
@@ -199,7 +199,11 @@ async def save_boundary(
     except InvalidPolygonError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"detail": "invalid polygon", "error_code": "INVALID_POLYGON", "errors": e.errors},
+            detail={
+                "detail": "invalid polygon",
+                "error_code": "INVALID_POLYGON",
+                "errors": e.errors,
+            },
         ) from None
     except FarmNotFoundError:
         raise _http_404() from None

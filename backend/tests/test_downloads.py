@@ -1,7 +1,5 @@
 """Downloads route (B-3): public APK serving behaviour."""
 
-import os
-import tempfile
 from pathlib import Path
 
 import pytest

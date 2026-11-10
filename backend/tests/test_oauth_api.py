@@ -139,13 +139,7 @@ class TestOAuthAuthorize:
         self, async_initialized_db: Any, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         # Hermetic against backend/.env (owner credentials may be present).
-        for f in (
-            "oauth_google_client_id",
-            "oauth_google_client_secret",
-            "oauth_microsoft_client_id",
-            "oauth_microsoft_client_secret",
-        ):
-            from app.factory import create_app
+        from app.factory import create_app
 
         settings = async_initialized_db.model_copy(
             update={
@@ -194,7 +188,6 @@ class TestOAuthCallback:
             assert user.is_active and user.email_verified
             assert user.verification_status == "pending_verification"  # E3 self-signup
 
-
     async def test_otp_verified_user_claimed(
         self, oauth_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -222,12 +215,16 @@ class TestOAuthCallback:
 
         async with db_manager.session() as session:
             links = (
-                await session.execute(
-                    select(AuthenticationAccount).where(
-                        AuthenticationAccount.provider == "google"
+                (
+                    await session.execute(
+                        select(AuthenticationAccount).where(
+                            AuthenticationAccount.provider == "google"
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
         assert len(links) == 1  # provider linked, nothing else merged
 
     async def test_repeat_login_same_subject_same_user(

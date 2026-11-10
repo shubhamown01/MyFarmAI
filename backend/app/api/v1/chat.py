@@ -11,8 +11,8 @@ from app.api.v1.auth import get_current_user_id
 from app.core.config import Settings
 from app.db.session import db_manager, get_db_session_sync
 from app.schemas.chat import ChatRequest, ChatResponse, ErrorResponse
-from app.services.chat import generate_chat_response
 from app.services.ai_quota import aconsume_slot, consume_slot
+from app.services.chat import generate_chat_response
 from app.services.context import FarmContextService
 from app.services.farm import FarmNotFoundError, FarmService
 from app.services.weather import weather_client

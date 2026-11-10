@@ -13,8 +13,6 @@ from app.db.models.crop_plan import (
     CropPlanTaskStatus,
 )
 from app.db.models.farm import Farm, FarmMember, FarmRole
-from app.db.models.land import FarmAreaMeasurement, FarmBoundary, FarmPlot, HomeLocation
-from app.db.models.profile import FarmerProfile
 from app.db.models.identity import (
     AuthenticationAccount,
     ConsentRecord,
@@ -22,6 +20,8 @@ from app.db.models.identity import (
     SelfieVerification,
     VerificationEvent,
 )
+from app.db.models.land import FarmAreaMeasurement, FarmBoundary, FarmPlot, HomeLocation
+from app.db.models.profile import FarmerProfile
 from app.db.models.research import Citation, ResearchQuery, ResearchQueryStatus, ResearchSource
 from app.db.models.session import RefreshToken, Session
 from app.db.models.user import User, UserRole

@@ -8,7 +8,7 @@ when the tester is anonymous (email absent).
 import uuid
 from typing import Any
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -54,28 +54,30 @@ class FeedbackService:
         await self.session.flush()
         return row.id  # type: ignore[no-any-return]
 
-    async def list_all(
-        self, limit: int = 50, offset: int = 0
-    ) -> tuple[list[dict[str, Any]], int]:
-        total = await self.session.scalar(
-            select(func.count()).select_from(FeedbackModel)
-        )
+    async def list_all(self, limit: int = 50, offset: int = 0) -> tuple[list[dict[str, Any]], int]:
+        total = await self.session.scalar(select(func.count()).select_from(FeedbackModel))
         rows = (
-            await self.session.execute(
-                select(FeedbackModel)
-                .order_by(FeedbackModel.created_at.desc())
-                .offset(offset)
-                .limit(limit)
+            (
+                await self.session.execute(
+                    select(FeedbackModel)
+                    .order_by(FeedbackModel.created_at.desc())
+                    .offset(offset)
+                    .limit(limit)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         items = []
         for r in rows:
-            items.append({
-                "id": str(r.id),
-                "email": r.email,
-                "category": r.category,
-                "message": r.message,
-                "app_version": r.app_version,
-                "created_at": str(r.created_at) if r.created_at else None,
-            })
+            items.append(
+                {
+                    "id": str(r.id),
+                    "email": r.email,
+                    "category": r.category,
+                    "message": r.message,
+                    "app_version": r.app_version,
+                    "created_at": str(r.created_at) if r.created_at else None,
+                }
+            )
         return items, total or 0

@@ -24,11 +24,7 @@ class AiQuotaCounter(Base):
         GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     # Start of the aligned UTC window (e.g. 10h buckets). Aware UTC datetimes.
-    window_start: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    used_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0, server_default="0"
-    )
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
 
     __table_args__ = (PrimaryKeyConstraint("user_id", "window_start"),)

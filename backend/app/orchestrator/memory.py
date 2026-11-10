@@ -38,10 +38,8 @@ class MemoryStorage:
     def save_decisions(self, decisions: dict[str, DecisionRecord]) -> None:
         """Save decisions to disk."""
         data = {
-            "decisions": {
-                k: v.model_dump(mode="json") for k, v in decisions.items()
-            },
-            "saved_at": datetime.now().isoformat()
+            "decisions": {k: v.model_dump(mode="json") for k, v in decisions.items()},
+            "saved_at": datetime.now().isoformat(),
         }
         self.decisions_file.write_text(json.dumps(data, indent=2))
 
@@ -53,8 +51,7 @@ class MemoryStorage:
         try:
             data = json.loads(self.decisions_file.read_text())
             return {
-                k: DecisionRecord.model_validate(v)
-                for k, v in data.get("decisions", {}).items()
+                k: DecisionRecord.model_validate(v) for k, v in data.get("decisions", {}).items()
             }
         except Exception:
             return {}
@@ -64,7 +61,9 @@ class MemoryStorage:
         with self.history_file.open("a") as f:
             f.write(json.dumps(entry.model_dump(mode="json")) + "\n")
 
-    def load_history(self, since: datetime | None = None, limit: int = 1000) -> list[TaskHistoryEntry]:
+    def load_history(
+        self, since: datetime | None = None, limit: int = 1000
+    ) -> list[TaskHistoryEntry]:
         """Load history entries from JSONL file."""
         entries = []
         if not self.history_file.exists():
@@ -88,10 +87,7 @@ class MemoryStorage:
 
     def save_capabilities(self, capabilities: dict[str, dict[str, Any]]) -> None:
         """Save capability snapshots."""
-        data = {
-            "capabilities": capabilities,
-            "saved_at": datetime.now().isoformat()
-        }
+        data = {"capabilities": capabilities, "saved_at": datetime.now().isoformat()}
         self.capabilities_file.write_text(json.dumps(data, indent=2))
 
     def load_capabilities(self) -> dict[str, dict[str, Any]]:
@@ -107,10 +103,7 @@ class MemoryStorage:
 
     def save_learnings(self, learnings: list[dict[str, Any]]) -> None:
         """Save captured learnings."""
-        data = {
-            "learnings": learnings,
-            "saved_at": datetime.now().isoformat()
-        }
+        data = {"learnings": learnings, "saved_at": datetime.now().isoformat()}
         self.learnings_file.write_text(json.dumps(data, indent=2))
 
     def load_learnings(self) -> list[dict[str, Any]]:
@@ -126,10 +119,7 @@ class MemoryStorage:
 
     def save_metadata(self, metadata: dict[str, Any]) -> None:
         """Save metadata."""
-        data = {
-            "metadata": metadata,
-            "saved_at": datetime.now().isoformat()
-        }
+        data = {"metadata": metadata, "saved_at": datetime.now().isoformat()}
         self.metadata_file.write_text(json.dumps(data, indent=2))
 
     def load_metadata(self) -> dict[str, Any]:
@@ -172,11 +162,13 @@ class ProjectMemoryManager:
         self.storage.save_decisions(self.memory.decisions)
         self.storage.save_capabilities(self.memory.capability_snapshots)
         self.storage.save_learnings(self.memory.learnings)
-        self.storage.save_metadata({
-            "total_decisions": len(self.memory.decisions),
-            "total_history_entries": len(self.memory.task_history),
-            "total_learnings": len(self.memory.learnings),
-        })
+        self.storage.save_metadata(
+            {
+                "total_decisions": len(self.memory.decisions),
+                "total_history_entries": len(self.memory.task_history),
+                "total_learnings": len(self.memory.learnings),
+            }
+        )
 
     # =========================================================================
     # Decision Records
@@ -198,16 +190,10 @@ class ProjectMemoryManager:
     def get_recent_decisions(self, days: int = 30) -> list[DecisionRecord]:
         """Get decisions from the last N days."""
         cutoff = datetime.now() - timedelta(days=days)
-        return [
-            d for d in self.memory.decisions.values()
-            if d.created_at >= cutoff
-        ]
+        return [d for d in self.memory.decisions.values() if d.created_at >= cutoff]
 
     def update_decision_status(
-        self,
-        decision_id: str,
-        status: DecisionStatus,
-        approver: str | None = None
+        self, decision_id: str, status: DecisionStatus, approver: str | None = None
     ) -> bool:
         """Update decision status."""
         decision = self.memory.decisions.get(decision_id)
@@ -245,18 +231,15 @@ class ProjectMemoryManager:
     def get_history_by_event(self, event: TaskEventType, hours: int = 24) -> list[TaskHistoryEntry]:
         """Get history entries by event type."""
         cutoff = datetime.now() - timedelta(hours=hours)
-        return [
-            e for e in self.memory.task_history
-            if e.event == event and e.timestamp >= cutoff
-        ]
+        return [e for e in self.memory.task_history if e.event == event and e.timestamp >= cutoff]
 
     def get_failure_patterns(self, days: int = 7) -> dict[str, int]:
         """Analyze recurring failure patterns."""
         cutoff = datetime.now() - timedelta(days=days)
         failures = [
-            e for e in self.memory.task_history
-            if e.event in (TaskEventType.FAILED, TaskEventType.BLOCKED)
-            and e.timestamp >= cutoff
+            e
+            for e in self.memory.task_history
+            if e.event in (TaskEventType.FAILED, TaskEventType.BLOCKED) and e.timestamp >= cutoff
         ]
 
         patterns: dict[str, int] = {}
@@ -275,10 +258,7 @@ class ProjectMemoryManager:
     def get_agent_performance(self, days: int = 30) -> dict[str, dict[str, Any]]:
         """Get performance metrics per agent."""
         cutoff = datetime.now() - timedelta(days=days)
-        entries = [
-            e for e in self.memory.task_history
-            if e.agent and e.timestamp >= cutoff
-        ]
+        entries = [e for e in self.memory.task_history if e.agent and e.timestamp >= cutoff]
 
         agent_stats: dict[str, dict[str, Any]] = {}
 
@@ -292,7 +272,7 @@ class ProjectMemoryManager:
                     "blocked": 0,
                     "retried": 0,
                     "avg_duration_ms": 0,
-                    "durations": []
+                    "durations": [],
                 }
 
             stats = agent_stats[agent]
@@ -349,7 +329,7 @@ class ProjectMemoryManager:
         category: str,
         related_tasks: list[str],
         related_files: list[str],
-        tags: list[str] = None
+        tags: list[str] = None,
     ) -> None:
         """Add a captured learning (from ce-compound or manual)."""
         learning = {
@@ -361,7 +341,7 @@ class ProjectMemoryManager:
             "related_files": related_files,
             "tags": tags or [],
             "created_at": datetime.now().isoformat(),
-            "source": "manual"  # or "ce-compound"
+            "source": "manual",  # or "ce-compound"
         }
         self.memory.learnings.append(learning)
         self.storage.save_learnings(self.memory.learnings)
@@ -378,7 +358,8 @@ class ProjectMemoryManager:
         """Search learnings by text."""
         query_lower = query.lower()
         return [
-            l for l in self.memory.learnings
+            l
+            for l in self.memory.learnings
             if query_lower in l.get("title", "").lower()
             or query_lower in l.get("description", "").lower()
             or any(query_lower in tag.lower() for tag in l.get("tags", []))
@@ -389,19 +370,14 @@ class ProjectMemoryManager:
     # =========================================================================
 
     def generate_audit_report(
-        self,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None
+        self, start_date: datetime | None = None, end_date: datetime | None = None
     ) -> dict[str, Any]:
         """Generate an audit report for a time period."""
         start = start_date or (datetime.now() - timedelta(days=30))
         end = end_date or datetime.now()
 
         # Filter history
-        history = [
-            e for e in self.memory.task_history
-            if start <= e.timestamp <= end
-        ]
+        history = [e for e in self.memory.task_history if start <= e.timestamp <= end]
 
         # Count by event type
         events: dict[str, int] = {}
@@ -415,22 +391,17 @@ class ProjectMemoryManager:
                 agents[entry.agent] = agents.get(entry.agent, 0) + 1
 
         # Decisions in period
-        decisions = [
-            d for d in self.memory.decisions.values()
-            if start <= d.created_at <= end
-        ]
+        decisions = [d for d in self.memory.decisions.values() if start <= d.created_at <= end]
 
         # Learnings in period
         learnings = [
-            l for l in self.memory.learnings
+            l
+            for l in self.memory.learnings
             if start <= datetime.fromisoformat(l.get("created_at", "")) <= end
         ]
 
         return {
-            "period": {
-                "start": start.isoformat(),
-                "end": end.isoformat()
-            },
+            "period": {"start": start.isoformat(), "end": end.isoformat()},
             "summary": {
                 "total_tasks": len([e for e in history if e.event == TaskEventType.CREATED]),
                 "completed": events.get(TaskEventType.COMPLETED.value, 0),
@@ -447,7 +418,7 @@ class ProjectMemoryManager:
                     "id": d.id,
                     "title": d.title,
                     "status": d.status.value,
-                    "created_at": d.created_at.isoformat()
+                    "created_at": d.created_at.isoformat(),
                 }
                 for d in decisions
             ],
@@ -458,10 +429,7 @@ class ProjectMemoryManager:
     def export_for_documentation(self) -> dict[str, Any]:
         """Export memory for documentation generation."""
         return {
-            "decisions": {
-                k: v.model_dump(mode="json")
-                for k, v in self.memory.decisions.items()
-            },
+            "decisions": {k: v.model_dump(mode="json") for k, v in self.memory.decisions.items()},
             "recent_history": [
                 e.model_dump(mode="json")
                 for e in self.get_recent_history(hours=168)  # Last week
@@ -479,10 +447,7 @@ class ProjectMemoryManager:
 
         # Clean history
         original_count = len(self.memory.task_history)
-        self.memory.task_history = [
-            e for e in self.memory.task_history
-            if e.timestamp >= cutoff
-        ]
+        self.memory.task_history = [e for e in self.memory.task_history if e.timestamp >= cutoff]
         history_removed = original_count - len(self.memory.task_history)
 
         # Clean learnings (keep all by default)
@@ -494,5 +459,5 @@ class ProjectMemoryManager:
         return {
             "history_removed": history_removed,
             "learnings_removed": 0,
-            "cutoff_date": cutoff.isoformat()
+            "cutoff_date": cutoff.isoformat(),
         }

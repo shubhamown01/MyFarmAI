@@ -17,16 +17,18 @@ from .models import OrchestrationConfig, ProjectMemory, Task, TaskStatus
 
 class ConflictType(Enum):
     """Types of integration conflicts."""
-    FILE_OVERLAP = "file_overlap"           # Multiple tasks modifying same file
-    DEPENDENCY_CYCLE = "dependency_cycle"   # Circular dependencies
-    API_CONTRACT = "api_contract"           # Breaking API changes
-    DATABASE_SCHEMA = "database_schema"     # Conflicting schema changes
-    CONFIGURATION = "configuration"         # Conflicting config changes
+
+    FILE_OVERLAP = "file_overlap"  # Multiple tasks modifying same file
+    DEPENDENCY_CYCLE = "dependency_cycle"  # Circular dependencies
+    API_CONTRACT = "api_contract"  # Breaking API changes
+    DATABASE_SCHEMA = "database_schema"  # Conflicting schema changes
+    CONFIGURATION = "configuration"  # Conflicting config changes
     RESOURCE_CONTENTION = "resource_contention"  # Competing for same resource
 
 
 class ConflictSeverity(Enum):
     """Severity of integration conflicts."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -36,6 +38,7 @@ class ConflictSeverity(Enum):
 @dataclass
 class IntegrationConflict:
     """A detected integration conflict."""
+
     conflict_id: str
     type: ConflictType
     severity: ConflictSeverity
@@ -50,6 +53,7 @@ class IntegrationConflict:
 @dataclass
 class IntegrationResult:
     """Result of integration review."""
+
     success: bool
     conflicts: list[IntegrationConflict]
     merged_files: list[str]
@@ -75,12 +79,14 @@ class FileOwnershipTracker:
                 conflicts.append(f"{file} owned by task {self.ownership[file]}")
             else:
                 self.ownership[file] = task_id
-                self.history.append({
-                    "action": "claim",
-                    "file": file,
-                    "task_id": task_id,
-                    "timestamp": datetime.now().isoformat()
-                })
+                self.history.append(
+                    {
+                        "action": "claim",
+                        "file": file,
+                        "task_id": task_id,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
         return conflicts
 
     def release_ownership(self, task_id: str, files: list[str]) -> None:
@@ -88,12 +94,14 @@ class FileOwnershipTracker:
         for file in files:
             if self.ownership.get(file) == task_id:
                 del self.ownership[file]
-                self.history.append({
-                    "action": "release",
-                    "file": file,
-                    "task_id": task_id,
-                    "timestamp": datetime.now().isoformat()
-                })
+                self.history.append(
+                    {
+                        "action": "release",
+                        "file": file,
+                        "task_id": task_id,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
     def get_owner(self, file: str) -> str | None:
         """Get current owner of a file."""
@@ -143,7 +151,7 @@ class IntegrationReviewManager:
     async def integrate_task_outputs(self, tasks: list[Task]) -> IntegrationResult:
         """
         Integrate outputs from completed tasks.
-        
+
         This is called after task verification passes.
         """
         # Filter to tasks that have passed and have file changes
@@ -157,7 +165,7 @@ class IntegrationReviewManager:
                 skipped_files=[],
                 warnings=[],
                 requires_review=False,
-                review_notes=[]
+                review_notes=[],
             )
 
         conflicts = []
@@ -183,7 +191,7 @@ class IntegrationReviewManager:
                 skipped_files=[],
                 warnings=[],
                 requires_review=True,
-                review_notes=[f"Blocking conflicts: {len(blocking_conflicts)}"]
+                review_notes=[f"Blocking conflicts: {len(blocking_conflicts)}"],
             )
 
         # Phase 3: Attempt auto-resolution for resolvable conflicts
@@ -193,22 +201,26 @@ class IntegrationReviewManager:
             if resolved:
                 merged_files.extend(conflict.affected_files)
             else:
-                conflicts.append(IntegrationConflict(
-                    conflict_id=f"auto_resolve_failed_{conflict.conflict_id}",
-                    type=conflict.type,
-                    severity=ConflictSeverity.ERROR,
-                    description=f"Failed to auto-resolve: {conflict.description}",
-                    affected_tasks=conflict.affected_tasks,
-                    affected_files=conflict.affected_files,
-                    auto_resolvable=False
-                ))
+                conflicts.append(
+                    IntegrationConflict(
+                        conflict_id=f"auto_resolve_failed_{conflict.conflict_id}",
+                        type=conflict.type,
+                        severity=ConflictSeverity.ERROR,
+                        description=f"Failed to auto-resolve: {conflict.description}",
+                        affected_tasks=conflict.affected_tasks,
+                        affected_files=conflict.affected_files,
+                        auto_resolvable=False,
+                    )
+                )
 
         # Phase 4: Integrate non-conflicting changes
         for task in completed_tasks:
             task_files = task.files_involved
             for file in task_files:
                 # Check if file has any unresolved conflicts
-                file_conflicts = [c for c in conflicts if file in c.affected_files and not c.auto_resolvable]
+                file_conflicts = [
+                    c for c in conflicts if file in c.affected_files and not c.auto_resolvable
+                ]
                 if not file_conflicts:
                     merged = await self._integrate_file(task, file)
                     if merged:
@@ -219,7 +231,11 @@ class IntegrationReviewManager:
                     skipped_files.append(file)
 
         # Phase 5: Determine if review required
-        error_conflicts = [c for c in conflicts if c.severity in (ConflictSeverity.ERROR, ConflictSeverity.BLOCKING)]
+        error_conflicts = [
+            c
+            for c in conflicts
+            if c.severity in (ConflictSeverity.ERROR, ConflictSeverity.BLOCKING)
+        ]
         warning_conflicts = [c for c in conflicts if c.severity == ConflictSeverity.WARNING]
 
         if error_conflicts:
@@ -248,7 +264,7 @@ class IntegrationReviewManager:
             skipped_files=skipped_files,
             warnings=warnings,
             requires_review=requires_review,
-            review_notes=review_notes
+            review_notes=review_notes,
         )
 
         self.integration_history.append(result)
@@ -272,7 +288,7 @@ class IntegrationReviewManager:
                 # Check if tasks are sequential (one depends on another)
                 sequential = False
                 for i, t1 in enumerate(task_ids):
-                    for t2 in task_ids[i+1:]:
+                    for t2 in task_ids[i + 1 :]:
                         task1 = self.core.get_task(t1)
                         task2 = self.core.get_task(t2)
                         if task1 and t2 in task1.dependencies:
@@ -281,16 +297,18 @@ class IntegrationReviewManager:
                             sequential = True
 
                 if not sequential:
-                    conflicts.append(IntegrationConflict(
-                        conflict_id=f"file_overlap_{file}_{datetime.now().timestamp()}",
-                        type=ConflictType.FILE_OVERLAP,
-                        severity=ConflictSeverity.ERROR,
-                        description=f"Multiple tasks modifying {file} without dependency ordering",
-                        affected_tasks=task_ids,
-                        affected_files=[file],
-                        suggested_resolution="Add explicit dependencies or merge tasks",
-                        auto_resolvable=False
-                    ))
+                    conflicts.append(
+                        IntegrationConflict(
+                            conflict_id=f"file_overlap_{file}_{datetime.now().timestamp()}",
+                            type=ConflictType.FILE_OVERLAP,
+                            severity=ConflictSeverity.ERROR,
+                            description=f"Multiple tasks modifying {file} without dependency ordering",
+                            affected_tasks=task_ids,
+                            affected_files=[file],
+                            suggested_resolution="Add explicit dependencies or merge tasks",
+                            auto_resolvable=False,
+                        )
+                    )
 
         return conflicts
 
@@ -303,30 +321,34 @@ class IntegrationReviewManager:
 
         if len(api_tasks) > 1:
             # Multiple tasks changing API - potential conflict
-            conflicts.append(IntegrationConflict(
-                conflict_id=f"api_contract_{datetime.now().timestamp()}",
-                type=ConflictType.API_CONTRACT,
-                severity=ConflictSeverity.WARNING,
-                description="Multiple tasks modifying API endpoints/contracts",
-                affected_tasks=[t.id for t in api_tasks],
-                affected_files=[f for t in api_tasks for f in t.files_involved],
-                suggested_resolution="Coordinate API changes; ensure backward compatibility",
-                auto_resolvable=False
-            ))
+            conflicts.append(
+                IntegrationConflict(
+                    conflict_id=f"api_contract_{datetime.now().timestamp()}",
+                    type=ConflictType.API_CONTRACT,
+                    severity=ConflictSeverity.WARNING,
+                    description="Multiple tasks modifying API endpoints/contracts",
+                    affected_tasks=[t.id for t in api_tasks],
+                    affected_files=[f for t in api_tasks for f in t.files_involved],
+                    suggested_resolution="Coordinate API changes; ensure backward compatibility",
+                    auto_resolvable=False,
+                )
+            )
 
         # Check for OpenAPI spec changes
         openapi_tasks = [t for t in tasks if any("openapi" in f.lower() for f in t.files_involved)]
         if len(openapi_tasks) > 1:
-            conflicts.append(IntegrationConflict(
-                conflict_id=f"openapi_conflict_{datetime.now().timestamp()}",
-                type=ConflictType.API_CONTRACT,
-                severity=ConflictSeverity.BLOCKING,
-                description="Multiple tasks modifying OpenAPI specification",
-                affected_tasks=[t.id for t in openapi_tasks],
-                affected_files=[f for t in openapi_tasks for f in t.files_involved],
-                suggested_resolution="Single task should own OpenAPI spec; others should reference",
-                auto_resolvable=False
-            ))
+            conflicts.append(
+                IntegrationConflict(
+                    conflict_id=f"openapi_conflict_{datetime.now().timestamp()}",
+                    type=ConflictType.API_CONTRACT,
+                    severity=ConflictSeverity.BLOCKING,
+                    description="Multiple tasks modifying OpenAPI specification",
+                    affected_tasks=[t.id for t in openapi_tasks],
+                    affected_files=[f for t in openapi_tasks for f in t.files_involved],
+                    suggested_resolution="Single task should own OpenAPI spec; others should reference",
+                    auto_resolvable=False,
+                )
+            )
 
         return conflicts
 
@@ -337,16 +359,18 @@ class IntegrationReviewManager:
         db_tasks = [t for t in tasks if self._is_database_change(t)]
 
         if len(db_tasks) > 1:
-            conflicts.append(IntegrationConflict(
-                conflict_id=f"db_schema_{datetime.now().timestamp()}",
-                type=ConflictType.DATABASE_SCHEMA,
-                severity=ConflictSeverity.BLOCKING,
-                description="Multiple tasks modifying database schema/migrations",
-                affected_tasks=[t.id for t in db_tasks],
-                affected_files=[f for t in db_tasks for f in t.files_involved],
-                suggested_resolution="Sequential migration tasks; single owner for schema",
-                auto_resolvable=False
-            ))
+            conflicts.append(
+                IntegrationConflict(
+                    conflict_id=f"db_schema_{datetime.now().timestamp()}",
+                    type=ConflictType.DATABASE_SCHEMA,
+                    severity=ConflictSeverity.BLOCKING,
+                    description="Multiple tasks modifying database schema/migrations",
+                    affected_tasks=[t.id for t in db_tasks],
+                    affected_files=[f for t in db_tasks for f in t.files_involved],
+                    suggested_resolution="Sequential migration tasks; single owner for schema",
+                    auto_resolvable=False,
+                )
+            )
 
         return conflicts
 
@@ -361,21 +385,26 @@ class IntegrationReviewManager:
             config_files: dict[str, list[str]] = defaultdict(list)
             for task in config_tasks:
                 for file in task.files_involved:
-                    if any(ext in file.lower() for ext in [".yml", ".yaml", ".json", ".toml", ".ini", ".env"]):
+                    if any(
+                        ext in file.lower()
+                        for ext in [".yml", ".yaml", ".json", ".toml", ".ini", ".env"]
+                    ):
                         config_files[file].append(task.id)
 
             for file, task_ids in config_files.items():
                 if len(task_ids) > 1:
-                    conflicts.append(IntegrationConflict(
-                        conflict_id=f"config_{file}_{datetime.now().timestamp()}",
-                        type=ConflictType.CONFIGURATION,
-                        severity=ConflictSeverity.WARNING,
-                        description=f"Multiple tasks modifying config file {file}",
-                        affected_tasks=task_ids,
-                        affected_files=[file],
-                        suggested_resolution="Consolidate config changes or use feature flags",
-                        auto_resolvable=False
-                    ))
+                    conflicts.append(
+                        IntegrationConflict(
+                            conflict_id=f"config_{file}_{datetime.now().timestamp()}",
+                            type=ConflictType.CONFIGURATION,
+                            severity=ConflictSeverity.WARNING,
+                            description=f"Multiple tasks modifying config file {file}",
+                            affected_tasks=task_ids,
+                            affected_files=[file],
+                            suggested_resolution="Consolidate config changes or use feature flags",
+                            auto_resolvable=False,
+                        )
+                    )
 
         return conflicts
 
@@ -402,18 +431,38 @@ class IntegrationReviewManager:
     def _is_security_sensitive(self, task: Task) -> bool:
         """Check if task involves security-sensitive changes."""
         security_patterns = [
-            "auth", "secret", "password", "token", "credential",
-            "security", "vulnerability", "encryption", "tls", "ssl",
-            "permission", "authorization", "rbac", "oauth"
+            "auth",
+            "secret",
+            "password",
+            "token",
+            "credential",
+            "security",
+            "vulnerability",
+            "encryption",
+            "tls",
+            "ssl",
+            "permission",
+            "authorization",
+            "rbac",
+            "oauth",
         ]
-        text = f"{task.objective} {' '.join(task.files_involved)} {' '.join(task.constraints)}".lower()
+        text = (
+            f"{task.objective} {' '.join(task.files_involved)} {' '.join(task.constraints)}".lower()
+        )
         return any(pattern in text for pattern in security_patterns)
 
     def _is_api_change(self, task: Task) -> bool:
         """Check if task modifies API contracts."""
         api_patterns = [
-            "api", "endpoint", "route", "handler", "contract",
-            "openapi", "swagger", "schema", "serializer"
+            "api",
+            "endpoint",
+            "route",
+            "handler",
+            "contract",
+            "openapi",
+            "swagger",
+            "schema",
+            "serializer",
         ]
         text = f"{task.objective} {' '.join(task.files_involved)}".lower()
         return any(pattern in text for pattern in api_patterns)
@@ -421,8 +470,15 @@ class IntegrationReviewManager:
     def _is_database_change(self, task: Task) -> bool:
         """Check if task modifies database schema."""
         db_patterns = [
-            "migration", "schema", "model", "database", "table",
-            "alembic", "sqlalchemy", "orm", "entity"
+            "migration",
+            "schema",
+            "model",
+            "database",
+            "table",
+            "alembic",
+            "sqlalchemy",
+            "orm",
+            "entity",
         ]
         text = f"{task.objective} {' '.join(task.files_involved)}".lower()
         return any(pattern in text for pattern in db_patterns)
@@ -430,8 +486,16 @@ class IntegrationReviewManager:
     def _is_config_change(self, task: Task) -> bool:
         """Check if task modifies configuration."""
         config_patterns = [
-            "config", "settings", ".yml", ".yaml", ".json", ".toml",
-            ".ini", ".env", "docker-compose", "dockerfile"
+            "config",
+            "settings",
+            ".yml",
+            ".yaml",
+            ".json",
+            ".toml",
+            ".ini",
+            ".env",
+            "docker-compose",
+            "dockerfile",
         ]
         text = f"{task.objective} {' '.join(task.files_involved)}".lower()
         return any(pattern in text for pattern in config_patterns)
@@ -444,15 +508,13 @@ class IntegrationReviewManager:
 
         # In practice, this would notify the reviewer agent
         # For now, just record the request
-        self.memory.add_history(TaskHistoryEntry(
-            task_id=task_id,
-            event=TaskEventType.BLOCKED,
-            details={
-                "review_requested": True,
-                "reviewer": reviewer,
-                "notes": notes
-            }
-        ))
+        self.memory.add_history(
+            TaskHistoryEntry(
+                task_id=task_id,
+                event=TaskEventType.BLOCKED,
+                details={"review_requested": True, "reviewer": reviewer, "notes": notes},
+            )
+        )
 
         task.status = TaskStatus.REVIEW
         return True
@@ -476,14 +538,16 @@ class IntegrationReviewManager:
             task.status = TaskStatus.FAILED
             task.blockers.append(f"Review rejected: {reviewer_notes}")
 
-        self.memory.add_history(TaskHistoryEntry(
-            task_id=task_id,
-            event=TaskEventType.COMPLETED if approved else TaskEventType.FAILED,
-            details={
-                "review_result": "approved" if approved else "rejected",
-                "reviewer_notes": reviewer_notes
-            }
-        ))
+        self.memory.add_history(
+            TaskHistoryEntry(
+                task_id=task_id,
+                event=TaskEventType.COMPLETED if approved else TaskEventType.FAILED,
+                details={
+                    "review_result": "approved" if approved else "rejected",
+                    "reviewer_notes": reviewer_notes,
+                },
+            )
+        )
 
     def get_integration_summary(self) -> dict[str, Any]:
         """Get summary of integration state."""

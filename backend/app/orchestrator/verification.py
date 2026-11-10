@@ -28,17 +28,19 @@ from .models import (
 
 class GateType(Enum):
     """Types of verification gates."""
-    QUALITY = "quality"          # Code quality (lint, typecheck, tests)
-    SECURITY = "security"        # Security scans
-    CONTRACT = "contract"        # API contract tests
-    BUILD = "build"              # Build verification
-    DEPENDENCY = "dependency"    # Dependency audit
-    CUSTOM = "custom"            # Custom checks
+
+    QUALITY = "quality"  # Code quality (lint, typecheck, tests)
+    SECURITY = "security"  # Security scans
+    CONTRACT = "contract"  # API contract tests
+    BUILD = "build"  # Build verification
+    DEPENDENCY = "dependency"  # Dependency audit
+    CUSTOM = "custom"  # Custom checks
 
 
 @dataclass
 class VerificationCheck:
     """Definition of a verification check."""
+
     name: str
     check_type: VerificationCheckType
     gate_type: GateType
@@ -54,6 +56,7 @@ class VerificationCheck:
 @dataclass
 class GateResult:
     """Result of a verification gate."""
+
     gate_type: GateType
     passed: bool
     checks: list[VerificationResult]
@@ -66,13 +69,13 @@ class GateResult:
 class VerificationSecurityGate:
     """
     Runs verification gates and enforces quality/security standards.
-    
+
     Quality Gate Checks (All Must Pass):
     - Backend tests, type check, lint
     - Frontend type check, tests, lint, build
     - Android type check, lint
     - Secret scan, dependency audit, OpenAPI diff
-    
+
     Security Gate (Security-Engineer Review Required):
     - Authentication/authorization changes
     - Secret/credential handling
@@ -87,7 +90,7 @@ class VerificationSecurityGate:
         config: OrchestrationConfig,
         core: OrchestratorCore,
         memory: ProjectMemory,
-        security_review_callback: Callable[[Task], Awaitable[bool]] | None = None
+        security_review_callback: Callable[[Task], Awaitable[bool]] | None = None,
     ):
         self.config = config
         self.core = core
@@ -103,11 +106,11 @@ class VerificationSecurityGate:
 
         # All checks by type
         self.all_checks = (
-            self.quality_checks +
-            self.security_checks +
-            self.contract_checks +
-            self.build_checks +
-            self.dependency_checks
+            self.quality_checks
+            + self.security_checks
+            + self.contract_checks
+            + self.build_checks
+            + self.dependency_checks
         )
 
         # Check cache
@@ -126,7 +129,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.backend_path),
                 timeout_seconds=120,
                 required=True,
-                description="Run backend unit and integration tests"
+                description="Run backend unit and integration tests",
             ),
             VerificationCheck(
                 name="backend_typecheck",
@@ -136,7 +139,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.backend_path),
                 timeout_seconds=60,
                 required=True,
-                description="Run mypy type checking on backend"
+                description="Run mypy type checking on backend",
             ),
             VerificationCheck(
                 name="backend_lint",
@@ -146,7 +149,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.backend_path),
                 timeout_seconds=60,
                 required=True,
-                description="Run ruff linting on backend"
+                description="Run ruff linting on backend",
             ),
             VerificationCheck(
                 name="backend_format",
@@ -156,9 +159,8 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.backend_path),
                 timeout_seconds=30,
                 required=True,
-                description="Check backend code formatting"
+                description="Check backend code formatting",
             ),
-
             # Frontend
             VerificationCheck(
                 name="frontend_typecheck",
@@ -168,7 +170,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.web_path),
                 timeout_seconds=60,
                 required=True,
-                description="Run TypeScript type checking on frontend"
+                description="Run TypeScript type checking on frontend",
             ),
             VerificationCheck(
                 name="frontend_tests",
@@ -178,7 +180,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.web_path),
                 timeout_seconds=120,
                 required=True,
-                description="Run frontend tests"
+                description="Run frontend tests",
             ),
             VerificationCheck(
                 name="frontend_lint",
@@ -188,7 +190,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.web_path),
                 timeout_seconds=60,
                 required=True,
-                description="Run ESLint on frontend"
+                description="Run ESLint on frontend",
             ),
             VerificationCheck(
                 name="frontend_build",
@@ -198,9 +200,8 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.web_path),
                 timeout_seconds=180,
                 required=True,
-                description="Build frontend for production"
+                description="Build frontend for production",
             ),
-
             # Android
             VerificationCheck(
                 name="android_typecheck",
@@ -210,7 +211,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.android_path),
                 timeout_seconds=60,
                 required=True,
-                description="Run TypeScript type checking on Android"
+                description="Run TypeScript type checking on Android",
             ),
             VerificationCheck(
                 name="android_lint",
@@ -220,7 +221,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.android_path),
                 timeout_seconds=60,
                 required=True,
-                description="Run ESLint on Android"
+                description="Run ESLint on Android",
             ),
         ]
 
@@ -235,7 +236,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.project_root),
                 timeout_seconds=60,
                 required=True,
-                description="Scan for secrets in codebase"
+                description="Scan for secrets in codebase",
             ),
             VerificationCheck(
                 name="dependency_audit_python",
@@ -245,7 +246,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.backend_path),
                 timeout_seconds=60,
                 required=True,
-                description="Audit Python dependencies for vulnerabilities"
+                description="Audit Python dependencies for vulnerabilities",
             ),
             VerificationCheck(
                 name="dependency_audit_web",
@@ -255,7 +256,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.web_path),
                 timeout_seconds=60,
                 required=False,  # May have false positives
-                description="Audit npm dependencies for vulnerabilities (web)"
+                description="Audit npm dependencies for vulnerabilities (web)",
             ),
             VerificationCheck(
                 name="dependency_audit_android",
@@ -265,7 +266,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.android_path),
                 timeout_seconds=60,
                 required=False,
-                description="Audit npm dependencies for vulnerabilities (android)"
+                description="Audit npm dependencies for vulnerabilities (android)",
             ),
         ]
 
@@ -276,11 +277,11 @@ class VerificationSecurityGate:
                 name="openapi_diff",
                 check_type=VerificationCheckType.OPEN_API_DIFF,
                 gate_type=GateType.CONTRACT,
-                command="diff -u docs/api/openapi.json <(uv run python -c \"from backend.app.main import app; import json; print(json.dumps(app.openapi(), indent=2))\")",
+                command='diff -u docs/api/openapi.json <(uv run python -c "from backend.app.main import app; import json; print(json.dumps(app.openapi(), indent=2))")',
                 working_dir=str(self.config.project_root),
                 timeout_seconds=30,
                 required=True,
-                description="Verify OpenAPI spec matches implementation"
+                description="Verify OpenAPI spec matches implementation",
             ),
         ]
 
@@ -295,7 +296,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.project_root),
                 timeout_seconds=30,
                 required=True,
-                description="Validate Docker Compose configuration"
+                description="Validate Docker Compose configuration",
             ),
             VerificationCheck(
                 name="dockerfile_syntax",
@@ -305,7 +306,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.project_root),
                 timeout_seconds=30,
                 required=False,
-                description="Lint Dockerfile (if hadolint available)"
+                description="Lint Dockerfile (if hadolint available)",
             ),
         ]
 
@@ -320,7 +321,7 @@ class VerificationSecurityGate:
                 working_dir=str(self.config.backend_path),
                 timeout_seconds=30,
                 required=True,
-                description="Verify uv.lock is up to date"
+                description="Verify uv.lock is up to date",
             ),
         ]
 
@@ -328,16 +329,16 @@ class VerificationSecurityGate:
         self,
         task: Task,
         gate_types: list[GateType] | None = None,
-        custom_checks: list[VerificationCheck] | None = None
+        custom_checks: list[VerificationCheck] | None = None,
     ) -> VerificationGate:
         """
         Run verification gate for a task.
-        
+
         Args:
             task: Task to verify
             gate_types: Specific gate types to run (default: all)
             custom_checks: Additional custom checks
-            
+
         Returns:
             VerificationGate with all results
         """
@@ -356,31 +357,28 @@ class VerificationSecurityGate:
             results.append(result)
 
         # Create gate
-        gate = VerificationGate(
-            task_id=task.id,
-            results=results
-        )
+        gate = VerificationGate(task_id=task.id, results=results)
         gate.evaluate()
 
         # Record in memory
-        self.memory.add_history(TaskHistoryEntry(
-            task_id=task.id,
-            event=TaskEventType.COMPLETED if gate.overall_passed else TaskEventType.FAILED,
-            details={
-                "verification_gate": {
-                    "passed": gate.overall_passed,
-                    "failed_checks": gate.failed_checks,
-                    "check_count": len(results),
-                }
-            }
-        ))
+        self.memory.add_history(
+            TaskHistoryEntry(
+                task_id=task.id,
+                event=TaskEventType.COMPLETED if gate.overall_passed else TaskEventType.FAILED,
+                details={
+                    "verification_gate": {
+                        "passed": gate.overall_passed,
+                        "failed_checks": gate.failed_checks,
+                        "check_count": len(results),
+                    }
+                },
+            )
+        )
 
         return gate
 
     def _select_checks_for_task(
-        self,
-        task: Task,
-        gate_types: list[GateType]
+        self, task: Task, gate_types: list[GateType]
     ) -> list[VerificationCheck]:
         """Select relevant checks based on task type and gate types."""
         selected = []
@@ -394,9 +392,13 @@ class VerificationSecurityGate:
             if any("android" in f for f in task.files_involved):
                 selected.extend([c for c in self.quality_checks if "android" in c.name])
             # If no specific area, run all quality checks
-            if not any([any("backend" in f for f in task.files_involved),
-                       any("web" in f for f in task.files_involved),
-                       any("android" in f for f in task.files_involved)]):
+            if not any(
+                [
+                    any("backend" in f for f in task.files_involved),
+                    any("web" in f for f in task.files_involved),
+                    any("android" in f for f in task.files_involved),
+                ]
+            ):
                 selected.extend(self.quality_checks)
 
         # Security checks for security-sensitive tasks
@@ -447,13 +449,12 @@ class VerificationSecurityGate:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=check.working_dir,
-                env=env
+                env=env,
             )
 
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    proc.communicate(),
-                    timeout=check.timeout_seconds
+                    proc.communicate(), timeout=check.timeout_seconds
                 )
             except TimeoutError:
                 proc.kill()
@@ -468,7 +469,7 @@ class VerificationSecurityGate:
                     stderr=f"Timeout after {check.timeout_seconds}s",
                     passed=False,
                     evidence={"timeout": True},
-                    duration_ms=int((datetime.now() - start_time).total_seconds() * 1000)
+                    duration_ms=int((datetime.now() - start_time).total_seconds() * 1000),
                 )
 
             exit_code = proc.returncode
@@ -488,7 +489,7 @@ class VerificationSecurityGate:
                     "gate_type": check.gate_type.value,
                     "description": check.description,
                 },
-                duration_ms=int((datetime.now() - start_time).total_seconds() * 1000)
+                duration_ms=int((datetime.now() - start_time).total_seconds() * 1000),
             )
 
             # Cache successful results
@@ -508,7 +509,7 @@ class VerificationSecurityGate:
                 stderr=str(e),
                 passed=False,
                 evidence={"error": str(e), "required": check.required},
-                duration_ms=int((datetime.now() - start_time).total_seconds() * 1000)
+                duration_ms=int((datetime.now() - start_time).total_seconds() * 1000),
             )
 
     async def run_security_review(self, task: Task) -> bool:
@@ -523,33 +524,60 @@ class VerificationSecurityGate:
             return await self.security_review_callback(task)
 
         # Default: require explicit approval (would integrate with security-engineer agent)
-        self.memory.add_history(TaskHistoryEntry(
-            task_id=task.id,
-            event=TaskEventType.BLOCKED,
-            details={
-                "security_review_required": True,
-                "reason": "Task involves security-sensitive changes"
-            }
-        ))
+        self.memory.add_history(
+            TaskHistoryEntry(
+                task_id=task.id,
+                event=TaskEventType.BLOCKED,
+                details={
+                    "security_review_required": True,
+                    "reason": "Task involves security-sensitive changes",
+                },
+            )
+        )
 
         return False  # Block until reviewed
 
     def _is_security_sensitive(self, task: Task) -> bool:
         """Check if task involves security-sensitive changes."""
         security_patterns = [
-            "auth", "secret", "password", "token", "credential",
-            "security", "vulnerability", "encryption", "tls", "ssl",
-            "permission", "authorization", "rbac", "oauth",
-            "login", "session", "cookie", "csrf", "xss", "sql injection"
+            "auth",
+            "secret",
+            "password",
+            "token",
+            "credential",
+            "security",
+            "vulnerability",
+            "encryption",
+            "tls",
+            "ssl",
+            "permission",
+            "authorization",
+            "rbac",
+            "oauth",
+            "login",
+            "session",
+            "cookie",
+            "csrf",
+            "xss",
+            "sql injection",
         ]
-        text = f"{task.objective} {' '.join(task.files_involved)} {' '.join(task.constraints)}".lower()
+        text = (
+            f"{task.objective} {' '.join(task.files_involved)} {' '.join(task.constraints)}".lower()
+        )
         return any(pattern in text for pattern in security_patterns)
 
     def _is_api_change(self, task: Task) -> bool:
         """Check if task modifies API contracts."""
         api_patterns = [
-            "api", "endpoint", "route", "handler", "contract",
-            "openapi", "swagger", "schema", "serializer"
+            "api",
+            "endpoint",
+            "route",
+            "handler",
+            "contract",
+            "openapi",
+            "swagger",
+            "schema",
+            "serializer",
         ]
         text = f"{task.objective} {' '.join(task.files_involved)}".lower()
         return any(pattern in text for pattern in api_patterns)
@@ -557,8 +585,17 @@ class VerificationSecurityGate:
     def _is_build_change(self, task: Task) -> bool:
         """Check if task modifies build configuration."""
         build_patterns = [
-            "docker", "dockerfile", "compose", "build", "ci", "cd",
-            "workflow", "pipeline", "deploy", "vercel", "kubernetes"
+            "docker",
+            "dockerfile",
+            "compose",
+            "build",
+            "ci",
+            "cd",
+            "workflow",
+            "pipeline",
+            "deploy",
+            "vercel",
+            "kubernetes",
         ]
         text = f"{task.objective} {' '.join(task.files_involved)}".lower()
         return any(pattern in text for pattern in build_patterns)
@@ -566,8 +603,15 @@ class VerificationSecurityGate:
     def _is_dependency_change(self, task: Task) -> bool:
         """Check if task modifies dependencies."""
         dep_patterns = [
-            "dependency", "requirements", "package.json", "pyproject",
-            "uv.lock", "package-lock", "add", "install", "upgrade"
+            "dependency",
+            "requirements",
+            "package.json",
+            "pyproject",
+            "uv.lock",
+            "package-lock",
+            "add",
+            "install",
+            "upgrade",
         ]
         text = f"{task.objective} {' '.join(task.files_involved)}".lower()
         return any(pattern in text for pattern in dep_patterns)
@@ -590,7 +634,7 @@ class VerificationSecurityGate:
                     "description": c.description,
                 }
                 for c in self.all_checks
-            ]
+            ],
         }
 
     def add_custom_check(self, check: VerificationCheck) -> None:

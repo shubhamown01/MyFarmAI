@@ -13,7 +13,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.farm import Farm, FarmMember, FarmRole
+from app.db.models.farm import Farm, FarmMember
 from app.db.models.land import FarmPlot, HomeLocation
 from app.db.models.profile import FarmerProfile
 from app.db.models.user import User
@@ -79,7 +79,9 @@ class ProfileService:
             {
                 "step": "contact_verified",
                 "complete": bool(user.email_verified),
-                "detail": None if user.email_verified else "verify your email or sign in with a provider",
+                "detail": None
+                if user.email_verified
+                else "verify your email or sign in with a provider",
             },
             {
                 "step": "verification",
@@ -88,7 +90,11 @@ class ProfileService:
             },
             {"step": "location", "complete": home is not None, "detail": None},
             {"step": "land", "complete": farm_plot is not None, "detail": None},
-            {"step": "profile", "complete": bool(profile and profile.profile_completed), "detail": None},
+            {
+                "step": "profile",
+                "complete": bool(profile and profile.profile_completed),
+                "detail": None,
+            },
         ]
         next_step = next((str(s["step"]) for s in steps if not s["complete"]), None)
         return {

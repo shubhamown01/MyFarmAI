@@ -53,7 +53,8 @@ class OrchestratorCore:
         config: OrchestrationConfig,
         registry: CapabilityRegistry,
         memory: ProjectMemory,
-        delegation_callback: Callable[[AgentAssignment, HandoffProtocol], Awaitable[dict[str, Any]]] | None = None,
+        delegation_callback: Callable[[AgentAssignment, HandoffProtocol], Awaitable[dict[str, Any]]]
+        | None = None,
         verification_callback: Callable[[Task], Awaitable[VerificationGate]] | None = None,
         integration_callback: Callable[[list[Task]], Awaitable[dict[str, Any]]] | None = None,
     ):

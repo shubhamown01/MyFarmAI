@@ -15,18 +15,20 @@ from .registry import CapabilityRegistry
 
 class RoutingStrategy(Enum):
     """Strategy for selecting capabilities."""
-    BEST_MATCH = "best_match"           # Highest capability match score
-    LEAST_LOADED = "least_loaded"       # Prefer less utilized capabilities
+
+    BEST_MATCH = "best_match"  # Highest capability match score
+    LEAST_LOADED = "least_loaded"  # Prefer less utilized capabilities
     MOST_SPECIALIZED = "most_specialized"  # Prefer specialized over general
-    FASTEST = "fastest"                  # Prefer fastest validation time
+    FASTEST = "fastest"  # Prefer fastest validation time
 
 
 @dataclass
 class RoutingRule:
     """A routing rule mapping task patterns to capabilities."""
+
     name: str
-    task_patterns: list[str]            # Keywords in task objective/constraints
-    required_capabilities: list[str]    # Required capability names
+    task_patterns: list[str]  # Keywords in task objective/constraints
+    required_capabilities: list[str]  # Required capability names
     preferred_capability_type: CapabilityType
     preferred_agent: str | None = None
     preferred_skill: str | None = None
@@ -40,6 +42,7 @@ class RoutingRule:
 @dataclass
 class RoutingResult:
     """Result of routing a task to capabilities."""
+
     task_id: str
     primary_agent: Capability | None = None
     primary_skill: Capability | None = None
@@ -56,7 +59,7 @@ class RoutingResult:
 class SkillToolRouter:
     """
     Routes tasks to appropriate skills, agents, and tools.
-    
+
     Routing Priority:
     1. Existing Skill (exact match for task type)
     2. Existing Agent + Skill (agent with relevant skill loaded)
@@ -85,9 +88,8 @@ class SkillToolRouter:
                 preferred_skill="api-contract",
                 fallback_agents=["fastapi-developer", "backend-developer"],
                 fallback_skills=["openapi", "pr-review"],
-                strategy=RoutingStrategy.MOST_SPECIALIZED
+                strategy=RoutingStrategy.MOST_SPECIALIZED,
             ),
-
             # Backend database
             RoutingRule(
                 name="backend_database",
@@ -98,65 +100,108 @@ class SkillToolRouter:
                 preferred_skill="migration",
                 fallback_agents=["postgres-pro", "sql-pro", "backend-engineer"],
                 fallback_skills=["sql-pro"],
-                strategy=RoutingStrategy.MOST_SPECIALIZED
+                strategy=RoutingStrategy.MOST_SPECIALIZED,
             ),
-
             # Frontend components
             RoutingRule(
                 name="frontend_component",
-                task_patterns=["component", "ui", "frontend", "web", "react", "next.js", "tailwind", "shadcn"],
+                task_patterns=[
+                    "component",
+                    "ui",
+                    "frontend",
+                    "web",
+                    "react",
+                    "next.js",
+                    "tailwind",
+                    "shadcn",
+                ],
                 required_capabilities=["frontend", "ui"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="frontend-engineer",
                 preferred_skill="shadcn",
                 fallback_agents=["frontend-developer", "react-specialist", "nextjs-developer"],
                 fallback_skills=["ui-styling", "frontend-design", "vercel-composition-patterns"],
-                strategy=RoutingStrategy.MOST_SPECIALIZED
+                strategy=RoutingStrategy.MOST_SPECIALIZED,
             ),
-
             # Android features
             RoutingRule(
                 name="android_feature",
-                task_patterns=["android", "mobile", "expo", "react native", "app", "device", "emulator"],
+                task_patterns=[
+                    "android",
+                    "mobile",
+                    "expo",
+                    "react native",
+                    "app",
+                    "device",
+                    "emulator",
+                ],
                 required_capabilities=["android", "mobile"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="android-engineer",
                 preferred_skill="vercel-react-native-skills",
                 fallback_agents=["mobile-developer", "mobile-app-developer", "flutter-expert"],
                 fallback_skills=["vercel-react-native-skills"],
-                strategy=RoutingStrategy.MOST_SPECIALIZED
+                strategy=RoutingStrategy.MOST_SPECIALIZED,
             ),
-
             # AI/ML model integration
             RoutingRule(
                 name="ai_ml_integration",
-                task_patterns=["model", "ai", "ml", "ollama", "inference", "qwen", "personaplex", "llm", "embedding"],
+                task_patterns=[
+                    "model",
+                    "ai",
+                    "ml",
+                    "ollama",
+                    "inference",
+                    "qwen",
+                    "personaplex",
+                    "llm",
+                    "embedding",
+                ],
                 required_capabilities=["ai_ml", "model"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="ai-ml-engineer",
                 preferred_skill="google-agents-cli-adk-code",
                 fallback_agents=["llm-architect", "machine-learning-engineer", "nlp-engineer"],
                 fallback_skills=["google-agents-cli-workflow", "prompt-engineer"],
-                strategy=RoutingStrategy.MOST_SPECIALIZED
+                strategy=RoutingStrategy.MOST_SPECIALIZED,
             ),
-
             # Research engine
             RoutingRule(
                 name="research_engine",
-                task_patterns=["research", "search", "searxng", "citation", "extraction", "web search", "source"],
+                task_patterns=[
+                    "research",
+                    "search",
+                    "searxng",
+                    "citation",
+                    "extraction",
+                    "web search",
+                    "source",
+                ],
                 required_capabilities=["research", "search"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="research-engineer",
                 preferred_skill="searxng",
-                fallback_agents=["search-specialist", "data-researcher", "scientific-literature-researcher"],
+                fallback_agents=[
+                    "search-specialist",
+                    "data-researcher",
+                    "scientific-literature-researcher",
+                ],
                 fallback_skills=["context7-mcp", "webapp-testing"],
-                strategy=RoutingStrategy.MOST_SPECIALIZED
+                strategy=RoutingStrategy.MOST_SPECIALIZED,
             ),
-
             # Security audit
             RoutingRule(
                 name="security_audit",
-                task_patterns=["security", "auth", "secret", "vulnerability", "penetration", "threat", "audit", "owasp"],
+                task_patterns=[
+                    "security",
+                    "auth",
+                    "secret",
+                    "vulnerability",
+                    "penetration",
+                    "threat",
+                    "audit",
+                    "owasp",
+                ],
                 required_capabilities=["security"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="security-engineer",
@@ -164,93 +209,146 @@ class SkillToolRouter:
                 fallback_agents=["penetration-tester", "security-auditor", "compliance-auditor"],
                 fallback_skills=["dependency-audit", "docker-destructive-guardrails"],
                 strategy=RoutingStrategy.MOST_SPECIALIZED,
-                tier=PermissionTier.TIER3_NEW  # Security changes need approval
+                tier=PermissionTier.TIER3_NEW,  # Security changes need approval
             ),
-
             # QA/Testing
             RoutingRule(
                 name="qa_testing",
-                task_patterns=["test", "qa", "quality", "lint", "typecheck", "coverage", "regression", "verify", "pytest"],
+                task_patterns=[
+                    "test",
+                    "qa",
+                    "quality",
+                    "lint",
+                    "typecheck",
+                    "coverage",
+                    "regression",
+                    "verify",
+                    "pytest",
+                ],
                 required_capabilities=["qa", "test"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="qa-reviewer",
                 preferred_skill="test-patterns",
                 fallback_agents=["test-automator", "test-writer", "accessibility-tester"],
                 fallback_skills=["webapp-testing", "ci-pipeline"],
-                strategy=RoutingStrategy.BEST_MATCH
+                strategy=RoutingStrategy.BEST_MATCH,
             ),
-
             # Deployment
             RoutingRule(
                 name="deployment",
-                task_patterns=["deploy", "docker", "ci", "cd", "vercel", "kubernetes", "infrastructure", "container"],
+                task_patterns=[
+                    "deploy",
+                    "docker",
+                    "ci",
+                    "cd",
+                    "vercel",
+                    "kubernetes",
+                    "infrastructure",
+                    "container",
+                ],
                 required_capabilities=["deployment"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="deployment-engineer",
                 preferred_skill="deploy-to-vercel",
                 fallback_agents=["devops-engineer", "platform-engineer", "kubernetes-specialist"],
-                fallback_skills=["docker-build-strategies", "docker-compose-patterns", "ci-pipeline"],
+                fallback_skills=[
+                    "docker-build-strategies",
+                    "docker-compose-patterns",
+                    "ci-pipeline",
+                ],
                 strategy=RoutingStrategy.MOST_SPECIALIZED,
-                tier=PermissionTier.TIER3_NEW  # Deployment changes need approval
+                tier=PermissionTier.TIER3_NEW,  # Deployment changes need approval
             ),
-
             # Documentation
             RoutingRule(
                 name="documentation",
-                task_patterns=["doc", "readme", "documentation", "guide", "api doc", "tutorial", "write docs"],
+                task_patterns=[
+                    "doc",
+                    "readme",
+                    "documentation",
+                    "guide",
+                    "api doc",
+                    "tutorial",
+                    "write docs",
+                ],
                 required_capabilities=["documentation"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="docs-writer",
                 preferred_skill="document-generate",
                 fallback_agents=["technical-writer", "content-marketer"],
                 fallback_skills=["changelog-generate", "adr-write"],
-                strategy=RoutingStrategy.BEST_MATCH
+                strategy=RoutingStrategy.BEST_MATCH,
             ),
-
             # Architecture decisions
             RoutingRule(
                 name="architecture",
-                task_patterns=["architecture", "design", "adr", "decision", "review", "refactor", "pattern", "trade-off"],
+                task_patterns=[
+                    "architecture",
+                    "design",
+                    "adr",
+                    "decision",
+                    "review",
+                    "refactor",
+                    "pattern",
+                    "trade-off",
+                ],
                 required_capabilities=["architecture"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="architect-reviewer",
                 preferred_skill="adr-write",
                 fallback_agents=["platform-engineer", "cloud-architect", "microservices-architect"],
                 fallback_skills=["ce-pov", "ce-plan", "ce-doc-review"],
-                strategy=RoutingStrategy.MOST_SPECIALIZED
+                strategy=RoutingStrategy.MOST_SPECIALIZED,
             ),
-
             # Debugging
             RoutingRule(
                 name="debugging",
-                task_patterns=["debug", "error", "trace", "log", "investigate", "fix", "bug", "crash", "failure"],
+                task_patterns=[
+                    "debug",
+                    "error",
+                    "trace",
+                    "log",
+                    "investigate",
+                    "fix",
+                    "bug",
+                    "crash",
+                    "failure",
+                ],
                 required_capabilities=["debugging"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="debugger",
                 preferred_skill="ce-debug",
                 fallback_agents=["error-detective", "error-coordinator"],
                 fallback_skills=["systematic-debugging", "error-triage"],
-                strategy=RoutingStrategy.FASTEST
+                strategy=RoutingStrategy.FASTEST,
             ),
-
             # Performance optimization
             RoutingRule(
                 name="performance",
-                task_patterns=["performance", "optimize", "slow", "latency", "benchmark", "profile", "memory", "cpu"],
+                task_patterns=[
+                    "performance",
+                    "optimize",
+                    "slow",
+                    "latency",
+                    "benchmark",
+                    "profile",
+                    "memory",
+                    "cpu",
+                ],
                 required_capabilities=["performance"],
                 preferred_capability_type=CapabilityType.AGENT,
                 preferred_agent="performance-engineer",
                 preferred_skill="performance-profile",
                 fallback_agents=["vercel-optimize", "database-optimizer"],
                 fallback_skills=["vercel-optimize", "performance-optimization"],
-                strategy=RoutingStrategy.MOST_SPECIALIZED
+                strategy=RoutingStrategy.MOST_SPECIALIZED,
             ),
         ]
 
     async def route_task(self, task: Task) -> RoutingResult:
         """
         Route a task to the best available capabilities.
-        
+
         Returns a RoutingResult with primary and fallback options.
         """
         # Check cache
@@ -271,7 +369,7 @@ class SkillToolRouter:
             # Use best matching rule
             best_rule = max(
                 (r for r in self.routing_rules if r.name in matched_rules),
-                key=lambda r: self._calculate_rule_match_score(r, task)
+                key=lambda r: self._calculate_rule_match_score(r, task),
             )
             result = await self._apply_routing_rule(task, best_rule)
 
@@ -281,7 +379,9 @@ class SkillToolRouter:
 
     def _rule_matches_task(self, rule: RoutingRule, task: Task) -> bool:
         """Check if a routing rule matches a task."""
-        text = f"{task.objective} {' '.join(task.constraints)} {' '.join(task.files_involved)}".lower()
+        text = (
+            f"{task.objective} {' '.join(task.constraints)} {' '.join(task.files_involved)}".lower()
+        )
         return any(pattern.lower() in text for pattern in rule.task_patterns)
 
     def _calculate_rule_match_score(self, rule: RoutingRule, task: Task) -> float:
@@ -382,7 +482,9 @@ class SkillToolRouter:
     def _infer_capabilities_from_task(self, task: Task) -> list[str]:
         """Infer required capabilities from task (shared with team builder)."""
         caps = []
-        text = f"{task.objective} {' '.join(task.constraints)} {' '.join(task.files_involved)}".lower()
+        text = (
+            f"{task.objective} {' '.join(task.constraints)} {' '.join(task.files_involved)}".lower()
+        )
 
         capability_keywords = {
             "backend": ["backend", "api", "fastapi", "database", "sql", "migration", "endpoint"],
@@ -392,7 +494,15 @@ class SkillToolRouter:
             "research": ["research", "search", "searxng", "citation", "extraction", "web search"],
             "security": ["security", "auth", "secret", "vulnerability", "penetration", "threat"],
             "qa": ["test", "qa", "quality", "lint", "typecheck", "coverage", "regression"],
-            "deployment": ["deploy", "docker", "ci", "cd", "vercel", "kubernetes", "infrastructure"],
+            "deployment": [
+                "deploy",
+                "docker",
+                "ci",
+                "cd",
+                "vercel",
+                "kubernetes",
+                "infrastructure",
+            ],
             "documentation": ["doc", "readme", "documentation", "guide", "api doc"],
             "architecture": ["architecture", "design", "adr", "decision", "review", "refactor"],
             "debugging": ["debug", "error", "trace", "log", "investigate", "fix", "bug"],

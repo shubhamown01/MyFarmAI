@@ -29,9 +29,7 @@ class TestHealthEndpoints:
         assert data["service"] == "backend"
 
     @pytest.mark.asyncio
-    async def test_readiness_ok_with_ollama_disabled(
-        self, async_client: AsyncClient, monkeypatch
-    ):
+    async def test_readiness_ok_with_ollama_disabled(self, async_client: AsyncClient, monkeypatch):
         """OLLAMA_BASE_URL="" disables the Ollama readiness check (cloud staging)."""
         from app.factory import default_settings
 

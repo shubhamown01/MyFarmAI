@@ -39,8 +39,11 @@ services:
       OTP_OUTBOX_PATH: /app/data/dev_otp_outbox.txt
     # Owner credentials (OAuth client secrets, SMTP) live in the git-ignored
     # backend/.env. environment: values still take precedence over this file.
+    # required:false keeps `docker compose config` valid in CI, where the
+    # secret file intentionally does not exist; local/dev runs still bring it.
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
     # Loopback-only host exposure for the local web dev server (proxy target).
     # Never publish beyond 127.0.0.1 until the Phase 6/9 deployment gates pass.
     ports:

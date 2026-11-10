@@ -47,7 +47,9 @@ class FarmerProfile(Base, TimestampMixin, UUIDMixin):
     soil_info: Mapped[str | None] = mapped_column(String(500), nullable=True)
     water_availability: Mapped[str | None] = mapped_column(String(100), nullable=True)
     growing_season: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    profile_completed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    profile_completed: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
 
     user: Mapped["User"] = relationship("User", viewonly=True)
 
@@ -63,4 +65,6 @@ class FarmerProfile(Base, TimestampMixin, UUIDMixin):
     )
 
     def __repr__(self) -> str:
-        return f"<FarmerProfile(user_id={self.user_id}, profile_completed={self.profile_completed})>"
+        return (
+            f"<FarmerProfile(user_id={self.user_id}, profile_completed={self.profile_completed})>"
+        )

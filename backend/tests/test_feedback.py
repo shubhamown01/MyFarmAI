@@ -100,7 +100,7 @@ class TestListFeedback:
 
     @pytest.mark.asyncio
     async def test_pagination_offset(self, async_client) -> None:
-        for i in range(5):
+        for _ in range(5):
             await async_client.post(
                 "/api/v1/feedback/submit",
                 json={"category": "praise", "message": "another test case"},

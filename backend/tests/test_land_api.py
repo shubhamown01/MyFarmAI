@@ -1,8 +1,6 @@
 """Land registration API tests (E4): plots, boundaries, geodesic area, home
 location, verification gate, cross-user 404 isolation."""
 
-import math
-
 import pytest
 from httpx import AsyncClient
 

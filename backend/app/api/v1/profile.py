@@ -7,7 +7,6 @@ onboarding). Profile mutation requires the verified-status gate (directive
 """
 
 import uuid
-
 from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -15,7 +14,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.api.v1.auth import get_current_user_id, require_verified_user
 from app.core.config import Settings
 from app.db.session import db_manager
-
 from app.schemas.profile import (
     FarmerProfileResponse,
     FarmerProfileUpdate,

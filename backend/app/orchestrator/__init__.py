@@ -76,32 +76,26 @@ __all__ = [
     "PermissionTier",
     "create_task_id",
     "parse_task_id",
-
     # Registry
     "CapabilityRegistry",
     "DiscoveryResult",
-
     # Core
     "OrchestratorCore",
     "OrchestrationResult",
-
     # Team Builder
     "DynamicTeamBuilder",
     "TeamPlan",
     "TeamOptimizer",
-
     # Router
     "SkillToolRouter",
     "RoutingRule",
     "RoutingResult",
     "RoutingStrategy",
-
     # Execution
     "ExecutionManager",
     "ExecutionContext",
     "ExecutionPhase",
     "CheckpointManager",
-
     # Integration
     "IntegrationReviewManager",
     "IntegrationConflict",
@@ -109,13 +103,11 @@ __all__ = [
     "ConflictType",
     "ConflictSeverity",
     "FileOwnershipTracker",
-
     # Verification
     "VerificationSecurityGate",
     "VerificationCheck",
     "GateResult",
     "GateType",
-
     # Memory
     "ProjectMemoryManager",
     "MemoryStorage",

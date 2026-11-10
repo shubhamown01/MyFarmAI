@@ -65,9 +65,7 @@ class TestConsumeSlot:
         uid = _make_user()
         with db_manager.sync_session() as session:
             assert consume_slot(session, uid, limit=20, window_hours=10) is True
-            row = session.scalars(
-                select(AiQuotaCounter).where(AiQuotaCounter.user_id == uid)
-            ).one()
+            row = session.scalars(select(AiQuotaCounter).where(AiQuotaCounter.user_id == uid)).one()
             assert row.used_count == 1
 
     def test_limit_enforced_atomically(self, client):
@@ -93,8 +91,9 @@ class TestConsumeSlot:
         # Simulate rollover: same (user_id, current-window) row blocks within
         # the window, but a request evaluated against a NEW window_start (the
         # aligned bucket after 10h) has no conflicting row and is admitted.
-        from app.services.ai_quota import window_start_for  # noqa: F401
         from datetime import UTC as _UTC
+
+        from app.services.ai_quota import window_start_for  # noqa: F401
 
         now = datetime.now(_UTC)
         current = window_start_for(now, 10)
@@ -124,7 +123,7 @@ class TestChatEndpointQuotaWiring:
 
     def _login(self, client):
         """Same helper pattern as test_chat.py (_login lives there)."""
-        from app.core.security import generate_session_id, hash_token
+        from app.core.security import hash_token
         from app.db.models.session import Session as SessionModel
 
         session_id = generate_session_id()
@@ -166,7 +165,7 @@ class TestAdminQuotaView:
 
     async def _make_admin(self, client) -> None:
         """Insert an admin + valid session row and set the auth cookie."""
-        from app.core.security import generate_session_id, hash_token
+        from app.core.security import hash_token
         from app.db.models.session import Session as SessionModel
 
         session_id = generate_session_id()
@@ -191,9 +190,7 @@ class TestAdminQuotaView:
     async def test_usage_rows_reflect_consumption(self, async_client):
         uid = uuid.uuid4()
         async with db_manager.session() as session:
-            session.add(
-                User(id=uid, email="quota-usage@example.com", password_hash="not-used")
-            )
+            session.add(User(id=uid, email="quota-usage@example.com", password_hash="not-used"))
             assert await aconsume_slot(session, uid, limit=20, window_hours=10) is True
             await session.commit()
         async with db_manager.session() as session:
@@ -204,7 +201,7 @@ class TestAdminQuotaView:
         assert match[0]["remaining"] == 19
 
     async def test_endpoint_requires_admin(self, async_client):
-        from app.core.security import generate_session_id, hash_token
+        from app.core.security import hash_token
         from app.db.models.session import Session as SessionModel
 
         session_id = generate_session_id()
@@ -229,7 +226,7 @@ class TestAdminQuotaView:
         assert response.json()["error_code"] == "ADMIN_REQUIRED"
 
     async def test_endpoint_returns_rows_for_admin(self, async_client):
-        from app.core.security import generate_session_id, hash_token
+        from app.core.security import hash_token
         from app.db.models.session import Session as SessionModel
 
         session_id = generate_session_id()

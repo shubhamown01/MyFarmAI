@@ -17,7 +17,7 @@ wired; the flag is off until then, so nothing counts today.
 """
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -40,16 +40,18 @@ def window_start_for(now: datetime, window_hours: int) -> datetime:
 def _statement(dialect_name: str, user_id: uuid.UUID, window_start: datetime, limit: int):
     col = AiQuotaCounter.__table__.c
     ins = pg_insert if dialect_name == "postgresql" else sqlite_insert
-    return ins(AiQuotaCounter).values(user_id=user_id, window_start=window_start, used_count=1).on_conflict_do_update(
-        index_elements=["user_id", "window_start"],
-        set_={"used_count": col.used_count + 1},
-        where=col.used_count < limit,
+    return (
+        ins(AiQuotaCounter)
+        .values(user_id=user_id, window_start=window_start, used_count=1)
+        .on_conflict_do_update(
+            index_elements=["user_id", "window_start"],
+            set_={"used_count": col.used_count + 1},
+            where=col.used_count < limit,
+        )
     )
 
 
-def consume_slot(
-    session: Session, user_id: uuid.UUID, *, limit: int, window_hours: int
-) -> bool:
+def consume_slot(session: Session, user_id: uuid.UUID, *, limit: int, window_hours: int) -> bool:
     """Atomically consume one cloud-AI slot for ``user_id``. True = admitted."""
     ws = window_start_for(datetime.now(UTC), window_hours)
     result = session.execute(_statement(session.connection().dialect.name, user_id, ws, limit))
@@ -67,9 +69,7 @@ async def aconsume_slot(
     return (result.rowcount or 0) > 0
 
 
-def remaining(
-    session: Session, user_id: uuid.UUID, *, limit: int, window_hours: int
-) -> int:
+def remaining(session: Session, user_id: uuid.UUID, *, limit: int, window_hours: int) -> int:
     """Advisory read: slots left for ``user_id`` in the current window."""
     ws = window_start_for(datetime.now(UTC), window_hours)
     used: int | None = session.scalars(

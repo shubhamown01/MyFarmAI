@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -12,9 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
-    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -49,7 +48,9 @@ class HomeLocation(Base, TimestampMixin, UUIDMixin):
         unique=True,
         index=True,
     )
-    name: Mapped[str] = mapped_column(String(255), nullable=False)  # e.g., "Home", "Primary residence"
+    name: Mapped[str] = mapped_column(
+        String(255), nullable=False
+    )  # e.g., "Home", "Primary residence"
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
     accuracy_m: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -59,8 +60,12 @@ class HomeLocation(Base, TimestampMixin, UUIDMixin):
     state: Mapped[str | None] = mapped_column(String(100), nullable=True)
     country: Mapped[str | None] = mapped_column(String(100), nullable=True)
     postal_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    source: Mapped[str] = mapped_column(String(20), nullable=False)  # auto_detected | manual_entry | map_pin
-    is_primary: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
+    source: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # auto_detected | manual_entry | map_pin
+    is_primary: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default="true", nullable=False
+    )
 
     __table_args__ = (
         CheckConstraint(

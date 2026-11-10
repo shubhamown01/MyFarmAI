@@ -72,9 +72,7 @@ async def test_profile_optional_fields_round_trip(async_client: AsyncClient) -> 
 async def test_profile_invalid_farming_type_422(async_client: AsyncClient) -> None:
     await _make_user("prof-c@example.com")
     await _login(async_client, "prof-c@example.com")
-    resp = await async_client.put(
-        "/api/v1/me/farmer-profile", json={"farming_type": "industrial"}
-    )
+    resp = await async_client.put("/api/v1/me/farmer-profile", json={"farming_type": "industrial"})
     assert resp.status_code == 422
 
 

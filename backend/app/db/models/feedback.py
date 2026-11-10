@@ -6,8 +6,6 @@ data or unnecessary personal information in feedback reports.
 """
 
 import uuid
-from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 from sqlalchemy import String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -25,9 +23,7 @@ class Feedback(Base, TimestampMixin, UUIDMixin):
 
     __tablename__ = "feedback"
 
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(), nullable=True
-    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(), nullable=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[str] = mapped_column(String(32), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
