@@ -4,12 +4,26 @@ Status: checklist defined; **on-device pass pending phone pairing** (see
 `ANDROID_TESTING_MASTER_PLAN.md` for the build + adb recipe). Update
 `TEST_RESULTS.md` gate F/G as evidence lands.
 
+Verified APK (2026-11-11): `android/android/app/build/outputs/apk/release/app-release.apk`
+— 67,884,479 bytes, SHA-256 `352020c56819c9349e139204692c4a01ba21ca4a8401a6601f5ef4072192c465`,
+signer `CN=MyFarmAI Release`, versionName `1.0.0`. The live download endpoint
+(`GET /api/v1/downloads/app-release.apk`) returns this identical binary.
+
+## Prerequisites
+| # | Check | Expected |
+|---|---|---|
+| 0a | `adb devices -l` | one device in `device` state (not `unauthorized`) |
+| 0b | USB debugging + RSA fingerprint accepted on phone | yes |
+| 0c | Android version | 6.0+ (minSdk 23) |
+| 0d | Build-time `EXPO_PUBLIC_API_BASE_URL` | points at the live backend (not the `api.myfarmai.example.com` placeholder) |
+
 ## Installation
 | # | Step | Expected | Result |
 |---|---|---|---|
 | 1 | `adb install -r app-release.apk` | `Success` | ⬜ |
 | 2 | Launch icon `MyFarm AI` | cold start < 5 s, no crash | ⬜ |
 | 3 | `adb shell dumpsys package com.myfarmai.android \| grep versionName` | `1.0.0` | ⬜ |
+| 3b | `sha256sum` on pulled APK | matches `352020c5…` | ⬜ |
 
 ## Authentication
 | # | Step | Expected | Result |
@@ -26,7 +40,7 @@ Status: checklist defined; **on-device pass pending phone pairing** (see
 | 9 | 21st chat message in window | friendly quota error | ⬜ |
 | 10 | Weather with location | data renders | ⬜ |
 | 11 | Crop plans | list renders | ⬜ |
-| 12 | Voice input button | permission prompt → works | ⬜ |
+| 12 | Voice input button | permission prompt → works (client-platform STT, not the contained `ai/voice` service) | ⬜ |
 | 13 | Camera/image analyze | permission prompt → works | ⬜ |
 
 ## Network & resilience
@@ -45,6 +59,11 @@ Status: checklist defined; **on-device pass pending phone pairing** (see
 
 ## Capture for every failure
 `adb logcat -d -s MyFarmAI:V AndroidRuntime:E` + screenshot + step number.
+
+## Results log
+| Date | Device / Android | Tester | Pass/Fail counts | Notes |
+|---|---|---|---|---|
+| — | pending device | — | — | — |
 
 ## Stall-risk notes for the tester (already handled elsewhere)
 - Manual/user login must be done by the owner (no SMTP yet).

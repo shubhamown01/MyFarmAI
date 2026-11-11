@@ -29,7 +29,7 @@ Farmers and field workers need fast, localized, trustworthy answers about crops,
 - Web: Next.js 15 dashboard, chat 𝖨UI, weather card, resources browser.
 - Android: Expo app foundation with API client config (`EXPO_PUBLIC_API_BASE_URL`).
 
-**Contained (not exposed):** voice service (faster-whisper) — removed from Compose, port 8001 unpublished pending auth work.
+**Contained (not exposed):** voice service (faster-whisper) — removed from Compose, port 8001 unpublished; now requires a bearer token, caps uploads at 25 MB, runs non-root, and has a healthcheck (SEC-014/SEC-028 fixed 2026-11-11). No consumer is wired yet.
 
 **Planned (not implemented):** authentication (Phase 3), AI gateway refactor + streaming (Phase 4), farm/crop domain APIs backed by the Alembic schema (Phase 5), research pipeline with SearXNG citations (Phase 6), public TLS deployment (Phase 8).
 

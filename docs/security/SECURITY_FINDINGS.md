@@ -10,8 +10,8 @@
 |---|---:|---:|---:|---:|---:|
 | Critical | 0 | 0 | 0 | 0 | 0 |
 | High | 2 | 2 | 0 | 0 | 0 |
-| Medium | 13 | 5 | 8 | 0 | 0 |
-| Low | 12 | 0 | 6 | 2 | 4 |
+| Medium | 13 | 6 | 7 | 0 | 0 |
+| Low | 12 | 1 | 5 | 2 | 4 |
 | Info | 3 | 0 | 0 | 0 | 3 |
 
 No unresolved Critical finding was identified. Both High findings are fixed in
@@ -181,16 +181,19 @@ is closed in a running environment.
 
 - **Component:** `ai/voice` container
 - **File:** `ai/voice/Dockerfile:1-24`
-- **Severity:** Medium · **Confidence:** Confirmed · **Status:** `OPEN`
+- **Severity:** Medium · **Confidence:** Confirmed · **Status:** `FIXED` (2026-11-11)
 - **Details:** The Dockerfile has no `USER` directive and no `HEALTHCHECK`; the
   process runs as root inside the container. It binds `127.0.0.1:8001`, so it is
   not directly reachable from other hosts, and the service is not part of
   `docker-compose.yml` (not running during the audit).
 - **Impact:** A voice-service compromise would yield root inside the container and
   weaken defense in depth; no healthcheck means failed starts can go unnoticed.
-- **Repair:** Add a non-root user, `USER`, and a `HEALTHCHECK`; mount only the
-  required model/cache directories with correct ownership. Validate the audio
-  pipeline after the change (ffmpeg/libsndfile permissions).
+- **Repair (applied):** `ai/voice/Dockerfile` now creates `appuser` (uid 10001),
+  sets `USER appuser`, and adds a `HEALTHCHECK` against `/health`. Targeted
+  `trivy config ai/voice/Dockerfile` → 0 misconfigurations.
+- **Residual:** Image build and audio-pipeline validation under the non-root user
+  require the service to be started (not part of compose); tracked in
+  `REMEDIATION_LOG.md` R-03.
 
 ### SEC-027 — Release build silently falls back to the debug signing key
 
@@ -224,7 +227,7 @@ is closed in a running environment.
 | SEC-021 | Bandit B108 temp-dir usage | `backend/app/core/config.py:227`, `backend/app/services/delivery.py:23` | `FALSE POSITIVE` (system temp for non-secret scratch/outbox) |
 | SEC-022 | Semgrep 0700 chmod and CSRF format-string warnings | `backend/app/api/v1/verification.py`, `backend/app/middleware/csrf.py` | `FALSE POSITIVE` (0700 is stricter than suggested; JSON response is not a format string) |
 | SEC-023 | gitleaks hit `myfarmai_recent_questions_v1` | `web/src/hooks/useRecentQuestions.ts:11` | `FALSE POSITIVE` (localStorage key, not a secret) |
-| SEC-028 | Voice `/transcribe` has no auth or size limit (loopback-only, not deployed) | `ai/voice/main.py:23-53` | `OPEN` |
+| SEC-028 | Voice `/transcribe` has no auth or size limit (loopback-only, not deployed) | `ai/voice/main.py` | `FIXED` (2026-11-11) |
 | SEC-029 | Indirect prompt injection via user/retrieved text has no tool execution path | `backend/app/ai/prompts.py` | `ACCEPTED` (output rendered as text; safety rules pinned) |
 
 ### Info

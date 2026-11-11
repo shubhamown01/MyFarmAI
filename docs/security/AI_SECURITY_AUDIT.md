@@ -79,7 +79,7 @@ moderation exists.
 
 | ID | Finding | Severity | Status |
 |---|---|---|---|
-| SEC-028 | Voice `/transcribe` unauthenticated, no size limit (loopback-only, not deployed) | Low | Open |
+| SEC-028 | Voice `/transcribe` unauthenticated, no size limit (loopback-only, not deployed) | Low | Fixed (2026-11-11) |
 | SEC-029 | Prompt injection can yield misleading advice; no tool execution | Low | Accepted |
 | — | No output moderation / hallucination guard beyond prompt rules | Info | Accepted product risk |
 
@@ -90,8 +90,8 @@ moderation exists.
 2. If research results are ever fed into a tool-using agent, add provenance
    labels, allowlisted tools, and human confirmation for actions.
 3. Pin Ollama/Whisper model versions and record their digests in deployment docs.
-4. Add the voice service to compose only with auth, a request-size cap, a
-   non-root user, and a healthcheck (SEC-014/SEC-028).
+4. The voice service now has auth, a request-size cap, a non-root user, and a
+   healthcheck (SEC-014/SEC-028); add it to compose only when a consumer exists.
 5. Revisit output moderation if the app is used by the public at scale.
 
 ## 8. Verification

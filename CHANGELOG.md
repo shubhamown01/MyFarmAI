@@ -37,4 +37,19 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
 - No Google Play publication (registration fee ≠ ₹0; owner approval required).
 
 ## [Unreleased]
+
+### Security
+- Voice service hardened (SEC-014/SEC-028): `/transcribe` now requires a bearer
+  token (`VOICE_SERVICE_TOKEN`, fails closed with 503 when unset), caps uploads
+  at 25 MB (413), streams to a temp file removed on every error path; container
+  runs as non-root `appuser` (uid 10001) with a `/health` healthcheck. Six
+  regression tests added (`ai/voice/test_main.py`). Service remains
+  loopback-only and outside Compose (no consumer wired yet).
+- Rate-limit client-IP resolution ignores `X-Forwarded-For` unless the socket
+  peer is in `TRUSTED_PROXY_CIDRS` (default empty); covered by 8 middleware
+  tests.
+- SearXNG secret externalized to `SEARXNG_SECRET` (template variable); real
+  value lives only in git-ignored `infra/searxng/.env`.
+
+### Changed
 - `phase-01-foundation` → `main` fast-forward history preserved; ongoing features merge via `develop`.

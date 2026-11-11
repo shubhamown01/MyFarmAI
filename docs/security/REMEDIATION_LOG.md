@@ -176,6 +176,62 @@ repository-settings decisions and remain owner actions.
 
 ---
 
+## R-07 — Harden the voice service: auth, upload cap, non-root, healthcheck (SEC-014/SEC-028)
+
+- **Date:** 2026-11-11
+- **Baseline:** `84f34fc` (working tree; voice changes uncommitted at time of writing)
+- **Scope:** `ai/voice` only. No compose change, no deployment, no data change.
+  The service has no consumer (no Android/backend caller; only the unused
+  `voice_service_url` setting), so hardening cannot break callers.
+
+**Files**
+
+- `ai/voice/main.py`
+- `ai/voice/Dockerfile`
+- `ai/voice/test_main.py` (new)
+
+**Change**
+
+- `POST /transcribe` now requires `Authorization: Bearer $VOICE_SERVICE_TOKEN`,
+  compared with `hmac.compare_digest`. Missing configuration fails closed with
+  `503`; a missing or wrong token returns `401`. `/health` stays open.
+- Uploads are streamed in 1 MiB chunks and rejected with `413` above 25 MB; the
+  temp file is removed on every error path.
+- Container: `useradd --create-home --uid 10001 appuser` + `USER appuser`, and a
+  `HEALTHCHECK` polling `http://127.0.0.1:8001/health`.
+- The service still binds `127.0.0.1:8001` and remains outside
+  `docker-compose.yml` (no consumer).
+
+**Regression tests**
+
+`backend/.venv/bin/python -m pytest ai/voice/test_main.py` → **6 passed**
+
+- `/health` open
+- missing token → 401
+- wrong token → 401
+- token unset → 503 (fail closed)
+- over-25 MB upload → 413
+- authorized upload → 200
+
+**Verification**
+
+| Check | Command | Result |
+|---|---|---|
+| Voice tests | `pytest ai/voice/test_main.py` | **PASS** — 6/6 |
+| Dockerfile misconfig | `trivy config ai/voice/Dockerfile` | **PASS** — 0 findings |
+| Semgrep | `semgrep scan --config auto` | **PASS** — voice Dockerfile finding resolved; remaining 2 are SEC-022 false positives |
+
+**Not done**
+
+- Image build and end-to-end transcription under `appuser` were not run (the
+  service is not part of compose and no model image was built in this session).
+  Validate ffmpeg/libsndfile access to the model cache when the service is
+  first deployed.
+- No consumer integration exists yet; wiring the Android client to the service
+  is future scope.
+
+---
+
 ## Documentation updated
 
 - `docs/security/SECURITY_AUDIT_PLAN.md`

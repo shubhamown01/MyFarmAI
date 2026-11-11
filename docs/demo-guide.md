@@ -28,7 +28,7 @@ cd web && npm run dev &                # http://localhost:3000
 | Limitation | Reason |
 |-----------|--------|
 | No login/auth | Phase 3 (roadmap gate) — API is loopback-only until then |
-| Voice not available in demo | Contained for security (port unpublished) until auth + consumer verification |
+| Voice not available in demo | Contained for security (port unpublished, bearer token required, 25 MB cap) until a consumer is wired |
 | Android build tested only as dev server | No release build verified in this pass |
 | AI answers depend on Ollama/Qwen3 availability and quality | Local, low-VRAM model (2 GB VRAM host) |
 | Alembic 13-table schema not applied to live SQLite | Phase 2 pending — chat uses runtime tables only |
