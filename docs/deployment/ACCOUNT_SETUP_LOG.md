@@ -109,3 +109,28 @@ EOF
   created/updated; `pk_feedback` + `ix_feedback_user_id`); round-trip
   insert/read/delete succeeded and left 0 rows.
 - **Tests**: full backend suite 305/305 pass after the migration change.
+
+## 2026-11-11 — Web fixes committed but not deployable from this host
+
+Four production defects found by live Playwright verification are fixed on
+`phase-01-foundation` (MFAI-013, MFAI-014, MFAI-016, MFAI-017). They are **not
+live**: the Slate deployment is CLI-upload based, so no Git-connected redeploy
+can pick them up.
+
+Verified through the Catalyst MCP (read-only):
+
+- Slate app `myfarmai-web` id `37777000000005001`, `app_type: cli`
+- Deployment `default` id `37777000000005003`, `type: cli`,
+  `auto_deploy: false`, `build_meta: {}` (no repo/branch/commit recorded)
+- Current build `37777000000008147`, Success, 2026-11-10 23:47 — predates the
+  four fixes
+- Domain `https://myfarmai-web-zwpytbwu.onslate.in`
+
+The MCP exposes list/get/redeploy/rollback/env-var tools only; there is no
+build-upload tool, and a redeploy would rebuild the same pre-fix source. The
+Catalyst CLI is not installed and no CLI credentials exist on this host, so the
+fixes cannot be shipped from here.
+
+**Owner action:** from an authenticated machine, run the Catalyst/Slate deploy
+for `web/` (same flow as deploy #4) and then re-run the live Playwright sweep.
+No secret, credential, or deployment was changed by this entry.
