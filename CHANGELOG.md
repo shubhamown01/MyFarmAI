@@ -29,6 +29,13 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
   `app_version` now defaults to the installed package metadata (pyproject single
   source of truth) with an `unknown` fallback; `.env.example` updated. Regression
   test added.
+- Web home page hydration mismatch (React #418) and a false "You're offline"
+  banner: `useOnlineStatus` read `navigator.onLine` during render, and Node 21+
+  defines `navigator` without `onLine`, so the server rendered the offline state
+  while the client rendered online. The hook now starts online and applies the
+  real status after mount (3 regression tests).
+- Web home page greeted every anonymous visitor with the developer's name
+  (`DEFAULT_PROFILE.name = 'Shubham'`). Default is now neutral (`Farmer`).
 - Feedback FK bug: `user_id` random-uuid violates users.id consistency on Postgres — now `NULL` for anonymous feedback.
 - Migration chain: feedback migration was forked (2 heads) and missing its `id` PK column; re-chained, fixed, and applied to prod (`f4b2c3d4e5a7_fb_feedback1`).
 

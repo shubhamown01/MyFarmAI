@@ -147,7 +147,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             aria-label="Open profile settings"
             title={`${profile.name} — profile settings`}
           >
-            {profile.name.charAt(0) || 'S'}
+            {profile.name.charAt(0) || 'F'}
           </Link>
         </div>
       </div>

@@ -3,16 +3,17 @@
 import { useEffect, useState } from 'react';
 
 export function useOnlineStatus(): { isOnline: boolean; wasOffline: boolean } {
-  const [isOnline, setIsOnline] = useState<boolean>(() => {
-    if (typeof navigator !== 'undefined') {
-      return navigator.onLine;
-    }
-    return true;
-  });
+  // Start online for both the server render and the first client render so
+  // hydration matches; the real status is applied after mount. Reading
+  // navigator.onLine during render breaks SSR: Node 21+ defines `navigator`
+  // without `onLine`, so the server would render an offline state.
+  const [isOnline, setIsOnline] = useState(true);
 
   const [wasOffline, setWasOffline] = useState(false);
 
   useEffect(() => {
+    setIsOnline(navigator.onLine);
+
     const handleOnline = () => {
       setIsOnline(true);
       setWasOffline(true);

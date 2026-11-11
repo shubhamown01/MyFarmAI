@@ -10,7 +10,7 @@ export interface FarmProfile {
 }
 
 export const DEFAULT_PROFILE: FarmProfile = {
-  name: 'Shubham',
+  name: 'Farmer',
   locationLabel: 'Durg, CG',
   latitude: 21.1938,
   longitude: 81.3509,

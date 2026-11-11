@@ -58,10 +58,10 @@ Remaining: a full Neon `pg_dump`/restore drill (no Neon credentials locally).
 
 | Check | Command | Result |
 |---|---|---|
-| Backend suite | `pytest tests/` | **PASS** — 310/310 in 192.91s |
+| Backend suite | `pytest tests/` | **PASS** — 311/311 in 182.73s |
 | Rate-limit/XFF tests | `pytest tests/test_security_middleware.py` | **PASS** — 8/8 |
 | Voice auth/cap tests | `pytest ai/voice/test_main.py` | **PASS** — 6/6 |
-| Frontend tests | `cd web && npm test -- --runInBand` | **PASS** — 40/40, 7 suites |
+| Frontend tests | `cd web && npm test -- --runInBand` | **PASS** — 43/43, 8 suites |
 | Semgrep | `semgrep scan --config auto` | 216 files / 458 rules → 3 findings: 1 true (fixed), 2 false positives (SEC-022) |
 | Trivy fs | `trivy fs` | 154 vulns (mostly worktree/vendored), **0 secrets**, 26 misconfigs; voice Dockerfile re-scan **0** |
 | OSV-Scanner | `osv-scanner scan source -r backend web android` | Matches Trivy app dependency set; no new class |
@@ -69,6 +69,20 @@ Remaining: a full Neon `pg_dump`/restore drill (no Neon credentials locally).
 | Live APK download | `GET /api/v1/downloads/app-release.apk` | **PASS** — 67,884,479 bytes, SHA-256 `352020c5…`, identical to verified release |
 | Authenticated chat E2E (local) | OTP request → dev outbox → verify → `/auth/me` → `POST /chat` | **PASS** — 200; `qwen3:0.6b`; 97-char answer; `conversation_id` returned; synthetic `@example.com` user created in local Postgres |
 | XFF rate-limit bypass (local) | 65 requests to `/api/v1/resources` with rotating `X-Forwarded-For` | **PASS** — 54 allowed, 11×`429` with `Retry-After`; spoofed header did not create new buckets |
+
+## Live web app verification (Playwright, 2026-11-11)
+
+Headless Chromium against `https://myfarmai-web-zwpytbwu.onslate.in`.
+
+| Check | Result |
+|---|---|
+| Routes `/`, `/assistant`, `/crops`, `/knowledge`, `/community`, `/history` | **PASS** — 6/6 HTTP 200, correct `<title>` and a single `<h1>` each |
+| A11y structure (home) | **PASS** — `lang=en`, `<main>`, skip link, 1×H1, ordered headings, 2/2 images with alt, 6/6 buttons with accessible names, 39 focusables |
+| Responsive @375×812 | **PASS** — no horizontal overflow; 2 inline links measure 20–21 px high (WCAG 2.5.8 spacing exception, not measured) |
+| Unknown route | **PASS** — HTTP 404 |
+| Hydration | **FAIL → FIXED** — React #418: SSR rendered "You're offline" (Node 21+ `navigator` has no `onLine`), client rendered online. Fixed in `useOnlineStatus`; local production build re-verified with **0** hydration errors |
+| Privacy | **FAIL → FIXED** — default profile rendered "Hello, Shubham" to every visitor; default is now `Farmer` |
+| Console | 4× `401` from `GET /farms` on the public home page — accepted by design (auth-aware data layer) |
 
 Not run: voice image build/run under `appuser` (Docker root is on the SSD;
 HDD-first policy — runtime permissions remain a deployment-time check); ZAP
