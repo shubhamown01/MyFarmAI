@@ -10,7 +10,11 @@ SMS: an ``SmsDelivery`` protocol interface is defined here for later stages
 pretending to deliver (never fake delivery).
 """
 
+import asyncio
 import logging
+import smtplib
+import ssl
+from email.message import EmailMessage
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
@@ -69,9 +73,72 @@ class DevModeEmailDelivery:
             pass  # fail open: the log line above is authoritative
 
 
+class EmailDeliveryError(Exception):
+    """Real delivery was attempted and failed; the code did not reach the user."""
+
+
+class EmailDeliveryConfigError(Exception):
+    """SMTP mode was selected but the relay is not configured."""
+
+
+class SmtpEmailDelivery:
+    """Real OTP delivery through an SMTP relay (MFAI-026).
+
+    Uses only the standard library: ``smtplib`` blocks, so the send runs in
+    a worker thread and the event loop stays free. Failures raise
+    :class:`EmailDeliveryError` with a generic message — credentials, the
+    OTP, and the full message body never reach the logs.
+    """
+
+    def __init__(
+        self,
+        *,
+        host: str,
+        port: int,
+        sender: str,
+        username: str = "",
+        password: str = "",
+        starttls: bool = True,
+        timeout: float = 15.0,
+    ) -> None:
+        if not host.strip() or not sender.strip():
+            raise EmailDeliveryConfigError("smtp_host and smtp_from are required")
+        self._host = host.strip()
+        self._port = port
+        self._sender = sender.strip()
+        self._username = username
+        self._password = password
+        self._starttls = starttls
+        self._timeout = timeout
+
+    async def send_otp(self, destination: str, code: str) -> None:
+        await asyncio.to_thread(self._send, destination, code)
+
+    def _send(self, destination: str, code: str) -> None:
+        message = EmailMessage()
+        message["Subject"] = "Your MyFarmAI verification code"
+        message["From"] = self._sender
+        message["To"] = destination
+        message.set_content(
+            f"Your MyFarmAI verification code is {code}.\n\n"
+            "It expires in 10 minutes. If you did not request it, ignore this email."
+        )
+        try:
+            with smtplib.SMTP(self._host, self._port, timeout=self._timeout) as smtp:
+                if self._starttls:
+                    smtp.starttls(context=ssl.create_default_context())
+                if self._username:
+                    smtp.login(self._username, self._password)
+                smtp.send_message(message)
+        except (smtplib.SMTPException, OSError) as exc:
+            # Type name only: SMTP responses and tracebacks can echo addresses
+            # and server details into platform logs.
+            logger.error("SMTP OTP delivery failed (%s)", type(exc).__name__)
+            raise EmailDeliveryError("email delivery failed") from exc
+
+
 class SmsDelivery(Protocol):
     """Delivery adapter for SMS OTP codes (reserved for later stages)."""
-
     async def send_otp(self, destination: str, code: str) -> None:
         """Deliver ``code`` to ``destination``. Raises on delivery failure."""
         ...
@@ -96,22 +163,31 @@ class UnavailableSmsDelivery:
 def get_email_delivery(settings: "Settings") -> EmailDelivery:
     """Factory: pick the email delivery adapter from settings.
 
-    Unknown modes fall back to dev-mode with a warning (never fail signup
-    because of a typo'd mode value).
+    ``smtp`` builds a real relay adapter and raises when it is unconfigured —
+    a missing host must not degrade into "pretend we sent it". Unknown modes
+    raise in production and fall back to the dev adapter (with a redacted
+    code) everywhere else.
     """
     mode = settings.email_delivery_mode
-    if mode == "dev":
-        return DevModeEmailDelivery(
-            outbox_path=getattr(settings, "otp_outbox_path", None),
-            redact_code=getattr(settings, "environment", "") == "production",
+    environment = getattr(settings, "environment", "")
+    if mode == "smtp":
+        return SmtpEmailDelivery(
+            host=getattr(settings, "smtp_host", ""),
+            port=getattr(settings, "smtp_port", 587),
+            sender=getattr(settings, "smtp_from", ""),
+            username=getattr(settings, "smtp_user", ""),
+            password=getattr(settings, "smtp_password", ""),
+            starttls=getattr(settings, "smtp_starttls", True),
+            timeout=getattr(settings, "smtp_timeout_seconds", 15.0),
         )
-    # No real provider adapter exists yet (MFAI-026). Unknown modes fall back to
-    # dev rather than failing signup, but the code is redacted in production.
-    logger.error(
-        "email_delivery_mode='%s' has no adapter — falling back to dev-mode delivery",
-        mode,
-    )
+    if mode != "dev":
+        if environment == "production":
+            raise EmailDeliveryConfigError(f"unknown email_delivery_mode '{mode}'")
+        logger.error(
+            "email_delivery_mode='%s' has no adapter — falling back to dev-mode delivery",
+            mode,
+        )
     return DevModeEmailDelivery(
         outbox_path=getattr(settings, "otp_outbox_path", None),
-        redact_code=getattr(settings, "environment", "") == "production",
+        redact_code=environment == "production",
     )

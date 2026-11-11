@@ -228,17 +228,34 @@ class Settings(BaseSettings):
         default="", description="Microsoft OAuth client secret"
     )
 
-    # Email/OTP delivery (E1): "dev" writes clearly-marked OTP lines to the
-    # server log + /tmp/opencode/dev_otp_outbox.txt; real providers later.
+    # Email/OTP delivery (E1). "dev" writes clearly-marked OTP lines to the
+    # server log + outbox file and never delivers. "smtp" delivers through the
+    # configured relay (MFAI-026). Production requires "smtp" and fails to
+    # start when it is unconfigured — a silent dev fallback would leave every
+    # registration unable to receive its code.
     email_delivery_mode: str = Field(
         default="dev",
-        description="OTP email delivery adapter: dev (log/file, never actually delivers)",
+        description="OTP email delivery adapter: dev (log/file) or smtp (real delivery)",
     )
     # Where the dev adapter writes OTPs. In Compose this points at the
     # bind-mounted backend/data volume so the code is readable on the host.
     otp_outbox_path: str = Field(
         default="/tmp/opencode/dev_otp_outbox.txt",
         description="Dev-mode OTP outbox file path",
+    )
+
+    # SMTP relay (MFAI-026). Credentials come from the platform secret
+    # manager, never from the repository.
+    smtp_host: str = Field(default="", description="SMTP relay hostname")
+    smtp_port: int = Field(default=587, ge=1, le=65535, description="SMTP relay port")
+    smtp_user: str = Field(default="", description="SMTP username (empty = no auth)")
+    smtp_password: str = Field(default="", description="SMTP password (secret)")
+    smtp_from: str = Field(default="", description="From address for OTP email")
+    smtp_starttls: bool = Field(
+        default=True, description="Upgrade the SMTP connection with STARTTLS"
+    )
+    smtp_timeout_seconds: float = Field(
+        default=15.0, gt=0, le=120, description="SMTP connect/send timeout"
     )
 
     # Selfie verification (E3): policy version stamped on consent records and
@@ -388,6 +405,19 @@ class Settings(BaseSettings):
             if self.max_request_body_size > 10_485_760:  # 10 MB
                 errors.append(
                     "max_request_body_size should not exceed 10 MB in production without justification"
+                )
+
+            # Email delivery: a production deployment that falls back to the
+            # dev adapter cannot deliver a single verification code, so every
+            # self-registration is dead on arrival (MFAI-026).
+            if self.email_delivery_mode != "smtp":
+                errors.append(
+                    "email_delivery_mode must be 'smtp' in production "
+                    "(the dev adapter never delivers mail)"
+                )
+            elif not self.smtp_host.strip() or not self.smtp_from.strip():
+                errors.append(
+                    "smtp_host and smtp_from must be set when email_delivery_mode='smtp'"
                 )
 
         return errors

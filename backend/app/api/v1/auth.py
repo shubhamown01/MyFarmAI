@@ -32,7 +32,7 @@ from app.services.auth import (
     RefreshTokenInvalidError,
     SessionInvalidError,
 )
-from app.services.delivery import get_email_delivery
+from app.services.delivery import EmailDeliveryError, get_email_delivery
 from app.services.oauth import (
     OAuthEmailTakenError,
     OAuthInvalidStateError,
@@ -302,6 +302,16 @@ async def register_request_otp(
                 "error_code": "OTP_RESEND_COOLDOWN",
             },
             headers={"Retry-After": "60"},
+        ) from None
+    except EmailDeliveryError:
+        # The session rolled back, so no account or code was created. The
+        # message stays generic: whether the address exists is not disclosed.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "detail": "Verification email could not be sent. Try again later.",
+                "error_code": "EMAIL_DELIVERY_UNAVAILABLE",
+            },
         ) from None
     return EmailOtpSentResponse(
         message="If the email address is valid, a verification code has been sent.",
