@@ -55,6 +55,16 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
 
 ## [Unreleased]
 
+### Added
+- Canonical public download page at `/download`: version, package id, file size,
+  SHA-256, Android requirements, install steps, honest limitations, support and
+  legal links. Static (no API call) so it survives backend outages. The landing
+  page now links to it instead of the API-proxied APK path.
+- Release evidence set: `V1_FEATURE_COMPLETION_MATRIX.md` (40 features),
+  `FINAL_RELEASE_TEST_RESULTS.md` (gates A–U), `PUBLIC_DOWNLOAD_PAGE.md`,
+  `PRODUCTION_ARCHITECTURE.md`, `PRODUCTION_DEPLOYMENT_RUNBOOK.md`,
+  `PRODUCTION_SECURITY_CHECKLIST.md`.
+
 ### Security
 - Voice service hardened (SEC-014/SEC-028): `/transcribe` now requires a bearer
   token (`VOICE_SERVICE_TOKEN`, fails closed with 503 when unset), caps uploads
@@ -85,3 +95,15 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
   `v1.0.0.sha256` now match the APK (confirmed by GitHub's asset digest), and
   `docs/release/` notes, history and checklist were corrected. The APK was not
   rebuilt or re-signed (audit finding MFAI-021).
+- Release notes described an in-app update check and a Settings → About screen
+  that the Android app does not have, and `/pest-disease` claimed no
+  image-analysis endpoint existed while `POST /vision/analyze` is implemented
+  and tested. Both corrected (audit finding MFAI-023). The checklist also
+  quoted the pre-fix APK size and checksum; corrected to 67,884,479 B /
+  `352020c5…c465`, re-verified by downloading the public asset.
+
+### Known issues
+- Onboarding cannot be completed by a self-registered account: the wizard's
+  `verification` step requires `active`/`verified`, but no web or Android client
+  can submit the required selfie and the admin queue has no approve endpoint
+  (audit finding MFAI-025). Needs an owner decision before public registration.
