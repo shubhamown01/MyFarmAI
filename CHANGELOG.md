@@ -64,6 +64,19 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
   `FINAL_RELEASE_TEST_RESULTS.md` (gates A–U), `PUBLIC_DOWNLOAD_PAGE.md`,
   `PRODUCTION_ARCHITECTURE.md`, `PRODUCTION_DEPLOYMENT_RUNBOOK.md`,
   `PRODUCTION_SECURITY_CHECKLIST.md`.
+- Administrator approval of pending registrations (MFAI-025):
+  `GET /api/v1/verification/admin/pending-users` and
+  `POST /api/v1/verification/admin/users/{target_user_id}/decision`. Rejects
+  self-approval, non-pending transitions, and rejections without a reason; every
+  decision writes a `VerificationEvent` with `method: admin_approval`. 11 tests.
+- Real SMTP delivery adapter (MFAI-026): stdlib `smtplib` + `EmailMessage` on
+  `asyncio.to_thread`, STARTTLS, timeout, optional auth. Production startup now
+  **fails** when email delivery is not configured. 17 tests against a fake relay.
+- `backend/scripts/create_admin.py` — the only supported way to create or
+  recover an administrator. Password prompted, never printed or passed in argv.
+- `docs/security/ADMIN_ACCOUNT_PROCEDURE.md`, `docs/deployment/SMTP_SETUP.md`,
+  `docs/deployment/BACKUP_AND_RESTORE.md`, `docs/release/V1_0_0_FINAL_RELEASE_STATUS.md`.
+- Web feedback form on `/settings` (`submitFeedback` → `POST /feedback/submit`).
 
 ### Security
 - Dev-mode OTP delivery no longer logs the verification code when
@@ -85,6 +98,17 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
 
 ### Changed
 - `phase-01-foundation` → `main` fast-forward history preserved; ongoing features merge via `develop`.
+- Web onboarding shows honest pending, pending-review, and rejected states
+  instead of pointing at a verification screen that does not exist.
+- Web `Content-Security-Policy` added in `next.config.js` (`default-src 'self'`,
+  `object-src 'none'`, `frame-ancestors 'none'`, OSM tiles as the only external
+  image source). `script-src` keeps `'unsafe-inline'` because Next injects inline
+  bootstrap scripts and a nonce cannot apply to static pages. Verified against a
+  local production build: 11 routes, zero console errors.
+- `/pest-disease` copy no longer denies that `POST /vision/analyze` exists; it
+  now says the capability is API-only with no user-facing UI.
+- Android `app.json` declares `android.versionCode: 1` explicitly.
+- Removed the stray `web/src/components/Chat/ChatInterface.tsx.bak` (MFAI-024).
 
 ### Fixed
 - Public email-OTP registration left the account with an unknown random
@@ -108,11 +132,17 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
   `352020c5…c465`, re-verified by downloading the public asset.
 
 ### Known issues
-- Registration cannot deliver verification codes: no real email adapter is
-  implemented. `get_email_delivery()` returns the dev adapter for every mode, so
-  `EMAIL_DELIVERY_MODE=smtp` silently sends nothing (audit finding MFAI-026).
-  Implementing a provider adapter is a code change, not a configuration change.
-- Onboarding cannot be completed by a self-registered account: the wizard's
-  `verification` step requires `active`/`verified`, but no web or Android client
-  can submit the required selfie and the admin queue has no approve endpoint
-  (audit finding MFAI-025). Needs an owner decision before public registration.
+- Nothing above is deployed. The live web build predates `/download` and the CSP;
+  the live API image predates the password fix, the SMTP adapter, and the
+  administrator-approval endpoints. Deployment requires the Catalyst CLI from an
+  authenticated machine — it cannot be done from the development host.
+- SMTP credentials are not configured, and **no real verification email has ever
+  been sent**. Registration is not operational until one is received and its
+  code completes the flow.
+- No administrator exists in production; `create_admin.py` must be run once
+  against the production database.
+- Administrator approval has no web UI — it is an authenticated API only.
+- No physical Android device is available, so the APK has never been run on real
+  hardware. The emulator is not viable on this host.
+- Backup/restore (gate F) is unverified: a procedure exists, no restore drill has
+  been run. OWASP ZAP baseline has not been run.

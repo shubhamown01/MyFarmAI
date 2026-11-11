@@ -62,8 +62,29 @@ Environment variable **names** the production image needs (values never printed)
 | `PUBLIC_DIR` | for APK | Directory served by the downloads router |
 | `OLLAMA_BASE_URL` | for AI | Empty/absent disables AI |
 | `SEARXNG_BASE_URL` | for research | Absent makes research return 503 |
-| `EMAIL_DELIVERY_MODE` | for registration | **No real adapter is implemented.** Every value (including `smtp`) resolves to the dev adapter, which writes the code to a server-side file and logs it — redacted when `ENVIRONMENT=production`. Registration cannot work until an adapter is written (MFAI-026). |
+| `EMAIL_DELIVERY_MODE` | yes | Must be `smtp`. **Production startup fails** for any other value. |
+| `SMTP_HOST` | yes | Relay hostname. Startup fails if blank. |
+| `SMTP_PORT` | yes | `587` (STARTTLS). Port 465/implicit TLS is not supported. |
+| `SMTP_USER` / `SMTP_PASSWORD` | conditional | Relay credentials; omit only for an unauthenticated relay. |
+| `SMTP_FROM` | yes | Sender address the relay is authorised to use. Startup fails if blank. |
 | `OAUTH_GOOGLE_CLIENT_ID` / `_SECRET` | optional | OAuth sign-in |
+
+**Deployment order is mandatory:** set the SMTP variables *before* deploying. The new
+image refuses to start a production instance with `EMAIL_DELIVERY_MODE=dev` or a blank
+`SMTP_HOST`/`SMTP_FROM`, so a deploy that skips this step takes the API down.
+See `docs/deployment/SMTP_SETUP.md`.
+
+### 4.1 First administrator (after the API is healthy)
+
+There is no seeded administrator and no API route that creates one. Run once against the
+production database, from `backend/`:
+
+```bash
+.venv/bin/python scripts/create_admin.py --email owner@example.com
+```
+
+Password is prompted (8–128 chars) and never printed. Full procedure:
+`docs/security/ADMIN_ACCOUNT_PROCEDURE.md`.
 
 ## 5. Post-deploy verification (all must be observed)
 
@@ -77,8 +98,10 @@ Environment variable **names** the production image needs (values never printed)
 | 6 | Web `/download` | 200, checksum present |
 | 7 | Web `/landing` | 200 |
 | 8 | APK link | 200, 67,884,479 B |
-| 9 | Register → verify (with SMTP) | 200 + session |
-| 10 | Chat with AI enabled | 200 with model output |
+| 9 | Register → receive code by email → verify | 200 + session |
+| 10 | `GET /api/v1/verification/admin/pending-users` with an admin session | 200, list |
+| 11 | Web `/` response headers | `Content-Security-Policy` present |
+| 12 | Chat with AI enabled | 200 with model output |
 
 ## 6. Why this host cannot deploy (evidence, 2026-11-11)
 
@@ -99,6 +122,8 @@ machine. The web fixes (MFAI-013/014/016/017), the auth fix (`6976a3f`), and the
 
 ## 7. Owner actions
 
-1. Run §3 from a machine with the Catalyst CLI authenticated.
-2. Run §4 if the backend also needs updating (it does — it predates `6976a3f`).
-3. Re-run §5 and record the results in `docs/testing/FINAL_RELEASE_TEST_RESULTS.md`.
+1. Set the SMTP variables from `docs/deployment/SMTP_SETUP.md` **before** deploying — the API will not start without them.
+2. Run §3 from a machine with the Catalyst CLI authenticated.
+3. Run §4 if the backend also needs updating (it does — it predates `6976a3f`).
+4. Run §4.1 to create the first administrator.
+5. Re-run §5 and record the results in `docs/testing/FINAL_RELEASE_TEST_RESULTS.md`.

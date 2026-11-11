@@ -23,7 +23,7 @@ secure; it states which controls were verified and which remain open.
 | `X-Content-Type-Options` | **PASS** | `nosniff` on both origins |
 | `Referrer-Policy` (web) | **PASS** | `strict-origin-when-cross-origin` |
 | `Permissions-Policy` (web) | **PASS (with note)** | `geolocation=(self), camera=(), microphone=()` — see §7 gap 2 |
-| Content-Security-Policy | **FAIL (open)** | No CSP header on the web origin. Tracked as a v1.0.1 hardening item. |
+| Content-Security-Policy | **PASS (repo) / FAIL (live)** | Added in `web/next.config.js` 2026-11-11: `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`; images allow `tile.openstreetmap.org`. Verified against a local production build: 11 routes, zero console errors. The deployed build predates it. |
 
 ## 2. Session and credential handling
 
@@ -92,24 +92,26 @@ secure; it states which controls were verified and which remain open.
 
 ## 7. Gaps that affect functionality or security
 
-1. **No CSP.** The web origin sends no `Content-Security-Policy`. Add one before the next
-   public release.
+1. **CSP is not live.** The policy exists in `web/next.config.js` and passes browser
+   verification locally, but the deployed web build predates it. Redeploy to activate.
 2. **`camera=()` blocks `getUserMedia`.** The web policy denies camera access to the
-   origin. The selfie flow has no capture UI today (MFAI-025), so nothing breaks yet — but
-   any future in-browser camera capture must amend this header first.
-3. **Selfie verification is unreachable and unapprovable** (MFAI-025). This is a
-   functional blocker with a security dimension: the identity gate cannot be satisfied or
-   waived.
-4. **Registration cannot complete** because no email adapter is implemented — every
-   delivery mode resolves to the dev adapter (MFAI-026). This is missing code, not a
-   missing environment variable.
+   origin. No in-browser camera capture exists, and none is required — identity
+   verification is administrator approval. Any future camera feature must amend this
+   header first.
+3. **Identity verification depends on an administrator** (MFAI-025, fixed in code). There
+   is no self-service path and no web admin screen; administrators use the approval API.
+   A deployment without a created administrator cannot approve anyone — see
+   `docs/security/ADMIN_ACCOUNT_PROCEDURE.md`.
+4. **Registration requires SMTP configuration** (MFAI-026, fixed in code). The adapter is
+   implemented and tested, but production refuses to start without `SMTP_*` values and
+   **no real message has ever been sent**.
 5. **Backup/restore is unverified** (gate F).
 
 ## 8. Sign-off
 
 | Role | Decision | Date |
 |---|---|---|
-| Automated security review | **Conditional** — no open Critical/High code finding; blocked on backup/restore (F), ZAP, and the MFAI-025 owner decision | 2026-11-11 |
+| Automated security review | **Conditional** — no open Critical/High code finding (MFAI-025 and MFAI-026 fixed in code, 28 new tests); blocked on backup/restore (F), ZAP, SMTP credentials, and deployment | 2026-11-11 |
 | Owner | _pending_ | |
 
 **No public-launch security approval is claimed.** The controls above are verified; the

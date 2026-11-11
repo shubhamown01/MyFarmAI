@@ -3,7 +3,7 @@
 **Document ID:** MYFARMAI-REL-014
 **Version:** 1.0
 **Date:** 2026-11-11
-**Repository state:** `phase-01-foundation` @ `6976a3f`
+**Repository state:** `phase-01-foundation`, v1.0.1 preparation work (2026-11-11)
 **Live web:** https://myfarmai-web-zwpytbwu.onslate.in
 **Live API:** https://myfarmai-backend-50047414881.development.catalystappsail.in
 **Live image:** `prod-c63d3963-v2` (built 2026-11-10)
@@ -35,7 +35,7 @@ button, route, or endpoint exists.
 
 | Check | Result | Date |
 |---|---|---|
-| Backend test suite (`pytest tests/`) | **313 passed**, 31 warnings, 94.87 s | 2026-11-11 |
+| Backend test suite (`pytest tests/`) | **343 passed**, 31 warnings, 98.00 s | 2026-11-11 |
 | Web Jest (`npm test -- --runInBand`) | **44 passed** / 9 suites | 2026-11-11 |
 | Web typecheck (`tsc --noEmit`) | clean | 2026-11-11 |
 | Web lint (`next lint`) | no warnings or errors | 2026-11-11 |
@@ -54,7 +54,7 @@ button, route, or endpoint exists.
 | # | Feature | Web | Android | Backend / DB | External | Auth | Status | Evidence |
 |---|---|---|---|---|---|---|---|---|
 | 1 | Public landing page | `/landing` implemented | n/a | none | none | public | **PASS (live)** | HTTP 200 live; content is the pre-fix build, so MFAI-014 copy defects remain |
-| 2 | Email-OTP registration | 2-stage form + password field (repo) | **none** | `POST /register/email/request-otp`, `/verify`; `users`, `contact_verification` | **no email adapter exists** | public | **BLOCKED** | Live API still runs the passwordless contract (image predates `6976a3f`); `get_email_delivery()` returns the dev adapter for **every** mode, so no configuration can send mail (MFAI-026) |
+| 2 | Email-OTP registration | 2-stage form + password field | **none** | `POST /register/email/request-otp`, `/verify`; `users`, `contact_verification` | SMTP relay (adapter implemented) | public | **BLOCKED** | MFAI-026 adapter implemented with 17 tests against a fake relay; live image predates `6976a3f` and still runs the passwordless contract. **No real email has been sent** — SMTP credentials are not configured |
 | 3 | Web login (email + password) | `/auth/login` | n/a | `POST /auth/login`, Argon2id | none | public | **PASS (repo) / PARTIAL (live)** | 44 web tests + backend auth tests pass; live bundle is stale |
 | 4 | Web logout / session revocation | Settings → Sign out | n/a | `POST /auth/logout` (204) | none | session | **PASS** | Backend tests; `apiClient.logout()` clears cookie |
 | 5 | Android login | n/a | `SignInForm` on Dashboard | `POST /auth/login` with `android: true` → bearer + refresh | none | public | **PARTIAL** | Code path verified by tests; never exercised on a device or emulator |
@@ -67,10 +67,10 @@ button, route, or endpoint exists.
 
 | # | Feature | Web | Android | Backend / DB | External | Auth | Status | Evidence |
 |---|---|---|---|---|---|---|---|---|
-| 10 | Onboarding wizard | `/onboarding`: contact → verification → location → land → profile → done | none | `/me/onboarding`, `/me/home-location`, `/me/farmer-profile` | browser geolocation | session | **PARTIAL** | Implemented (484 lines); not executed end-to-end on the live build; selfie step needs a camera |
+| 10 | Onboarding wizard | `/onboarding`: contact → verification → location → land → profile → done | none | `/me/onboarding`, `/me/home-location`, `/me/farmer-profile` | browser geolocation | session | **PARTIAL** | Implemented; the verification step now shows pending/rejected states. Completes only after an administrator approves the account. Not executed end-to-end on the live build |
 | 11 | Farmer profile | Settings → Profile | none | `GET/PATCH /me/farmer-profile` | none | session | **PASS (repo)** | Backend tests; settings form wired |
 | 12 | Home location | map pin + "use my location" | none | `PATCH /me/home-location` | browser geolocation | session | **PARTIAL** | Code path present; not live-verified |
-| 13 | Selfie identity verification | onboarding step is text + "Check again"; **no capture UI** | none | `/verification/*`; files re-encoded, EXIF stripped, 0700 dir | none | session | **BLOCKED** | 20 backend tests pass; `grep` finds no `getUserMedia`/selfie upload caller in any client. New users are `pending_verification`, the step only completes at `active`/`verified`, and wave 1 has no approve endpoint — so onboarding can never complete (MFAI-025) |
+| 13 | Identity verification (administrator approval) | onboarding shows pending / rejected states; **no admin UI** | none | `GET /verification/admin/pending-users`, `POST /verification/admin/users/{id}/decision` | none | session + admin | **PARTIAL (repo)** | 11 approval tests pass; rejects self-approval, non-pending transitions, and rejections without a reason. No selfie capture exists and none is required. Administrators act through the API only — no web screen |
 
 ### 3.3 Farm data
 
@@ -112,15 +112,15 @@ button, route, or endpoint exists.
 | 37 | In-app update check | none | **no UI** | `GET /app-updates/latest` live, returns 1.0.0 / min 0.9.0 | GitHub Releases | public | **NOT IMPLEMENTED (client)** | Endpoint verified live; Android has no Settings/About screen, contradicting the v1.0.0 release notes (finding MFAI-023) |
 | 38 | Public APK download | n/a | n/a | `GET /downloads/app-release.apk` (GET only; HEAD → 405) | GitHub Releases | public | **PASS** | GitHub asset 67,884,479 B, SHA-256 `352020c5…c465`, anonymous HTTP 200 |
 | 39 | Community | `/community` "Unavailable" placeholder | none | none | none | session | **MOCKED** | Honest placeholder — correctly not advertised |
-| 40 | Pest & disease | `/pest-disease` "Unavailable" placeholder | none | vision endpoint exists | none | session | **MOCKED** | Placeholder is honest about the missing UI but wrong about the backend (MFAI-023) |
+| 40 | Pest & disease | `/pest-disease` "Unavailable" placeholder | none | `POST /vision/analyze` exists | none | session | **MOCKED** | Placeholder is honest: no user-facing vision UI exists. Copy corrected 2026-11-11 to stop denying the backend endpoint (MFAI-023) |
 
 ## 4. Summary
 
 | Status | Count |
 |---|---|
 | PASS | 8 |
-| PARTIAL | 12 |
-| BLOCKED | 6 |
+| PARTIAL | 13 |
+| BLOCKED | 5 |
 | NOT IMPLEMENTED (client) | 4 |
 | NOT IMPLEMENTED | 4 |
 | MOCKED | 2 |
@@ -134,10 +134,10 @@ citations, crop plans, dashboard, feedback, update check, APK download.
 
 | Advertised feature | Honest status |
 |---|---|
-| Registration | **BLOCKED** live (dev-mode OTP; live image lacks the password fix) |
+| Registration | **BLOCKED** live (live image lacks the password fix and has no SMTP adapter); repo code complete |
 | AI chat | **BLOCKED** live (`ollama: disabled`) |
 | Research + citations | **BLOCKED** live (no SearXNG) |
-| Feedback | **NOT IMPLEMENTED** in any client |
+| Feedback | **PARTIAL** (repo): form added to Settings; not deployed |
 | Update check | **NOT IMPLEMENTED** in any client |
 | Weather | PARTIAL (unverified live outbound) |
 | Crop plans | PARTIAL (repo-verified, not device/live-verified) |
@@ -152,9 +152,9 @@ citations, crop plans, dashboard, feedback, update check, APK download.
 |---|---|---|---|
 | MFAI-022 | OTP registration left an unknown random password; every login path is password-based; no reset endpoint. Self-registered users were permanently locked out, and could never sign in on Android. | Critical | **Fixed** in `6976a3f` (verify step now requires a password). Not yet deployed. |
 | MFAI-023 | `/pest-disease` claims no image-analysis endpoint exists, but `POST /vision/analyze` is implemented and tested. Separately, the v1.0.0 release notes describe an in-app update check and a Settings → About screen that do not exist in the Android app. | Medium | Documentation corrected 2026-11-11; vision UI remains unimplemented |
-| MFAI-024 | `web/src/components/Chat/ChatInterface.tsx.bak` is a stray backup file in the source tree. | Low | Remove before v1.0.1 |
-| MFAI-025 | Onboarding cannot be completed by any self-registered user. New signups get `verification_status=pending_verification`; `require_verified_user` is wired to every land/plot and farmer-profile endpoint (403), and `ProfileService.ONBOARDING_STEPS` only marks `verification` complete at `active`/`verified`; the web step renders text and a "Check again" button that points at a verification screen which does not exist; the admin queue has no approve endpoint. | **Critical** | Documented; needs an owner decision (add a selfie capture UI, or make the step optional, or add an admin approval path). Not changed unilaterally — it is a security gate. |
-| MFAI-026 | No real email adapter exists. `get_email_delivery()` returns `DevModeEmailDelivery` for **every** mode, so setting `EMAIL_DELIVERY_MODE=smtp` silently sends nothing. The dev adapter also logged the OTP code in plaintext at WARNING level; because OTP verify can now reset a password, a log reader could take over an account. | **High** | Code redaction fixed 2026-11-11 (production redacts the code; unknown modes log at error). A real provider adapter is still unimplemented — that is the registration blocker. |
+| MFAI-024 | `web/src/components/Chat/ChatInterface.tsx.bak` is a stray backup file in the source tree. | Low | **Fixed** 2026-11-11 — file deleted |
+| MFAI-025 | Onboarding could not be completed by any self-registered user: `require_verified_user` blocks land/plot and profile writes, onboarding only marks verification complete at `active`/`verified`, and there was no approve path. | **Critical** | **Fixed** 2026-11-11 — administrator approval API (`GET /verification/admin/pending-users`, `POST /verification/admin/users/{id}/decision`) with 11 tests. No selfie capture; `require_verified_user` unchanged. Not yet deployed |
+| MFAI-026 | No real email adapter existed; `get_email_delivery()` returned the dev adapter for **every** mode, so `EMAIL_DELIVERY_MODE=smtp` silently sent nothing. The dev adapter logged the OTP code in plaintext at WARNING level. | **High** | **Fixed** 2026-11-11 — real `SmtpEmailDelivery` (stdlib `smtplib`), 17 tests, production startup fails when email is unconfigured, OTP redacted in production logs. **No real message has been sent yet** |
 
 ## 6. Release impact
 
