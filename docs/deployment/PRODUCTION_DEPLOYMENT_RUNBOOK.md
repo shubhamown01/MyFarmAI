@@ -62,7 +62,7 @@ Environment variable **names** the production image needs (values never printed)
 | `PUBLIC_DIR` | for APK | Directory served by the downloads router |
 | `OLLAMA_BASE_URL` | for AI | Empty/absent disables AI |
 | `SEARXNG_BASE_URL` | for research | Absent makes research return 503 |
-| `EMAIL_DELIVERY_MODE` | for registration | `dev` writes codes to a server-side file; `smtp` needs host/port/user/password |
+| `EMAIL_DELIVERY_MODE` | for registration | **No real adapter is implemented.** Every value (including `smtp`) resolves to the dev adapter, which writes the code to a server-side file and logs it — redacted when `ENVIRONMENT=production`. Registration cannot work until an adapter is written (MFAI-026). |
 | `OAUTH_GOOGLE_CLIENT_ID` / `_SECRET` | optional | OAuth sign-in |
 
 ## 5. Post-deploy verification (all must be observed)

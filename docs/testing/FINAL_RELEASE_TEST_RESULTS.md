@@ -19,7 +19,7 @@
 | **E** | Database persists across restart | **PASS (indirect)** | Managed Neon PostgreSQL survives AppSail redeploys; no data loss observed across the 2026-11-09/10 redeploys. No restart drill run this session. |
 | **F** | Backup and restore verified | **BLOCKED** | No automated `pg_dump`; no restore drill performed. Recorded as pending in `docs/security/V1_RELEASE_SECURITY_CHECKLIST.md`. |
 | **G** | Authentication and user isolation pass | **PASS (repo) / NOT TESTED (live)** | 313 backend tests incl. `test_auth_matrix`, `test_conversation_ownership`, per-resource ownership tests. New regression `test_registration_password_enables_login` covers register → logout → login. Live two-account isolation **not** exercised. |
-| **H** | All advertised core features pass end-to-end | **FAIL** | Registration BLOCKED (dev-mode OTP); onboarding dead-ends at the selfie step with no client capture UI (MFAI-025); AI and research BLOCKED live (`ollama: disabled`, no SearXNG); feedback and update-check have no client UI. See matrix §4. |
+| **H** | All advertised core features pass end-to-end | **FAIL** | Registration BLOCKED (no email adapter exists — MFAI-026); onboarding dead-ends at the selfie step with no client capture UI (MFAI-025); AI and research BLOCKED live (`ollama: disabled`, no SearXNG); feedback and update-check have no client UI. See matrix §4. |
 | **I** | External APIs/providers verified with failure states | **PARTIAL** | Open-Meteo and SearXNG covered by mocked failure-state tests. Live outbound from AppSail unverified. SearXNG not deployed with the live API. |
 | **J** | AI works end-to-end or limitations disclosed | **PARTIAL** | Works locally with `qwen3:4b` (backend suite). Disabled on the live deployment; disclosed in release notes, feature matrix and `/download`. |
 | **K** | Android release build succeeds | **PASS** | Signed `app-release.apk` built 2026-11-09 via `expo prebuild` + Gradle release. Not rebuilt this session (no source change affecting Android). |
@@ -32,7 +32,7 @@
 | **R** | Security gates pass | **PARTIAL** | No unresolved Critical/High open finding in the repo; gitleaks clean on the staged diff; dependency remediation applied (see `docs/security/DEPENDENCY_AUDIT.md`). Open: backup/restore gate, residual Starlette advisories (owner-accepted), OWASP ZAP not run. |
 | **S** | Privacy/support/release notes published | **PARTIAL** | Release notes published on GitHub; `/legal/privacy` and `/legal/terms` exist but are not owner-approved; support channel is GitHub Issues; `/download` not live |
 | **T** | Update and rollback procedures verified | **PARTIAL** | `GET /app-updates/latest` live (1.0.0, min 0.9.0); no client UI consumes it. Rollback documented; not drilled this session. |
-| **U** | External tester workflow passes | **FAIL** | A new tester cannot self-register (no email delivery), so the workflow stops at step 3. |
+| **U** | External tester workflow passes | **FAIL** | A new tester cannot self-register: no email adapter is implemented, so the verification code is never delivered (MFAI-026). The workflow stops at step 3. |
 
 ### Summary
 
@@ -119,8 +119,7 @@ items are listed with owner acceptance in `docs/security/V1_RELEASE_SECURITY_CHE
 ## 4. What an ordinary person experiences today
 
 1. Open `https://myfarmai-web-zwpytbwu.onslate.in/landing` → **works**.
-2. Click "Start testing — create an account" → asks for an email; the code is written to
-   a file on the server → **stops here**.
+2. Click "Start testing — create an account" → asks for an email; **no email adapter exists**, so the code is written to a server-side file and never delivered → **stops here**.
 3. Even with a working code: onboarding asks for a selfie at the `verification` step, but
    no client can capture or upload one, and there is no approval endpoint → **stops here**.
 4. Download the APK → **works**, checksum verifies.

@@ -240,3 +240,37 @@ async def test_dev_outbox_writes_code(tmp_path) -> None:
     assert outbox.exists()
     assert "farmer@example.com" in outbox.read_text(encoding="utf-8")
     assert "123456" in outbox.read_text(encoding="utf-8")
+
+
+async def test_production_redacts_otp_from_logs(caplog, tmp_path) -> None:
+    """MFAI-026: OTP verify can reset a password, so a production log must not
+    contain the code."""
+    import logging
+    from pathlib import Path as P
+
+    from app.services.delivery import DevModeEmailDelivery
+
+    delivery = DevModeEmailDelivery(
+        outbox_path=str(P(str(tmp_path / "outbox.txt"))), redact_code=True
+    )
+    with caplog.at_level(logging.WARNING):
+        await delivery.send_otp("farmer@example.com", "654321")
+
+    assert "654321" not in caplog.text
+    assert "farmer@example.com" in caplog.text
+
+
+def test_factory_redacts_in_production(tmp_path) -> None:
+    """The factory must enable redaction for the production environment."""
+    from types import SimpleNamespace
+
+    from app.services.delivery import get_email_delivery
+
+    delivery = get_email_delivery(
+        SimpleNamespace(
+            email_delivery_mode="dev",
+            otp_outbox_path=str(tmp_path / "outbox.txt"),
+            environment="production",
+        )
+    )
+    assert delivery._redact_code is True

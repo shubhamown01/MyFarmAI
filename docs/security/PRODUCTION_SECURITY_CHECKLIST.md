@@ -40,6 +40,7 @@ secure; it states which controls were verified and which remain open.
 | Password reset | **PARTIAL** | Only via OTP verify; requires working email delivery |
 | Secrets in Git | **PASS** | gitleaks clean on the release diff; only test fixtures, explicitly allow-listed |
 | Secrets in clients | **PASS** | APK bundle inspected: one backend host, no keys, no dev URLs |
+| OTP codes in logs | **PASS (repo) / FAIL (live)** | Fixed 2026-11-11 (MFAI-026): the dev adapter redacts the code when `ENVIRONMENT=production`. The deployed image predates the fix and still logs it. |
 
 ## 3. Authorization and data isolation
 
@@ -99,7 +100,9 @@ secure; it states which controls were verified and which remain open.
 3. **Selfie verification is unreachable and unapprovable** (MFAI-025). This is a
    functional blocker with a security dimension: the identity gate cannot be satisfied or
    waived.
-4. **Registration cannot complete** because no email provider is configured.
+4. **Registration cannot complete** because no email adapter is implemented — every
+   delivery mode resolves to the dev adapter (MFAI-026). This is missing code, not a
+   missing environment variable.
 5. **Backup/restore is unverified** (gate F).
 
 ## 8. Sign-off

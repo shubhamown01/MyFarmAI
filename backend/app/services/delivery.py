@@ -38,15 +38,25 @@ class DevModeEmailDelivery:
     outbox append is best-effort (read-only filesystem → log-only).
     """
 
-    def __init__(self, outbox_path: Path | None = None) -> None:
+    def __init__(self, outbox_path: Path | None = None, *, redact_code: bool = False) -> None:
         self._outbox = Path(outbox_path) if outbox_path else _OTP_OUTBOX
+        # In production the code must never reach the logs: OTP verification can
+        # reset a password, so a log reader would get account takeover.
+        self._redact_code = redact_code
 
     async def send_otp(self, destination: str, code: str) -> None:
-        logger.warning(
-            "DEV-MODE OTP — NOT ACTUALLY DELIVERED: destination=%s code=%s",
-            destination,
-            code,
-        )
+        if self._redact_code:
+            logger.warning(
+                "DEV-MODE OTP — NOT ACTUALLY DELIVERED (code redacted in production): "
+                "destination=%s",
+                destination,
+            )
+        else:
+            logger.warning(
+                "DEV-MODE OTP — NOT ACTUALLY DELIVERED: destination=%s code=%s",
+                destination,
+                code,
+            )
         try:
             # The parent directory may not exist (fresh container) — create it
             # instead of silently dropping the code (fail-open hid this once).
@@ -91,6 +101,17 @@ def get_email_delivery(settings: "Settings") -> EmailDelivery:
     """
     mode = settings.email_delivery_mode
     if mode == "dev":
-        return DevModeEmailDelivery(outbox_path=getattr(settings, "otp_outbox_path", None))
-    logger.warning("Unknown email_delivery_mode '%s' — falling back to dev-mode delivery", mode)
-    return DevModeEmailDelivery(outbox_path=getattr(settings, "otp_outbox_path", None))
+        return DevModeEmailDelivery(
+            outbox_path=getattr(settings, "otp_outbox_path", None),
+            redact_code=getattr(settings, "environment", "") == "production",
+        )
+    # No real provider adapter exists yet (MFAI-026). Unknown modes fall back to
+    # dev rather than failing signup, but the code is redacted in production.
+    logger.error(
+        "email_delivery_mode='%s' has no adapter — falling back to dev-mode delivery",
+        mode,
+    )
+    return DevModeEmailDelivery(
+        outbox_path=getattr(settings, "otp_outbox_path", None),
+        redact_code=getattr(settings, "environment", "") == "production",
+    )

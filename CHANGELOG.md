@@ -66,6 +66,11 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
   `PRODUCTION_SECURITY_CHECKLIST.md`.
 
 ### Security
+- Dev-mode OTP delivery no longer logs the verification code when
+  `ENVIRONMENT=production` (MFAI-026). Because the OTP verify step can reset a
+  password, a plaintext code in exported platform logs would have allowed
+  account takeover. Unknown `EMAIL_DELIVERY_MODE` values now log at error level
+  instead of a warning. Two regression tests added.
 - Voice service hardened (SEC-014/SEC-028): `/transcribe` now requires a bearer
   token (`VOICE_SERVICE_TOKEN`, fails closed with 503 when unset), caps uploads
   at 25 MB (413), streams to a temp file removed on every error path; container
@@ -103,6 +108,10 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
   `352020c5…c465`, re-verified by downloading the public asset.
 
 ### Known issues
+- Registration cannot deliver verification codes: no real email adapter is
+  implemented. `get_email_delivery()` returns the dev adapter for every mode, so
+  `EMAIL_DELIVERY_MODE=smtp` silently sends nothing (audit finding MFAI-026).
+  Implementing a provider adapter is a code change, not a configuration change.
 - Onboarding cannot be completed by a self-registered account: the wizard's
   `verification` step requires `active`/`verified`, but no web or Android client
   can submit the required selfie and the admin queue has no approve endpoint
