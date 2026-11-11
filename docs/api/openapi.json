@@ -2930,6 +2930,121 @@
         }
       }
     },
+    "/api/v1/verification/admin/pending-users": {
+      "get": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Admin Pending Users",
+        "description": "Accounts awaiting an approval decision (administrators only).",
+        "operationId": "admin_pending_users_api_v1_verification_admin_pending_users_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Pending Users Api V1 Verification Admin Pending Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification/admin/users/{target_user_id}/decision": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Admin User Decision",
+        "description": "Approve or reject a pending account; the outcome is audited.",
+        "operationId": "admin_user_decision_api_v1_verification_admin_users__target_user_id__decision_post",
+        "parameters": [
+          {
+            "name": "target_user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Target User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalDecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin User Decision Api V1 Verification Admin Users  Target User Id  Decision Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/ai-quota": {
       "get": {
         "tags": [
@@ -3153,6 +3268,31 @@
           "updated_at"
         ],
         "title": "AlertsBlock"
+      },
+      "ApprovalDecisionRequest": {
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "title": "Approved"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "approved"
+        ],
+        "title": "ApprovalDecisionRequest"
       },
       "AreaMeasurementResponse": {
         "properties": {

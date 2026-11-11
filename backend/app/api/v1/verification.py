@@ -33,7 +33,7 @@ from app.db.models.identity import ConsentRecord, SelfieVerification, Verificati
 from app.db.models.user import User
 from app.db.session import db_manager
 from app.services import selfie as selfie_service
-from app.services import selfie_review
+from app.services import selfie_review, verification_admin
 from app.services.selfie import ChallengeInvalidError
 
 router = APIRouter(prefix="/verification", tags=["Verification"])
@@ -327,3 +327,58 @@ async def admin_raw(
     except Exception as exc:
         raise _map_review_errors(exc) from None
     return FileResponse(path, media_type=mime_type)
+
+
+# -- administrator approval of pending registrations (MFAI-025) --------------
+#
+# The non-biometric verification path. Self-signups land in
+# ``pending_verification`` and are denied every plot/profile write; an
+# administrator decides here, and the decision is audited. Self-approval is
+# rejected server-side, not hidden in the UI.
+
+
+class ApprovalDecisionRequest(BaseModel):
+    approved: bool
+    reason: str | None = Field(default=None, max_length=255)
+
+
+def _map_approval_errors(exc: Exception) -> HTTPException:
+    if isinstance(exc, verification_admin.PendingUserNotFoundError):
+        return _err(404, "user not found", "USER_NOT_FOUND")
+    if isinstance(exc, verification_admin.InvalidTransitionError):
+        return _err(409, "account is not awaiting approval", "INVALID_TRANSITION")
+    if isinstance(exc, verification_admin.SelfApprovalError):
+        return _err(403, "administrators cannot decide their own account", "SELF_APPROVAL")
+    if isinstance(exc, verification_admin.ReasonRequiredError):
+        return _err(422, "a reason is required to reject", "REASON_REQUIRED")
+    raise exc  # pragma: no cover
+
+
+@router.get("/admin/pending-users")
+async def admin_pending_users(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> dict[str, Any]:
+    """Accounts awaiting an approval decision (administrators only)."""
+    async with db_manager.session() as session:
+        await _require_admin(session, user_id)
+        items = await verification_admin.list_pending(session, limit=limit, offset=offset)
+    return {"items": items, "count": len(items)}
+
+
+@router.post("/admin/users/{target_user_id}/decision")
+async def admin_user_decision(
+    target_user_id: uuid.UUID,
+    body: ApprovalDecisionRequest,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+) -> dict[str, Any]:
+    """Approve or reject a pending account; the outcome is audited."""
+    try:
+        async with db_manager.session() as session:
+            await _require_admin(session, user_id)
+            return await verification_admin.decide(
+                session, user_id, target_user_id, body.approved, body.reason
+            )
+    except Exception as exc:
+        raise _map_approval_errors(exc) from None
