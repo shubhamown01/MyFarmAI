@@ -1,6 +1,6 @@
 # MyFarm AI Backend — API Reference
 
-**Version:** 0.1.0 (aligned with `settings.app_version`)  
+**Version:** 1.0.0 (aligned with `settings.app_version`)  
 **Date:** 2026-10-28  
 **Status:** Phase 1 Complete
 
@@ -128,7 +128,7 @@ Returns basic project information.
 ```json
 {
   "project": "My Farm AI",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "status": "running"
 }
 ```

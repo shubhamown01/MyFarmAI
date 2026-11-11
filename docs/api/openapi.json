@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "My Farm AI Backend",
-    "version": "0.1.0"
+    "version": "1.0.0"
   },
   "paths": {
     "/": {
@@ -74,7 +74,7 @@
     "/health/ready": {
       "get": {
         "summary": "Health Readiness",
-        "description": "Readiness probe with real dependency checks.\n\nReports 503 with per-dependency status when any dependency is\nunreachable; 200 only when the database and Ollama are both reachable.",
+        "description": "Readiness probe with real dependency checks.\n\nReports 503 with per-dependency status when any dependency is\nunreachable; 200 only when the database and Ollama are both reachable.\nSetting ``OLLAMA_BASE_URL=\"\"`` disables the Ollama check for hosts\nwithout a local model server (e.g. cloud staging).",
         "operationId": "health_readiness_health_ready_get",
         "responses": {
           "200": {
@@ -189,6 +189,48 @@
         }
       }
     },
+    "/api/v1/auth/preferences": {
+      "patch": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Update Preferences",
+        "description": "P5G: update the authenticated user's preferences (own only).",
+        "operationId": "update_preferences_api_v1_auth_preferences_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/token/refresh": {
       "post": {
         "tags": [
@@ -272,6 +314,212 @@
         }
       }
     },
+    "/api/v1/auth/register/email/request-otp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register Request Otp",
+        "description": "Issue an email OTP (creating a pending user if the email is unknown).\n\nPrivacy-aware: the response is identical whether or not the address was\nknown — no account-existence disclosure.",
+        "operationId": "register_request_otp_api_v1_auth_register_email_request_otp_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailOtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailOtpSentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register/email/verify": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Register Verify Otp",
+        "description": "Verify the email OTP, activate the user, and open a web session.",
+        "operationId": "register_verify_otp_api_v1_auth_register_email_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailOtpVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/oauth/{provider}/authorize": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Oauth Authorize",
+        "description": "Start the OAuth flow: build the provider authorize URL.\n\nThe state/nonce pair is stored server-side (single-use, 10-min TTL) and\nthe state is returned so the web client passes it back on the callback.",
+        "operationId": "oauth_authorize_api_v1_auth_oauth__provider__authorize_get",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Redirect Uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthAuthorizeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/oauth/{provider}/callback": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Oauth Callback",
+        "description": "Finish the OAuth flow: verify state+id_token, then login/link/signup.\n\nAccount-linking protection: a provider-verified email belonging to an\nACTIVE account returns 409 OAUTH_EMAIL_TAKEN (never silently merged); a\nPENDING email-OTP user is claimed (activated + linked).",
+        "operationId": "oauth_callback_api_v1_auth_oauth__provider__callback_get",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "State"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Redirect Uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/chat": {
       "post": {
         "tags": [
@@ -320,8 +568,18 @@
               }
             }
           },
+          "429": {
+            "description": "§10 cloud-AI quota exhausted for the current window (error_code=AI_QUOTA_EXCEEDED; only active when cloud_ai_enabled)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
           "503": {
-            "description": "AI service unavailable or overloaded (error_code=AI_BUSY when the queue depth limit is exceeded)",
+            "description": "AI service unavailable or overloaded: error_code=AI_BUSY when the queue depth limit is exceeded, error_code=AI_QUOTA_UNAVAILABLE when the quota counter cannot be reached (fail-closed, cloud mode only)",
             "content": {
               "application/json": {
                 "schema": {
@@ -336,6 +594,1750 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms": {
+      "get": {
+        "tags": [
+          "Farms"
+        ],
+        "summary": "List Farms",
+        "operationId": "list_farms_api_v1_farms_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FarmResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Farms Api V1 Farms Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Farms"
+        ],
+        "summary": "Create Farm",
+        "operationId": "create_farm_api_v1_farms_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FarmCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}": {
+      "get": {
+        "tags": [
+          "Farms"
+        ],
+        "summary": "Get Farm",
+        "operationId": "get_farm_api_v1_farms__farm_id__get",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Farms"
+        ],
+        "summary": "Update Farm",
+        "operationId": "update_farm_api_v1_farms__farm_id__patch",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FarmUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}/members": {
+      "get": {
+        "tags": [
+          "Farms"
+        ],
+        "summary": "List Members",
+        "operationId": "list_members_api_v1_farms__farm_id__members_get",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FarmMemberResponse"
+                  },
+                  "title": "Response List Members Api V1 Farms  Farm Id  Members Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Farms"
+        ],
+        "summary": "Add Member",
+        "operationId": "add_member_api_v1_farms__farm_id__members_post",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FarmMemberAdd"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmMemberResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}/members/{member_user_id}": {
+      "delete": {
+        "tags": [
+          "Farms"
+        ],
+        "summary": "Remove Member",
+        "operationId": "remove_member_api_v1_farms__farm_id__members__member_user_id__delete",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          },
+          {
+            "name": "member_user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Member User Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Farms"
+        ],
+        "summary": "Update Member Role",
+        "operationId": "update_member_role_api_v1_farms__farm_id__members__member_user_id__patch",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          },
+          {
+            "name": "member_user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Member User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FarmMemberRoleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmMemberResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}/plots": {
+      "post": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "Create Plot",
+        "operationId": "create_plot_api_v1_farms__farm_id__plots_post",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlotCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "List Plots",
+        "operationId": "list_plots_api_v1_farms__farm_id__plots_get",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlotResponse"
+                  },
+                  "title": "Response List Plots Api V1 Farms  Farm Id  Plots Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}/plots/{plot_id}": {
+      "get": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "Get Plot",
+        "operationId": "get_plot_api_v1_farms__farm_id__plots__plot_id__get",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          },
+          {
+            "name": "plot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plot Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "Update Plot",
+        "operationId": "update_plot_api_v1_farms__farm_id__plots__plot_id__patch",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          },
+          {
+            "name": "plot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plot Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlotUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "Delete Plot",
+        "operationId": "delete_plot_api_v1_farms__farm_id__plots__plot_id__delete",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          },
+          {
+            "name": "plot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plot Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}/plots/{plot_id}/boundary": {
+      "put": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "Save Boundary",
+        "operationId": "save_boundary_api_v1_farms__farm_id__plots__plot_id__boundary_put",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          },
+          {
+            "name": "plot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plot Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoundarySave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlotResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}/plots/{plot_id}/area": {
+      "post": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "Report Area",
+        "description": "Manual area entry (user_reported — never presented as map-measured).",
+        "operationId": "report_area_api_v1_farms__farm_id__plots__plot_id__area_post",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          },
+          {
+            "name": "plot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plot Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserReportedArea"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreaMeasurementResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/home-location": {
+      "get": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "Get Home Location",
+        "operationId": "get_home_location_api_v1_me_home_location_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeLocationResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Land"
+        ],
+        "summary": "Save Home Location",
+        "operationId": "save_home_location_api_v1_me_home_location_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeLocationSave"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeLocationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/onboarding": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Get Onboarding Status",
+        "operationId": "get_onboarding_status_api_v1_me_onboarding_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/farmer-profile": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Get Farmer Profile",
+        "operationId": "get_farmer_profile_api_v1_me_farmer_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmerProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Save Farmer Profile",
+        "operationId": "save_farmer_profile_api_v1_me_farmer_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FarmerProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FarmerProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research": {
+      "get": {
+        "tags": [
+          "Research"
+        ],
+        "summary": "Search Research",
+        "operationId": "search_research_api_v1_research_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 200,
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 8,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vision/analyze": {
+      "post": {
+        "tags": [
+          "Vision"
+        ],
+        "summary": "Analyze Image",
+        "operationId": "analyze_image_api_v1_vision_analyze_post",
+        "parameters": [
+          {
+            "name": "question",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Question"
+            }
+          },
+          {
+            "name": "crop",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Crop"
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "en",
+              "title": "Language"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_analyze_image_api_v1_vision_analyze_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Analyze Image Api V1 Vision Analyze Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/voice/capabilities": {
+      "get": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Voice Capabilities",
+        "description": "Voice capability discovery (ADR-016): MVP voice is client-platform\n(Android SpeechRecognizer/TTS, Web Speech API); the backend has no\nserver-side STT/TTS.",
+        "operationId": "voice_capabilities_api_v1_voice_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Voice Capabilities Api V1 Voice Capabilities Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}/crop-cycles": {
+      "post": {
+        "tags": [
+          "CropCycles"
+        ],
+        "summary": "Create Cycle",
+        "operationId": "create_cycle_api_v1_farms__farm_id__crop_cycles_post",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CropCycleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CropCycleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "CropCycles"
+        ],
+        "summary": "List Cycles",
+        "operationId": "list_cycles_api_v1_farms__farm_id__crop_cycles_get",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CropCycleStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CropCycleResponse"
+                  },
+                  "title": "Response List Cycles Api V1 Farms  Farm Id  Crop Cycles Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/crop-cycles/{cycle_id}": {
+      "get": {
+        "tags": [
+          "CropCycles"
+        ],
+        "summary": "Get Cycle",
+        "operationId": "get_cycle_api_v1_crop_cycles__cycle_id__get",
+        "parameters": [
+          {
+            "name": "cycle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cycle Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CropCycleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "CropCycles"
+        ],
+        "summary": "Update Cycle",
+        "operationId": "update_cycle_api_v1_crop_cycles__cycle_id__patch",
+        "parameters": [
+          {
+            "name": "cycle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cycle Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CropCycleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CropCycleResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/farms/{farm_id}/crop-plans": {
+      "post": {
+        "tags": [
+          "CropPlans"
+        ],
+        "summary": "Create Plan",
+        "operationId": "create_plan_api_v1_farms__farm_id__crop_plans_post",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CropPlanCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CropPlanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "CropPlans"
+        ],
+        "summary": "List Plans",
+        "operationId": "list_plans_api_v1_farms__farm_id__crop_plans_get",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Farm Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CropPlanResponse"
+                  },
+                  "title": "Response List Plans Api V1 Farms  Farm Id  Crop Plans Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/crop-plans/{plan_id}": {
+      "get": {
+        "tags": [
+          "CropPlans"
+        ],
+        "summary": "Get Plan",
+        "operationId": "get_plan_api_v1_crop_plans__plan_id__get",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CropPlanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "CropPlans"
+        ],
+        "summary": "Update Plan",
+        "operationId": "update_plan_api_v1_crop_plans__plan_id__patch",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CropPlanUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CropPlanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/crop-plans/{plan_id}/revisions": {
+      "get": {
+        "tags": [
+          "CropPlans"
+        ],
+        "summary": "List Revisions",
+        "operationId": "list_revisions_api_v1_crop_plans__plan_id__revisions_get",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CropPlanRevisionResponse"
+                  },
+                  "title": "Response List Revisions Api V1 Crop Plans  Plan Id  Revisions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/crop-plans/{plan_id}/tasks": {
+      "post": {
+        "tags": [
+          "CropPlans"
+        ],
+        "summary": "Add Task",
+        "operationId": "add_task_api_v1_crop_plans__plan_id__tasks_post",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plan Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanTaskCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanTaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/crop-plans/{plan_id}/tasks/{task_id}": {
+      "patch": {
+        "tags": [
+          "CropPlans"
+        ],
+        "summary": "Update Task",
+        "operationId": "update_task_api_v1_crop_plans__plan_id__tasks__task_id__patch",
+        "parameters": [
+          {
+            "name": "plan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Plan Id"
+            }
+          },
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanTaskUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanTaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Get Dashboard",
+        "operationId": "get_dashboard_api_v1_dashboard_get",
+        "parameters": [
+          {
+            "name": "farm_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Farm to assemble the dashboard for",
+              "title": "Farm Id"
+            },
+            "description": "Farm to assemble the dashboard for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Farm not found or not a member (no existence leak)"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations": {
+      "get": {
+        "tags": [
+          "Conversations"
+        ],
+        "summary": "List Conversations",
+        "operationId": "list_conversations_api_v1_conversations_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationSummaryResponse"
+                  },
+                  "title": "Response List Conversations Api V1 Conversations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}": {
+      "get": {
+        "tags": [
+          "Conversations"
+        ],
+        "summary": "Get Conversation",
+        "operationId": "get_conversation_api_v1_conversations__conversation_id__get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conversation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDetailResponse"
                 }
               }
             }
@@ -678,10 +2680,398 @@
           }
         }
       }
+    },
+    "/api/v1/verification/selfie/consent": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Grant Consent",
+        "description": "Record selfie-liveness processing consent (E3).",
+        "operationId": "grant_consent_api_v1_verification_selfie_consent_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Grant Consent Api V1 Verification Selfie Consent Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification/selfie/challenge": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Issue Challenge",
+        "description": "Issue a 2-action liveness challenge (single-use, 300s, session-bound).",
+        "operationId": "issue_challenge_api_v1_verification_selfie_challenge_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Issue Challenge Api V1 Verification Selfie Challenge Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification/selfie/upload": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Upload Selfie",
+        "description": "Ingest a liveness selfie for manual review (E3 wave 1).\n\nValidation order: pending status → consent → challenge consume (atomic,\nsingle-use) → magic bytes → size → dimensions → metadata-stripping\nre-encode → 0700/0600 storage. The response never contains a storage\npath, filename, or URL.",
+        "operationId": "upload_selfie_api_v1_verification_selfie_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_selfie_api_v1_verification_selfie_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Upload Selfie Api V1 Verification Selfie Upload Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification/admin/selfies": {
+      "get": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Admin Queue",
+        "description": "Admin manual-review queue (pending rows only; no storage paths).\n\nRetention safety net: rows pending longer than ``selfie_retention_days``\nare auto-rejected and their raw files deleted before listing.",
+        "operationId": "admin_queue_api_v1_verification_admin_selfies_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Queue Api V1 Verification Admin Selfies Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification/admin/selfies/{selfie_id}/decision": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Admin Decide",
+        "description": "Final decision: flips status + user verification state, deletes the raw\nfile immediately (raw captures are kept only until the decision).",
+        "operationId": "admin_decide_api_v1_verification_admin_selfies__selfie_id__decision_post",
+        "parameters": [
+          {
+            "name": "selfie_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Selfie Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Decide Api V1 Verification Admin Selfies  Selfie Id  Decision Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification/admin/selfies/{selfie_id}/raw": {
+      "get": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Admin Raw",
+        "description": "Admin-only streaming access to the raw capture (the only such path).",
+        "operationId": "admin_raw_api_v1_verification_admin_selfies__selfie_id__raw_get",
+        "parameters": [
+          {
+            "name": "selfie_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Selfie Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/ai-quota": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Admin Ai Quota",
+        "description": "Per-user §10 cloud-AI usage for the current window (admin only).",
+        "operationId": "admin_ai_quota_api_v1_admin_ai_quota_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Ai Quota Api V1 Admin Ai Quota Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/app-updates/latest": {
+      "get": {
+        "tags": [
+          "AppUpdates"
+        ],
+        "summary": "Latest Release",
+        "description": "Official release metadata for the in-app update check.",
+        "operationId": "latest_release_api_v1_app_updates_latest_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Latest Release Api V1 App Updates Latest Get"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ActivityBlock": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated_at"
+        ],
+        "title": "ActivityBlock"
+      },
+      "ActivityItem": {
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_type",
+          "occurred_at"
+        ],
+        "title": "ActivityItem"
+      },
       "AgriculturalResource": {
         "properties": {
           "title": {
@@ -720,6 +3110,197 @@
         ],
         "title": "AgriculturalResource"
       },
+      "AlertItem": {
+        "properties": {
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "default": "info"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "AlertItem"
+      },
+      "AlertsBlock": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AlertItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated_at"
+        ],
+        "title": "AlertsBlock"
+      },
+      "AreaMeasurementResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "plot_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Plot Id"
+          },
+          "area_sq_m": {
+            "type": "number",
+            "title": "Area Sq M"
+          },
+          "area_unit": {
+            "type": "string",
+            "title": "Area Unit"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "user_confirmed": {
+            "type": "boolean",
+            "title": "User Confirmed"
+          },
+          "calculated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Calculated At"
+          },
+          "conversions": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Conversions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "plot_id",
+          "area_sq_m",
+          "area_unit",
+          "source",
+          "user_confirmed",
+          "calculated_at",
+          "conversions"
+        ],
+        "title": "AreaMeasurementResponse"
+      },
+      "Body_analyze_image_api_v1_vision_analyze_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_analyze_image_api_v1_vision_analyze_post"
+      },
+      "Body_upload_selfie_api_v1_verification_selfie_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "challenge_id": {
+            "type": "string",
+            "title": "Challenge Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "challenge_id"
+        ],
+        "title": "Body_upload_selfie_api_v1_verification_selfie_upload_post"
+      },
+      "BoundaryResponse": {
+        "properties": {
+          "polygon": {
+            "items": {
+              "$ref": "#/components/schemas/PolygonPoint"
+            },
+            "type": "array",
+            "title": "Polygon"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "point_count": {
+            "type": "integer",
+            "title": "Point Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "polygon",
+          "source",
+          "point_count",
+          "created_at"
+        ],
+        "title": "BoundaryResponse"
+      },
+      "BoundarySave": {
+        "properties": {
+          "polygon": {
+            "items": {
+              "$ref": "#/components/schemas/PolygonPoint"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 3,
+            "title": "Polygon"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "map_drawn",
+              "manual_entry"
+            ],
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "polygon",
+          "source"
+        ],
+        "title": "BoundarySave",
+        "description": "Replace the plot's (single) boundary. Source distinguishes a\nmap-drawn polygon from coordinates the farmer typed manually."
+      },
       "ChatRequest": {
         "properties": {
           "message": {
@@ -740,6 +3321,18 @@
             ],
             "title": "Conversation Id",
             "description": "Existing conversation ID to continue, or null to start new"
+          },
+          "farm_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farm Id",
+            "description": "Farm whose owner-provided context (P5A) grounds the answer"
           },
           "language": {
             "type": "string",
@@ -807,6 +3400,150 @@
         ],
         "title": "ChatResponse"
       },
+      "ConversationDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "crop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crop"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "farm_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farm Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageResponse"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "language",
+          "crop",
+          "location",
+          "farm_id",
+          "created_at",
+          "updated_at",
+          "messages"
+        ],
+        "title": "ConversationDetailResponse"
+      },
+      "ConversationSummaryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "crop": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crop"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "farm_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farm Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "language",
+          "crop",
+          "location",
+          "farm_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ConversationSummaryResponse"
+      },
       "CreateUserRequest": {
         "properties": {
           "email": {
@@ -839,6 +3576,764 @@
           "password"
         ],
         "title": "CreateUserRequest"
+      },
+      "CropCycleCreate": {
+        "properties": {
+          "crop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Crop Id"
+          },
+          "season_year": {
+            "type": "integer",
+            "maximum": 2100.0,
+            "minimum": 1900.0,
+            "title": "Season Year"
+          },
+          "season_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Season Name"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "expected_harvest_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Harvest Date"
+          },
+          "area_hectares": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Hectares"
+          },
+          "area_acres": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Acres"
+          },
+          "expected_yield_kg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Yield Kg"
+          },
+          "yield_unit": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Yield Unit",
+            "default": "kg/ha"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "crop_id",
+          "season_year"
+        ],
+        "title": "CropCycleCreate"
+      },
+      "CropCycleResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "farm_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Farm Id"
+          },
+          "crop_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Crop Id"
+          },
+          "season_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Season Name"
+          },
+          "season_year": {
+            "type": "integer",
+            "title": "Season Year"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "expected_harvest_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Harvest Date"
+          },
+          "actual_harvest_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Harvest Date"
+          },
+          "area_hectares": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Hectares"
+          },
+          "area_acres": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Acres"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CropCycleStatus"
+          },
+          "expected_yield_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Yield Kg"
+          },
+          "actual_yield_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Yield Kg"
+          },
+          "yield_unit": {
+            "type": "string",
+            "title": "Yield Unit"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "farm_id",
+          "crop_id",
+          "season_name",
+          "season_year",
+          "planting_date",
+          "expected_harvest_date",
+          "actual_harvest_date",
+          "area_hectares",
+          "area_acres",
+          "status",
+          "expected_yield_kg",
+          "actual_yield_kg",
+          "yield_unit",
+          "notes",
+          "created_at"
+        ],
+        "title": "CropCycleResponse"
+      },
+      "CropCycleStatus": {
+        "type": "string",
+        "enum": [
+          "planned",
+          "planted",
+          "growing",
+          "harvested",
+          "failed",
+          "archived"
+        ],
+        "title": "CropCycleStatus",
+        "description": "Crop cycle status."
+      },
+      "CropCycleUpdate": {
+        "properties": {
+          "season_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Season Name"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "expected_harvest_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Harvest Date"
+          },
+          "actual_harvest_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Harvest Date"
+          },
+          "area_hectares": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Hectares"
+          },
+          "area_acres": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Acres"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CropCycleStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expected_yield_kg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Yield Kg"
+          },
+          "actual_yield_kg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Yield Kg"
+          },
+          "yield_unit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yield Unit"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "title": "CropCycleUpdate"
+      },
+      "CropItem": {
+        "properties": {
+          "crop": {
+            "type": "string",
+            "title": "Crop"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "season_year": {
+            "type": "integer",
+            "title": "Season Year"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "expected_harvest_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Harvest Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "crop",
+          "status",
+          "season_year"
+        ],
+        "title": "CropItem"
+      },
+      "CropPlanCreate": {
+        "properties": {
+          "crop_cycle_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crop Cycle Id"
+          },
+          "variety": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variety"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/PlanTaskCreate"
+            },
+            "type": "array",
+            "title": "Tasks",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "CropPlanCreate"
+      },
+      "CropPlanResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "farm_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Farm Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "crop_cycle_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crop Cycle Id"
+          },
+          "variety": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variety"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "assumptions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assumptions"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneResponse"
+            },
+            "type": "array",
+            "title": "Milestones"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/PlanTaskResponse"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "farm_id",
+          "user_id",
+          "crop_cycle_id",
+          "variety",
+          "planting_date",
+          "assumptions",
+          "milestones",
+          "tasks",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CropPlanResponse"
+      },
+      "CropPlanRevisionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "changed_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Changed By"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Snapshot"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "changed_by",
+          "summary",
+          "snapshot",
+          "created_at"
+        ],
+        "title": "CropPlanRevisionResponse"
+      },
+      "CropPlanTaskSource": {
+        "type": "string",
+        "enum": [
+          "user",
+          "suggested"
+        ],
+        "title": "CropPlanTaskSource",
+        "description": "Who created a plan task. User tasks are never system-modified."
+      },
+      "CropPlanTaskStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "done",
+          "cancelled"
+        ],
+        "title": "CropPlanTaskStatus",
+        "description": "Task lifecycle. 'cancelled' is a soft delete — history is preserved."
+      },
+      "CropPlanUpdate": {
+        "properties": {
+          "crop_cycle_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Crop Cycle Id"
+          },
+          "variety": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variety"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          }
+        },
+        "type": "object",
+        "title": "CropPlanUpdate"
+      },
+      "CropsBlock": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "cycles": {
+            "items": {
+              "$ref": "#/components/schemas/CropItem"
+            },
+            "type": "array",
+            "title": "Cycles"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated_at"
+        ],
+        "title": "CropsBlock"
       },
       "CurrentWeather": {
         "properties": {
@@ -922,6 +4417,135 @@
         ],
         "title": "DailyForecast"
       },
+      "DashboardResponse": {
+        "properties": {
+          "farm_id": {
+            "type": "string",
+            "title": "Farm Id"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "farm": {
+            "$ref": "#/components/schemas/FarmBlock"
+          },
+          "crops": {
+            "$ref": "#/components/schemas/CropsBlock"
+          },
+          "weather": {
+            "$ref": "#/components/schemas/WeatherBlock"
+          },
+          "tasks": {
+            "$ref": "#/components/schemas/TasksBlock"
+          },
+          "alerts": {
+            "$ref": "#/components/schemas/AlertsBlock"
+          },
+          "recommendations": {
+            "$ref": "#/components/schemas/RecommendationsBlock"
+          },
+          "activity": {
+            "$ref": "#/components/schemas/ActivityBlock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "farm_id",
+          "generated_at",
+          "farm",
+          "crops",
+          "weather",
+          "tasks",
+          "alerts",
+          "recommendations",
+          "activity"
+        ],
+        "title": "DashboardResponse"
+      },
+      "DecisionRequest": {
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "title": "Approved"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "approved"
+        ],
+        "title": "DecisionRequest"
+      },
+      "EmailOtpRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "EmailOtpRequest",
+        "description": "Passwordless signup: request an OTP code (E1). Response is\nprivacy-aware — identical whether or not the email is known."
+      },
+      "EmailOtpSentResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "delivery_mode": {
+            "type": "string",
+            "title": "Delivery Mode",
+            "default": "dev"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "EmailOtpSentResponse",
+        "description": "Privacy-aware response — identical whether or not the email exists.\n\n``delivery_mode`` tells the client HOW the code was delivered so the UI\ncan be honest: ``dev`` means no real email is sent in this environment\n(the code is in the server outbox / log); ``provider`` means real email."
+      },
+      "EmailOtpVerifyRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "^[0-9]{6}$",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "code"
+        ],
+        "title": "EmailOtpVerifyRequest",
+        "description": "Passwordless signup: verify the OTP code (E1)."
+      },
       "ErrorResponse": {
         "properties": {
           "detail": {
@@ -948,6 +4572,664 @@
         ],
         "title": "ErrorResponse"
       },
+      "FarmBlock": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated_at",
+          "name",
+          "timezone"
+        ],
+        "title": "FarmBlock"
+      },
+      "FarmCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 90.0,
+                "minimum": -90.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "timezone": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Timezone",
+            "default": "UTC"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "FarmCreate"
+      },
+      "FarmMemberAdd": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/FarmRole",
+            "default": "member"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "FarmMemberAdd"
+      },
+      "FarmMemberResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/FarmRole"
+          },
+          "joined_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Joined At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "role",
+          "joined_at"
+        ],
+        "title": "FarmMemberResponse"
+      },
+      "FarmMemberRoleUpdate": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/FarmRole"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "FarmMemberRoleUpdate"
+      },
+      "FarmResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "owner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Owner Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "address",
+          "latitude",
+          "longitude",
+          "timezone",
+          "owner_id",
+          "is_active",
+          "created_at"
+        ],
+        "title": "FarmResponse"
+      },
+      "FarmRole": {
+        "type": "string",
+        "enum": [
+          "owner",
+          "member",
+          "viewer"
+        ],
+        "title": "FarmRole",
+        "description": "Farm membership roles."
+      },
+      "FarmUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 90.0,
+                "minimum": -90.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 180.0,
+                "minimum": -180.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "FarmUpdate"
+      },
+      "FarmerProfileResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "farming_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farming Type"
+          },
+          "preferred_language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Language"
+          },
+          "farming_experience_years": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farming Experience Years"
+          },
+          "existing_crops": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Existing Crops"
+          },
+          "intended_crops": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intended Crops"
+          },
+          "soil_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Soil Info"
+          },
+          "water_availability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Availability"
+          },
+          "growing_season": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Growing Season"
+          },
+          "profile_completed": {
+            "type": "boolean",
+            "title": "Profile Completed"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "full_name",
+          "farming_type",
+          "preferred_language",
+          "farming_experience_years",
+          "existing_crops",
+          "intended_crops",
+          "soil_info",
+          "water_availability",
+          "growing_season",
+          "profile_completed",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FarmerProfileResponse"
+      },
+      "FarmerProfileUpdate": {
+        "properties": {
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "farming_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "home_farming",
+                  "small_outdoor",
+                  "agricultural",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farming Type"
+          },
+          "preferred_language": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Language"
+          },
+          "farming_experience_years": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Farming Experience Years"
+          },
+          "existing_crops": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Existing Crops"
+          },
+          "intended_crops": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intended Crops"
+          },
+          "soil_info": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Soil Info"
+          },
+          "water_availability": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Availability"
+          },
+          "growing_season": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Growing Season"
+          }
+        },
+        "type": "object",
+        "title": "FarmerProfileUpdate",
+        "description": "Progressive profile: every field optional, upsert semantics."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -960,6 +5242,265 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HomeLocationResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy M"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "title": "Is Primary"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "latitude",
+          "longitude",
+          "accuracy_m",
+          "address",
+          "city",
+          "district",
+          "state",
+          "country",
+          "postal_code",
+          "source",
+          "is_primary",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "HomeLocationResponse"
+      },
+      "HomeLocationSave": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "default": "Home"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "accuracy_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accuracy M"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "auto_detected",
+              "manual_entry",
+              "map_pin"
+            ],
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude",
+          "source"
+        ],
+        "title": "HomeLocationSave",
+        "description": "Upsert of the farmer's home location (one per user)."
       },
       "LoginRequest": {
         "properties": {
@@ -1026,6 +5567,479 @@
         ],
         "title": "LoginResponse"
       },
+      "MessageResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "content",
+          "created_at"
+        ],
+        "title": "MessageResponse"
+      },
+      "MilestoneResponse": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "date"
+        ],
+        "title": "MilestoneResponse"
+      },
+      "OAuthAuthorizeResponse": {
+        "properties": {
+          "authorize_url": {
+            "type": "string",
+            "title": "Authorize Url"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "authorize_url",
+          "state"
+        ],
+        "title": "OAuthAuthorizeResponse",
+        "description": "E2: URL the web client redirects the browser to; ``state`` is echoed\nback as the ``state`` query parameter on the callback."
+      },
+      "OnboardingStatusResponse": {
+        "properties": {
+          "verification_status": {
+            "type": "string",
+            "title": "Verification Status"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingStep"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "next_step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Step"
+          },
+          "complete": {
+            "type": "boolean",
+            "title": "Complete"
+          }
+        },
+        "type": "object",
+        "required": [
+          "verification_status",
+          "steps",
+          "next_step",
+          "complete"
+        ],
+        "title": "OnboardingStatusResponse",
+        "description": "Computed onboarding state (directive §12: resume incomplete onboarding).\n\nNo separate state table — the state is derived from existing records so\nit can never drift from the source of truth."
+      },
+      "OnboardingStep": {
+        "properties": {
+          "step": {
+            "type": "string",
+            "title": "Step"
+          },
+          "complete": {
+            "type": "boolean",
+            "title": "Complete"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "step",
+          "complete"
+        ],
+        "title": "OnboardingStep"
+      },
+      "PlanTaskCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "PlanTaskCreate"
+      },
+      "PlanTaskResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "source": {
+            "$ref": "#/components/schemas/CropPlanTaskSource"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CropPlanTaskStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "due_date",
+          "source",
+          "status",
+          "created_at"
+        ],
+        "title": "PlanTaskResponse"
+      },
+      "PlanTaskUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CropPlanTaskStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "PlanTaskUpdate"
+      },
+      "PlotCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "land_type": {
+            "type": "string",
+            "enum": [
+              "home_farming",
+              "small_outdoor",
+              "agricultural",
+              "other"
+            ],
+            "title": "Land Type"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "land_type"
+        ],
+        "title": "PlotCreate"
+      },
+      "PlotResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "farm_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Farm Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "land_type": {
+            "type": "string",
+            "title": "Land Type"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "boundary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoundaryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_measurement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AreaMeasurementResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "farm_id",
+          "name",
+          "land_type",
+          "notes",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PlotResponse"
+      },
+      "PlotUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "land_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "home_farming",
+                  "small_outdoor",
+                  "agricultural",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Land Type"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "title": "PlotUpdate"
+      },
+      "PolygonPoint": {
+        "properties": {
+          "lat": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat"
+          },
+          "lon": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "PolygonPoint"
+      },
+      "PreferencesUpdate": {
+        "properties": {
+          "preferred_language": {
+            "type": "string",
+            "pattern": "^[a-z]{2}$",
+            "title": "Preferred Language"
+          }
+        },
+        "type": "object",
+        "required": [
+          "preferred_language"
+        ],
+        "title": "PreferencesUpdate",
+        "description": "User preferences (P5G). Only the authenticated user's own preferences."
+      },
+      "RecommendationsBlock": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": false
+          },
+          "unavailable_reason": {
+            "type": "string",
+            "title": "Unavailable Reason",
+            "default": "Saved recommendations are not available yet"
+          }
+        },
+        "type": "object",
+        "title": "RecommendationsBlock"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -1040,6 +6054,76 @@
           "refresh_token"
         ],
         "title": "RefreshRequest"
+      },
+      "ResearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchResultResponse"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Retrieved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "results",
+          "provider",
+          "retrieved_at"
+        ],
+        "title": "ResearchResponse"
+      },
+      "ResearchResultResponse": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "snippet": {
+            "type": "string",
+            "title": "Snippet"
+          },
+          "source_domain": {
+            "type": "string",
+            "title": "Source Domain"
+          },
+          "official_source": {
+            "type": "boolean",
+            "title": "Official Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "title",
+          "url",
+          "snippet",
+          "source_domain",
+          "official_source"
+        ],
+        "title": "ResearchResultResponse"
       },
       "ResourcesResponse": {
         "properties": {
@@ -1104,6 +6188,101 @@
           "role"
         ],
         "title": "SessionUserResponse"
+      },
+      "TaskItem": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Due Date"
+          },
+          "crop": {
+            "type": "string",
+            "title": "Crop"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "due_date",
+          "crop"
+        ],
+        "title": "TaskItem"
+      },
+      "TasksBlock": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaskItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated_at"
+        ],
+        "title": "TasksBlock"
+      },
+      "UserReportedArea": {
+        "properties": {
+          "area_value": {
+            "type": "number",
+            "maximum": 1000000000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Area Value"
+          },
+          "area_unit": {
+            "type": "string",
+            "enum": [
+              "sq_m",
+              "sq_km",
+              "hectare",
+              "acre",
+              "sq_ft",
+              "sq_yd"
+            ],
+            "title": "Area Unit"
+          },
+          "confirm": {
+            "type": "boolean",
+            "title": "Confirm",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "area_value",
+          "area_unit"
+        ],
+        "title": "UserReportedArea",
+        "description": "Manual area entry (directive §7.3): recorded as user_reported, never\npresented as map-measured. Optionally marks it farmer-confirmed."
       },
       "UserResponse": {
         "properties": {
@@ -1182,6 +6361,69 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WeatherBlock": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": false
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "windspeed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Windspeed"
+          },
+          "conditions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailable Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated_at"
+        ],
+        "title": "WeatherBlock"
       },
       "WeatherErrorResponse": {
         "properties": {

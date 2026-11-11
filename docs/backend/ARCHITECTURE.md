@@ -1,6 +1,6 @@
 # MyFarm AI Backend — Architecture
 
-**Version:** 0.1.0 (aligned with `settings.app_version`)  
+**Version:** 1.0.0 (aligned with `settings.app_version`)  
 **Date:** 2026-10-28  
 **Status:** Phase 1 Complete — Quality Gates Passing
 
