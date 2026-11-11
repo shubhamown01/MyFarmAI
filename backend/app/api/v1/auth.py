@@ -321,6 +321,7 @@ async def register_verify_otp(
         user, session_id = await svc.verify_email_otp(
             body.email,
             body.code,
+            password=body.password,
             client_ip=_client_ip(request),
             user_agent=request.headers.get("user-agent"),
         )

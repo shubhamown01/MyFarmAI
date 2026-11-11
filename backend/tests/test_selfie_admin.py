@@ -48,7 +48,7 @@ async def _signup_and_upload(
     """Full wave-1 flow; leaves the client logged in as the applicant."""
     captured = _capture_deliveries(monkeypatch)
     await client.post(REQUEST_URL, json={"email": email})
-    resp = await client.post(VERIFY_URL, json={"email": email, "code": captured[email][0]})
+    resp = await client.post(VERIFY_URL, json={"email": email, "code": captured[email][0], "password": "selfie-pass-123"})
     assert resp.status_code == 200, resp.text
     await client.post(CONSENT_URL)
     challenge = (await client.post(CHALLENGE_URL)).json()

@@ -66,10 +66,13 @@ class EmailOtpRequest(BaseModel):
 
 
 class EmailOtpVerifyRequest(BaseModel):
-    """Passwordless signup: verify the OTP code (E1)."""
+    """Email-OTP signup: verify the code and set the account password (E1)."""
 
     email: EmailStr
     code: str = Field(..., min_length=6, max_length=6, pattern="^[0-9]{6}$")
+    # Password-based login is the only path on Android and after a web logout,
+    # so the account is unusable without one (audit MFAI-022).
+    password: str = Field(..., min_length=8, max_length=128)
 
 
 class EmailOtpSentResponse(BaseModel):

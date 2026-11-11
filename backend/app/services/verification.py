@@ -130,6 +130,7 @@ class VerificationService:
         email: str,
         code: str,
         *,
+        password: str | None = None,
         client_ip: str | None = None,
         user_agent: str | None = None,
     ) -> tuple[User, str]:
@@ -177,11 +178,17 @@ class VerificationService:
         row.consumed_at = now
         user = await self._session.get(User, row.user_id)
         assert user is not None  # FK guarantees the row exists
+        was_new_signup = not user.email_verified
         user.email_verified = True
         user.is_active = True
+        if password:
+            # Email control is proven, so this also serves as a password reset
+            # for accounts created before passwords were required.
+            user.password_hash = hash_password(password)
         # E3: fresh self-signups enter the selfie-verification flow; sessions
         # stay usable (feature gating happens via require_verified_user).
-        user.verification_status = "pending_verification"
+        if was_new_signup:
+            user.verification_status = "pending_verification"
         session_id, _ = await self._auth._establish_session(
             user, client_ip=client_ip, user_agent=user_agent, android=False
         )

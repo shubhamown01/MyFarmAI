@@ -320,7 +320,7 @@
           "Auth"
         ],
         "summary": "Register Request Otp",
-        "description": "Issue an email OTP (creating a pending user if the email is unknown).\n\nPrivacy-aware: the response is identical whether or not the address was\nknown — no account-existence disclosure.",
+        "description": "Issue an email OTP (creating a pending user if the email is unknown).\n\nPrivacy-aware: the response is identical whether or not the address was\nknown \u2014 no account-existence disclosure.",
         "operationId": "register_request_otp_api_v1_auth_register_email_request_otp_post",
         "requestBody": {
           "content": {
@@ -569,7 +569,7 @@
             }
           },
           "429": {
-            "description": "§10 cloud-AI quota exhausted for the current window (error_code=AI_QUOTA_EXCEEDED; only active when cloud_ai_enabled)",
+            "description": "\u00a710 cloud-AI quota exhausted for the current window (error_code=AI_QUOTA_EXCEEDED; only active when cloud_ai_enabled)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1299,7 +1299,7 @@
           "Land"
         ],
         "summary": "Report Area",
-        "description": "Manual area entry (user_reported — never presented as map-measured).",
+        "description": "Manual area entry (user_reported \u2014 never presented as map-measured).",
         "operationId": "report_area_api_v1_farms__farm_id__plots__plot_id__area_post",
         "parameters": [
           {
@@ -2735,7 +2735,7 @@
           "Verification"
         ],
         "summary": "Upload Selfie",
-        "description": "Ingest a liveness selfie for manual review (E3 wave 1).\n\nValidation order: pending status → consent → challenge consume (atomic,\nsingle-use) → magic bytes → size → dimensions → metadata-stripping\nre-encode → 0700/0600 storage. The response never contains a storage\npath, filename, or URL.",
+        "description": "Ingest a liveness selfie for manual review (E3 wave 1).\n\nValidation order: pending status \u2192 consent \u2192 challenge consume (atomic,\nsingle-use) \u2192 magic bytes \u2192 size \u2192 dimensions \u2192 metadata-stripping\nre-encode \u2192 0700/0600 storage. The response never contains a storage\npath, filename, or URL.",
         "operationId": "upload_selfie_api_v1_verification_selfie_upload_post",
         "requestBody": {
           "content": {
@@ -2936,7 +2936,7 @@
           "Admin"
         ],
         "summary": "Admin Ai Quota",
-        "description": "Per-user §10 cloud-AI usage for the current window (admin only).",
+        "description": "Per-user \u00a710 cloud-AI usage for the current window (admin only).",
         "operationId": "admin_ai_quota_api_v1_admin_ai_quota_get",
         "parameters": [
           {
@@ -4254,7 +4254,7 @@
           "cancelled"
         ],
         "title": "CropPlanTaskStatus",
-        "description": "Task lifecycle. 'cancelled' is a soft delete — history is preserved."
+        "description": "Task lifecycle. 'cancelled' is a soft delete \u2014 history is preserved."
       },
       "CropPlanUpdate": {
         "properties": {
@@ -4502,7 +4502,7 @@
           "email"
         ],
         "title": "EmailOtpRequest",
-        "description": "Passwordless signup: request an OTP code (E1). Response is\nprivacy-aware — identical whether or not the email is known."
+        "description": "Passwordless signup: request an OTP code (E1). Response is\nprivacy-aware \u2014 identical whether or not the email is known."
       },
       "EmailOtpSentResponse": {
         "properties": {
@@ -4521,7 +4521,7 @@
           "message"
         ],
         "title": "EmailOtpSentResponse",
-        "description": "Privacy-aware response — identical whether or not the email exists.\n\n``delivery_mode`` tells the client HOW the code was delivered so the UI\ncan be honest: ``dev`` means no real email is sent in this environment\n(the code is in the server outbox / log); ``provider`` means real email."
+        "description": "Privacy-aware response \u2014 identical whether or not the email exists.\n\n``delivery_mode`` tells the client HOW the code was delivered so the UI\ncan be honest: ``dev`` means no real email is sent in this environment\n(the code is in the server outbox / log); ``provider`` means real email."
       },
       "EmailOtpVerifyRequest": {
         "properties": {
@@ -4536,15 +4536,22 @@
             "minLength": 6,
             "pattern": "^[0-9]{6}$",
             "title": "Code"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
           }
         },
         "type": "object",
         "required": [
           "email",
-          "code"
+          "code",
+          "password"
         ],
         "title": "EmailOtpVerifyRequest",
-        "description": "Passwordless signup: verify the OTP code (E1)."
+        "description": "Email-OTP signup: verify the code and set the account password (E1)."
       },
       "ErrorResponse": {
         "properties": {
@@ -5682,7 +5689,7 @@
           "complete"
         ],
         "title": "OnboardingStatusResponse",
-        "description": "Computed onboarding state (directive §12: resume incomplete onboarding).\n\nNo separate state table — the state is derived from existing records so\nit can never drift from the source of truth."
+        "description": "Computed onboarding state (directive \u00a712: resume incomplete onboarding).\n\nNo separate state table \u2014 the state is derived from existing records so\nit can never drift from the source of truth."
       },
       "OnboardingStep": {
         "properties": {
@@ -6282,7 +6289,7 @@
           "area_unit"
         ],
         "title": "UserReportedArea",
-        "description": "Manual area entry (directive §7.3): recorded as user_reported, never\npresented as map-measured. Optionally marks it farmer-confirmed."
+        "description": "Manual area entry (directive \u00a77.3): recorded as user_reported, never\npresented as map-measured. Optionally marks it farmer-confirmed."
       },
       "UserResponse": {
         "properties": {

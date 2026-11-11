@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [stage, setStage] = useState<'email' | 'verify'>('email');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +61,7 @@ export default function RegisterPage() {
     setMessage(null);
     setBusy(true);
     try {
-      await apiClient.verifyEmailOtp(email.trim(), code.trim());
+      await apiClient.verifyEmailOtp(email.trim(), code.trim(), password);
       router.push('/onboarding');
     } catch (err) {
       if (err instanceof ApiError) {
@@ -130,9 +131,29 @@ export default function RegisterPage() {
                 placeholder="000000"
               />
             </div>
+            <div>
+              <label htmlFor="password" className="text-[13px] font-medium text-on-surface">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={128}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputClass}
+                placeholder="At least 8 characters"
+              />
+              <p className="mt-1 text-[12px] text-on-surface-variant">
+                Used to sign in on the Android app and after logging out.
+              </p>
+            </div>
             <button
               type="submit"
-              disabled={busy || code.length !== 6}
+              disabled={busy || code.length !== 6 || password.length < 8}
               className="h-11 w-full rounded-xl bg-primary text-[14px] font-medium text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {busy ? 'Verifying…' : 'Verify and continue'}

@@ -16,6 +16,7 @@ pytestmark = pytest.mark.usefixtures("async_initialized_db")
 REQUEST_URL = "/api/v1/auth/register/email/request-otp"
 VERIFY_URL = "/api/v1/auth/register/email/verify"
 EMAIL = "farmer@example.com"
+PASSWORD = "farmer-pass-123"
 
 
 # -- helpers ----------------------------------------------------------------
@@ -70,7 +71,7 @@ class TestEmailOtpRegistration:
         assert len(codes) == 1
         assert len(codes[0]) == 6 and codes[0].isdigit()
 
-        resp = await async_client.post(VERIFY_URL, json={"email": EMAIL, "code": codes[0]})
+        resp = await async_client.post(VERIFY_URL, json={"email": EMAIL, "code": codes[0], "password": PASSWORD})
         assert resp.status_code == 200, resp.text
         body = resp.json()
         assert body["user"]["email"] == EMAIL
@@ -94,12 +95,12 @@ class TestEmailOtpRegistration:
         code = captured[EMAIL][0]
         wrong = "000000" if code != "000000" else "111111"
 
-        resp = await async_client.post(VERIFY_URL, json={"email": EMAIL, "code": wrong})
+        resp = await async_client.post(VERIFY_URL, json={"email": EMAIL, "code": wrong, "password": PASSWORD})
         assert resp.status_code == 422, resp.text
         assert resp.json()["error_code"] == "OTP_INVALID"
 
         # Second wrong attempt on the SAME pending row — attempts persisted.
-        resp = await async_client.post(VERIFY_URL, json={"email": EMAIL, "code": wrong})
+        resp = await async_client.post(VERIFY_URL, json={"email": EMAIL, "code": wrong, "password": PASSWORD})
         assert resp.status_code == 422, resp.text
         assert resp.json()["error_code"] == "OTP_INVALID"
 
@@ -119,7 +120,7 @@ class TestEmailOtpRegistration:
         await async_client.post(REQUEST_URL, json={"email": EMAIL})
         await _backdate_row(EMAIL, created_ago=60, expires_in=-60)
         resp = await async_client.post(
-            VERIFY_URL, json={"email": EMAIL, "code": captured[EMAIL][0]}
+            VERIFY_URL, json={"email": EMAIL, "code": captured[EMAIL][0], "password": PASSWORD}
         )
         assert resp.status_code == 422, resp.text
         assert resp.json()["error_code"] == "OTP_EXPIRED"
@@ -132,7 +133,7 @@ class TestEmailOtpRegistration:
 
         for i in range(5):
             resp = await async_client.post(
-                VERIFY_URL, json={"email": EMAIL, "code": f"1000{i:02d}"}
+                VERIFY_URL, json={"email": EMAIL, "code": f"1000{i:02d}", "password": PASSWORD}
             )
         assert resp.status_code == 422, resp.text
         assert resp.json()["error_code"] == "OTP_MAX_ATTEMPTS"
@@ -174,6 +175,54 @@ class TestEmailOtpRegistration:
         )
         assert resp.status_code == 401, resp.text
         assert resp.json()["error_code"] == "INVALID_CREDENTIALS"
+
+    async def test_registration_password_enables_login(
+        self, async_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """MFAI-022: OTP signup must leave a usable password.
+
+        Before the fix the user got a random unknown password, so after logout
+        (or on Android, always) the account was unreachable.
+        """
+        captured = _capture_deliveries(monkeypatch)
+        await async_client.post(REQUEST_URL, json={"email": EMAIL})
+        resp = await async_client.post(
+            VERIFY_URL,
+            json={"email": EMAIL, "code": captured[EMAIL][0], "password": PASSWORD},
+        )
+        assert resp.status_code == 200, resp.text
+
+        logout = await async_client.post("/api/v1/auth/logout")
+        assert logout.status_code == 204, logout.text
+
+        login = await async_client.post(
+            "/api/v1/auth/login", json={"email": EMAIL, "password": PASSWORD}
+        )
+        assert login.status_code == 200, login.text
+        assert login.json()["user"]["email"] == EMAIL
+
+        wrong_password = "definitely-wrong-1"  # gitleaks:allow (test fixture)
+        wrong = await async_client.post(
+            "/api/v1/auth/login",
+            json={"email": EMAIL, "password": wrong_password},
+        )
+        assert wrong.status_code == 401, wrong.text
+
+    async def test_verify_requires_password(
+        self, async_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        captured = _capture_deliveries(monkeypatch)
+        await async_client.post(REQUEST_URL, json={"email": EMAIL})
+        resp = await async_client.post(
+            VERIFY_URL, json={"email": EMAIL, "code": captured[EMAIL][0]}
+        )
+        assert resp.status_code == 422, resp.text
+
+        short = await async_client.post(
+            VERIFY_URL,
+            json={"email": EMAIL, "code": captured[EMAIL][0], "password": "short"},
+        )
+        assert short.status_code == 422, short.text
 
 
 # -- dev outbox regression ---------------------------------------------------

@@ -1,17 +1,21 @@
 # MyFarmAI — Authentication Flow
 
 **Document ID:** MYFARMAI-FLOW-004  
-**Version:** 2.0  
-**Status:** Implemented (Phase 3, per ADR-008) — verified by test suite and Phase 3 exit-gate review  
+**Version:** 2.1  
+**Status:** Implemented (Phase 3 per ADR-008; public email-OTP registration added by E1, reconciled with password login 2026-11-11) — verified by test suite and Phase 3 exit-gate review  
 **Related documents:** `PRD.md`, `TRD.md`, `ADR-008`, `AUTHZ_MATRIX.md`, `docs/api/openapi.json`
 
 ## 1. Scope
 
-Describes the **implemented** authentication behavior (Phase 3). Authority: ADR-008 (MVP auth: admin-created accounts, no public registration; opaque session tokens; Android refresh-token rotation).
+Describes the **implemented** authentication behavior. ADR-008 defined the MVP baseline (admin-created accounts, opaque session tokens, Android refresh-token rotation). E1 added public **email-OTP registration**; since 2026-11-11 that flow also sets the account password, so a self-registered user can sign in on the web after logout and on Android (audit finding MFAI-022).
 
 ## 2. Account Model
 
-- Accounts are created **by an administrator** via `POST /api/v1/auth/admin/users` (admin-role session required). There is no public registration endpoint.
+- Accounts can be created two ways:
+  - **Administrator** via `POST /api/v1/auth/admin/users` (admin-role session required).
+  - **Self-registration** via `POST /api/v1/auth/register/email/request-otp` → `POST /api/v1/auth/register/email/verify`.
+- Self-registration is email-OTP based and **requires a password** (8–128 chars) at verification. Email control is proven by the code, so the same flow doubles as a password reset for accounts created before passwords were required.
+- OTP delivery depends on `EMAIL_DELIVERY_MODE`; `dev` writes the code to the server-side outbox and sends nothing, so public registration is only usable once a real email provider is configured.
 - Passwords are hashed with **Argon2id**; verification cost ~114 ms by design. Rehash-on-login upgrades weak parameters transparently.
 - Generic error `INVALID_CREDENTIALS` (401) for both unknown-email and wrong-password — no account enumeration.
 
@@ -25,6 +29,9 @@ flowchart TD
     C -- Yes --> E[HttpOnly session cookie: SameSite=Lax, Secure in production]
     E --> F[Subsequent requests authenticated by cookie or Bearer session id]
     F --> G[POST /api/v1/auth/logout revokes the session server-side]
+    R[Register screen] --> R1[POST /register/email/request-otp]
+    R1 --> R2[POST /register/email/verify + password]
+    R2 --> E
 ```
 
 - Session id: 256-bit random opaque token; only its SHA-256 hash is stored (`sessions.session_id_hash`).
@@ -33,7 +40,7 @@ flowchart TD
 
 ## 4. Android Flow (Bearer + Refresh Rotation)
 
-1. `POST /api/v1/auth/login` with `client: "android"` → access session id (bearer token) **plus** a single-use refresh token.
+1. `POST /api/v1/auth/login` with `android: true` in the body → access session id (bearer token) **plus** a single-use refresh token.
 2. API calls: `Authorization: Bearer <session_id>`.
 3. Rotation: `POST /api/v1/auth/token/refresh` consumes the refresh token and issues a new one (old token marked revoked).
 4. **Reuse detection:** presenting an already-revoked refresh token revokes the entire chain **and all of the user's sessions** (suspected theft), emits `REFRESH_TOKEN_REVOKED` audit event, and returns 401.
@@ -63,6 +70,6 @@ Note: middleware error bodies are flat `{"detail": ..., "error_code": ...}`; end
 
 Pre-authentication rows owned by the sentinel user `00000000-0000-0000-0000-000000000000` are **not** readable or reassignable by real users; chat creation always attributes the real authenticated user. Re-assignment of legacy rows is a separate owner decision.
 
-## 8. Out of Scope (MVP, per ADR-008)
+## 8. Out of Scope (current)
 
-Public registration, password reset, e-mail verification, MFA, OAuth/SSO. Revisit after MVP.
+MFA, OAuth/SSO provider configuration, and a dedicated "forgot password" screen. Public registration and email verification are implemented; the OTP verify flow can reset a password because it proves email control. Android has **no** registration screen — users register on the web (or are admin-created) and sign in with email+password.

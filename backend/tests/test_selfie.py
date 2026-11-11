@@ -47,7 +47,7 @@ async def _signup_pending_user(
     captured = _capture_deliveries(monkeypatch)
     await client.post(REQUEST_URL, json={"email": email})
     code = captured[email][0]
-    resp = await client.post(VERIFY_URL, json={"email": email, "code": code})
+    resp = await client.post(VERIFY_URL, json={"email": email, "code": code, "password": "selfie-pass-123"})
     assert resp.status_code == 200, resp.text
     return email
 

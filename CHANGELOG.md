@@ -72,6 +72,12 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
 - `phase-01-foundation` → `main` fast-forward history preserved; ongoing features merge via `develop`.
 
 ### Fixed
+- Public email-OTP registration left the account with an unknown random
+  password, and every login path is password-based. A self-registered user was
+  therefore locked out after logout and could never sign in on Android, which
+  has no registration screen. The verify step now requires a password
+  (8–128 chars) and stores it, so the account is usable on every client
+  (audit finding MFAI-022). Regression tests cover register → logout → login.
 - v1.0.0 release metadata published a checksum that did not match the attached
   APK: the release body and `v1.0.0.sha256` still described the pre-publication
   RC build (`631112be…e112`, 67,884,524 B) after the version-fix rebuild

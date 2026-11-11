@@ -239,10 +239,10 @@ class ApiClient {
     );
   }
 
-  async verifyEmailOtp(email: string, code: string) {
+  async verifyEmailOtp(email: string, code: string, password: string) {
     return this.request<LoginResponse>('/auth/register/email/verify', {
       method: 'POST',
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ email, code, password }),
     });
   }
 
