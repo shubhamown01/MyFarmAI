@@ -70,3 +70,12 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
 
 ### Changed
 - `phase-01-foundation` → `main` fast-forward history preserved; ongoing features merge via `develop`.
+
+### Fixed
+- v1.0.0 release metadata published a checksum that did not match the attached
+  APK: the release body and `v1.0.0.sha256` still described the pre-publication
+  RC build (`631112be…e112`, 67,884,524 B) after the version-fix rebuild
+  replaced the binary (`352020c5…c465`, 67,884,479 B). The release body and
+  `v1.0.0.sha256` now match the APK (confirmed by GitHub's asset digest), and
+  `docs/release/` notes, history and checklist were corrected. The APK was not
+  rebuilt or re-signed (audit finding MFAI-021).

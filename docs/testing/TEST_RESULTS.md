@@ -129,3 +129,16 @@ The APK was **not** rebuilt or re-signed; these hardening items target v1.0.1.
 
 Docs-only commits since the last code change; no source was modified after this
 gate.
+
+## Public download links and release integrity (2026-11-11)
+
+| Check | Result |
+|---|---|
+| GitHub release APK | **PASS** — `releases/download/v1.0.0/app-release.apk` → 302 → 200, `content-length: 67884479`, `application/vnd.android.package-archive` |
+| Release checksum assets | **FAIL → FIXED** — body and `v1.0.0.sha256` published `631112be…e112` (67,884,524 B) while the APK is `352020c5…c465` (67,884,479 B). Corrected both; GitHub asset digest now confirms `sha256:352020c5…c465` and both checksum assets are identical |
+| Slate proxy mirror | **PASS** — 200 `application/octet-stream`, `content-disposition: attachment; filename="myfarmai-app-release.apk"`; does not honour range requests |
+| Backend direct route | **PASS (GET) / note (HEAD)** — GET range → 206 `content-range: bytes 0-3/67884479`; HEAD → 405 JSON because the route registers GET only (reproduced locally with `TestClient`) |
+| Signing certificate | **PASS** — unchanged `CN=MyFarmAI Release`, cert SHA-256 `cfa4f1d7…df48` |
+
+`docs/testing/PUBLIC_TESTER_GUIDE.md` now points testers at the GitHub release
+and publishes the correct size and checksum.

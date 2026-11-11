@@ -4,9 +4,12 @@
 
 - **Date:** 2026-11-10 (published)
 - **Tag:** `v1.0.0` — created 2026-11-10T16:53:56Z, release is public (`isDraft: false`),
-  assets: `app-release.apk` (67,884,524 B, SHA-256
-  `631112beed79db3154db46a8118f3003b93c85a5255f96de46b2ed7fda35e112`),
+  assets: `app-release.apk` (67,884,479 B, SHA-256
+  `352020c56819c9349e139204692c4a01ba21ca4a8401a6601f5ef4072192c465`),
   `app-release.apk.sha256`, `v1.0.0.sha256`. Anonymous download verified.
+  The pre-publication RC build (`631112be…e112`, 67,884,524 B) was replaced by
+  the version-fix rebuild before publication; its hash is retained in
+  `V1.0.0_RELEASE_CHECKLIST.md` as history and is not the shipped artifact.
 - **Application ID:** `com.myfarmai.android`
 - **versionName / versionCode:** `1.0.0` / `1`
 - **Backend deployment:** `prod-c63d3963-v2` (version-fix + signed APK; live-verified)

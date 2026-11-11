@@ -9,10 +9,14 @@ owner, OR self-registration once OTP email is configured (currently blocked
 - **Web**: open `https://myfarmai-web-zwpytbwu.onslate.in/landing` on any
   phone or laptop browser. Log in, explore the dashboard, weather, crops,
   assistant chat.
-- **Android**: download
-  `https://myfarmai-backend-50047414881.development.catalystappsail.in/api/v1/downloads/app-release.apk`
-  (65 MB, arm64 devices), allow install from that file, log in with the
-  account credentials. The APK points at the same staging backend.
+- **Android**: download the APK from the GitHub release
+  `https://github.com/shubhamown01/MyFarmAI/releases/download/v1.0.0/app-release.apk`
+  — 67,884,479 bytes, SHA-256
+  `352020c56819c9349e139204692c4a01ba21ca4a8401a6601f5ef4072192c465`
+  (the release also carries `app-release.apk.sha256`). Mirror, same binary:
+  `https://myfarmai-backend-50047414881.development.catalystappsail.in/api/v1/downloads/app-release.apk`.
+  Allow install from that file, log in with the account credentials. The APK
+  points at the same staging backend.
 
 ## Login
 Use the credentials the owner shared (test account). Change nothing there
