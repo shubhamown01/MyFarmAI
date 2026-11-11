@@ -66,14 +66,13 @@ export default function LandingPage() {
             >
               Start testing — create an account
             </Link>
-            <a
-              href="/api/v1/downloads/app-release.apk"
+            <Link
+              href="/download"
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-outline px-5 text-[14px] font-semibold transition-colors hover:bg-surface-container-low"
-              download
             >
               <Smartphone className="h-4 w-4" aria-hidden="true" />
               Download Android app
-            </a>
+            </Link>
           </div>
           <p className="mt-2 text-[12px] text-on-surface-variant" role="note">
             Test release. Registration needs a verified email; reaches you with a one-time code.
