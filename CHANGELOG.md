@@ -25,6 +25,10 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
 - Backend metadata/${pyproject} version synced 0.1.0 → 1.0.0 (single source of truth via `VERSION`).
 
 ### Fixed
+- Public root endpoint reported `version: 0.1.0` while the release is 1.0.0.
+  `app_version` now defaults to the installed package metadata (pyproject single
+  source of truth) with an `unknown` fallback; `.env.example` updated. Regression
+  test added.
 - Feedback FK bug: `user_id` random-uuid violates users.id consistency on Postgres — now `NULL` for anonymous feedback.
 - Migration chain: feedback migration was forked (2 heads) and missing its `id` PK column; re-chained, fixed, and applied to prod (`f4b2c3d4e5a7_fb_feedback1`).
 

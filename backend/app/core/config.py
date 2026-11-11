@@ -1,5 +1,7 @@
 """Application configuration with environment profiles."""
 
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _package_version
 from pathlib import Path
 from urllib.parse import quote, urlsplit, urlunsplit
 
@@ -9,12 +11,23 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from app.core.config_profiles import Environment, get_profile_defaults, validate_production_settings
 
 
+def _app_version() -> str:
+    """Single source of truth: the installed package version (pyproject)."""
+    try:
+        return _package_version("myfarmai-backend")
+    except PackageNotFoundError:
+        return "unknown"
+
+
 class Settings(BaseSettings):
     """Application settings with environment-aware defaults."""
 
     # Core
     app_name: str = "My Farm AI Backend"
-    app_version: str = "0.1.0"
+    app_version: str = Field(
+        default_factory=_app_version,
+        description="Reported app version; defaults to the installed package version",
+    )
     environment: str = Field(
         default="development", description="Environment: development, test, production"
     )

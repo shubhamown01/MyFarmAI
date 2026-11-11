@@ -10,7 +10,14 @@ class TestHealthEndpoints:
         data = response.json()
         assert data["project"] == "My Farm AI"
         assert data["status"] == "running"
-        assert "version" in data
+        assert data["version"] != "0.1.0"
+
+    def test_app_version_matches_package_metadata(self):
+        from importlib.metadata import version
+
+        from app.core.config import settings
+
+        assert settings.app_version == version("myfarmai-backend")
 
     @pytest.mark.asyncio
     async def test_root_health_endpoint(self, async_client: AsyncClient):
