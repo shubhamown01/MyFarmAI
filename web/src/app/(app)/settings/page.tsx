@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, LogOut, MapPin, User } from 'lucide-react';
-import { apiClient } from '@/lib/api/client';
+import { apiClient, ApiError } from '@/lib/api/client';
 import { useProfile } from '@/hooks/useProfile';
 import { useTheme } from '@/providers';
 import { cn } from '@/lib/utils';
@@ -300,6 +300,117 @@ export default function SettingsPage() {
           </p>
         </section>
       </form>
+
+      <FeedbackSection />
     </div>
+  );
+}
+
+const FEEDBACK_CATEGORIES = [
+  { value: 'bug', label: 'Bug' },
+  { value: 'feature', label: 'Feature request' },
+  { value: 'question', label: 'Question' },
+  { value: 'praise', label: 'Praise' },
+] as const;
+
+/** Feedback goes to the public, unauthenticated /feedback/submit endpoint. */
+function FeedbackSection() {
+  const [category, setCategory] = useState<'bug' | 'feature' | 'question' | 'praise'>('bug');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setStatus(null);
+    setError(null);
+    try {
+      await apiClient.submitFeedback({ category, message });
+      setStatus('Thank you — your feedback was received.');
+      setMessage('');
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Could not send feedback. Check your connection and retry.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={submit}
+      className="mt-6 rounded-2xl border border-outline bg-surface p-5 sm:p-6"
+      aria-labelledby="feedback-heading"
+      noValidate
+    >
+      <h2 id="feedback-heading" className="text-[17px] font-semibold text-on-surface">
+        Send feedback
+      </h2>
+      <p className="mt-1 text-[13px] leading-5 text-on-surface-variant">
+        Report a bug or request a feature. Do not include personal or farm data.
+      </p>
+
+      <label htmlFor="feedback-category" className="mt-4 block text-[13px] font-medium text-on-surface">
+        Category
+      </label>
+      <select
+        id="feedback-category"
+        value={category}
+        onChange={(event) => {
+          setCategory(event.target.value as typeof category);
+          setStatus(null);
+          setError(null);
+        }}
+        className={inputClass}
+      >
+        {FEEDBACK_CATEGORIES.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+
+      <label htmlFor="feedback-message" className="mt-4 block text-[13px] font-medium text-on-surface">
+        Message
+      </label>
+      <textarea
+        id="feedback-message"
+        value={message}
+        onChange={(event) => {
+          setMessage(event.target.value);
+          setStatus(null);
+          setError(null);
+        }}
+        rows={4}
+        minLength={5}
+        maxLength={2000}
+        required
+        className={`${inputClass} h-auto py-2.5`}
+      />
+
+      {status && (
+        <p role="status" className="mt-3 text-[13px] text-primary">
+          {status}
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="mt-3 text-[13px] text-icon-red">
+          {error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={busy || message.trim().length < 5}
+        className="mt-4 h-11 w-full rounded-xl bg-primary text-[14px] font-medium text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto sm:px-6"
+      >
+        {busy ? 'Sending…' : 'Send feedback'}
+      </button>
+    </form>
   );
 }

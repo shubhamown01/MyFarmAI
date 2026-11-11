@@ -108,14 +108,30 @@ function ContactStep() {
 }
 
 function VerificationStep({ status }: { status: string }) {
+  if (status === 'rejected') {
+    return (
+      <div className="mt-4" role="status">
+        <p className="text-[14px] text-on-surface-variant">
+          Your identity verification was not approved, so farm setup stays locked.
+          Contact the MyFarmAI team to resolve this — an administrator can review
+          and re-open your account.
+        </p>
+      </div>
+    );
+  }
+
+  const message =
+    status === 'pending_review'
+      ? 'Your identity verification is awaiting manual review. Check back soon.'
+      : 'Your account is awaiting administrator approval. Farm setup unlocks once an administrator approves it — this is usually quick.';
+
   return (
-    <div className="mt-4">
-      <p className="text-[14px] text-on-surface-variant">
-        {status === 'pending_review'
-          ? 'Your selfie verification is awaiting manual review. This usually takes a short while — check back soon.'
-          : 'Complete identity verification to continue. Open the verification screen to submit your selfie.'}
-      </p>
-      <button onClick={() => window.location.reload()} className="mt-3 text-[13px] font-medium text-primary hover:underline">
+    <div className="mt-4" role="status">
+      <p className="text-[14px] text-on-surface-variant">{message}</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="mt-3 text-[13px] font-medium text-primary hover:underline"
+      >
         Check again
       </button>
     </div>

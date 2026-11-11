@@ -27,6 +27,7 @@
         "backgroundColor": "#2E7D32"
       },
       "package": "com.myfarmai.android",
+      "versionCode": 1,
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW"
       ],

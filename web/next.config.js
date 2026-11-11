@@ -1,3 +1,23 @@
+const isDev = process.env.NODE_ENV !== 'production';
+
+// Next.js injects inline bootstrap/hydration scripts, so 'unsafe-inline' is
+// required for script-src without a nonce middleware (a nonce cannot apply to
+// statically rendered pages). Everything else is locked to the app origin;
+// OpenStreetMap tiles are the only external image source.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://tile.openstreetmap.org",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+].join('; ');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Phase 6F: standalone output for a minimal production server image.
@@ -19,6 +39,7 @@ const nextConfig = {
             value: 'geolocation=(self), camera=(), microphone=()',
           },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
+          { key: 'Content-Security-Policy', value: contentSecurityPolicy },
         ],
       },
     ];

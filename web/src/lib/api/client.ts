@@ -315,6 +315,19 @@ class ApiClient {
       body: JSON.stringify({ area_value: value, area_unit: unit, confirm: true }),
     });
   }
+  // ── Feedback (public, no auth) ──
+
+  async submitFeedback(payload: {
+    category: 'bug' | 'feature' | 'question' | 'praise';
+    message: string;
+    email?: string;
+    app_version?: string;
+  }) {
+    return this.request<{ status: string; id: string }>('/feedback/submit', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

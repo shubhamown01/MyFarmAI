@@ -31,7 +31,7 @@ export default function PestDiseasePage() {
       </div>
       <UnavailablePage
         title="Pest & Disease"
-        description="Photo-based pest and disease diagnosis is not connected yet. There is no image-analysis endpoint in the backend, so photos are not sent or analysed. You can describe the symptoms to the AI assistant for general guidance."
+        description="API-only; no user-facing vision interface is currently available. The backend can analyse a leaf photo, but this app has no screen to send one yet, so no photos are collected here. You can describe the symptoms to the AI assistant for general guidance."
         icon={<Bug className="h-7 w-7 text-icon-red" aria-hidden="true" />}
         primaryAction={{
           href: '/assistant?q=How%20can%20I%20identify%20a%20pest%20or%20disease%20on%20my%20crop%3F',
