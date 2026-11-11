@@ -98,3 +98,21 @@ Headless Chromium against `https://myfarmai-web-zwpytbwu.onslate.in`.
 Not run: voice image build/run under `appuser` (Docker root is on the SSD;
 HDD-first policy — runtime permissions remain a deployment-time check); ZAP
 dynamic scan; cloud AI chat (disabled by design).
+## Android release APK static audit (2026-11-11)
+
+`apkanalyzer` + bundle grep against the verified release APK. No device needed;
+no app was executed.
+
+| Check | Result |
+|---|---|
+| Identity | **PASS** — `com.myfarmai.android`, versionName `1.0.0`, minSdk 23, targetSdk 34 |
+| Debuggable / cleartext | **PASS** — not debuggable; cleartext blocked by default; no network security config |
+| Exported components | **PASS** — only `MainActivity`; all activities/providers `exported="false"` |
+| Shipped API URL | **PASS** — bundle contains the live `…catalystappsail.in` URL; placeholder and `10.0.2.2` absent |
+| OTA updates | **PASS** — `expo.modules.updates.ENABLED=false` |
+| Token storage | **PASS** — `expo-secure-store` only; no `AsyncStorage` |
+| Backup | **OPEN (Low)** — `allowBackup="true"`; Keystore-bound values are not decryptable after restore |
+| API base fallback | **OPEN (Low, build safety)** — release builds fall back to `api.myfarmai.example.com` when the env var is unset; the shipped APK is unaffected |
+| Deep links / permissions | **INFO** — unused `myfarmai://` scheme; 4 transitive permissions beyond `app.json` |
+
+The APK was **not** rebuilt or re-signed; these hardening items target v1.0.1.
