@@ -543,7 +543,8 @@ async def require_verified_user(
 
     'pending_verification' (fresh self-signups) → 403 USER_NOT_VERIFIED;
     'rejected' → 403 USER_REJECTED. Admin-created users default to 'active'.
-    NOT attached to any endpoint in E3 wave 1 — wiring is a later wave.
+    Attached to the land/plot and farmer-profile endpoints, so a pending
+    self-signup cannot create plots or complete onboarding (MFAI-025).
     """
     if db_manager._is_async:
         async with db_manager.session() as session:
