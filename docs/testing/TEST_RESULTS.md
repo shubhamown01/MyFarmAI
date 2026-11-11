@@ -67,7 +67,9 @@ Remaining: a full Neon `pg_dump`/restore drill (no Neon credentials locally).
 | OSV-Scanner | `osv-scanner scan source -r backend web android` | Matches Trivy app dependency set; no new class |
 | Local Ollama | `/health/ready`, direct `qwen3:0.6b` generation | **PASS** — `ollama: ok`; generation returned "OK" |
 | Live APK download | `GET /api/v1/downloads/app-release.apk` | **PASS** — 67,884,479 bytes, SHA-256 `352020c5…`, identical to verified release |
+| Authenticated chat E2E (local) | OTP request → dev outbox → verify → `/auth/me` → `POST /chat` | **PASS** — 200; `qwen3:0.6b`; 97-char answer; `conversation_id` returned; synthetic `@example.com` user created in local Postgres |
+| XFF rate-limit bypass (local) | 65 requests to `/api/v1/resources` with rotating `X-Forwarded-For` | **PASS** — 54 allowed, 11×`429` with `Retry-After`; spoofed header did not create new buckets |
 
 Not run: voice image build/run under `appuser` (Docker root is on the SSD;
 HDD-first policy — runtime permissions remain a deployment-time check); ZAP
-dynamic scan.
+dynamic scan; cloud AI chat (disabled by design).
