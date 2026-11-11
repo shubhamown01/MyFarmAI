@@ -1,6 +1,6 @@
 # MyFarmAI — Test Results (public live deployment)
 
-Updated: **2026-11-10** (security audit pass; previous live-deployment run 2026-11-09). Evidence-first: every claim links to an observed output. Honest gaps are labeled. Companion: `../deployment/DEPLOYMENT_RUNBOOK.md`, `../security/PUBLIC_DEPLOYMENT_SECURITY_CHECKLIST.md`, `../security/V1_RELEASE_SECURITY_CHECKLIST.md`.
+Updated: **2026-11-11** (security remediation pass; previous live-deployment run 2026-11-09). Evidence-first: every claim links to an observed output. Honest gaps are labeled. Companion: `../deployment/DEPLOYMENT_RUNBOOK.md`, `../security/PUBLIC_DEPLOYMENT_SECURITY_CHECKLIST.md`, `../security/V1_RELEASE_SECURITY_CHECKLIST.md`.
 
 ## Gates (master prompt §11) — honest verdicts
 
@@ -53,3 +53,21 @@ Updated: **2026-11-10** (security audit pass; previous live-deployment run 2026-
 | Local Postgres backup | `scripts/backup.sh` → 80K dump, `pg_restore --list` clean |
 
 Remaining: a full Neon `pg_dump`/restore drill (no Neon credentials locally).
+
+## Security remediation verification (2026-11-11)
+
+| Check | Command | Result |
+|---|---|---|
+| Backend suite | `pytest tests/` | **PASS** — 310/310 in 192.91s |
+| Rate-limit/XFF tests | `pytest tests/test_security_middleware.py` | **PASS** — 8/8 |
+| Voice auth/cap tests | `pytest ai/voice/test_main.py` | **PASS** — 6/6 |
+| Frontend tests | `cd web && npm test -- --runInBand` | **PASS** — 40/40, 7 suites |
+| Semgrep | `semgrep scan --config auto` | 216 files / 458 rules → 3 findings: 1 true (fixed), 2 false positives (SEC-022) |
+| Trivy fs | `trivy fs` | 154 vulns (mostly worktree/vendored), **0 secrets**, 26 misconfigs; voice Dockerfile re-scan **0** |
+| OSV-Scanner | `osv-scanner scan source -r backend web android` | Matches Trivy app dependency set; no new class |
+| Local Ollama | `/health/ready`, direct `qwen3:0.6b` generation | **PASS** — `ollama: ok`; generation returned "OK" |
+| Live APK download | `GET /api/v1/downloads/app-release.apk` | **PASS** — 67,884,479 bytes, SHA-256 `352020c5…`, identical to verified release |
+
+Not run: voice image build/run under `appuser` (Docker root is on the SSD;
+HDD-first policy — runtime permissions remain a deployment-time check); ZAP
+dynamic scan.
