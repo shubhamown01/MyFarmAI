@@ -116,3 +116,16 @@ no app was executed.
 | Deep links / permissions | **INFO** — unused `myfarmai://` scheme; 4 transitive permissions beyond `app.json` |
 
 The APK was **not** rebuilt or re-signed; these hardening items target v1.0.1.
+
+## Final gate on the committed tree (2026-11-11, HEAD `07aea50`)
+
+| Suite | Command | Result |
+|---|---|---|
+| Backend | `backend/.venv/bin/python -m pytest tests/ -q` | **PASS** — 311/311 in 91.65s |
+| Web tests | `npm test -- --runInBand` | **PASS** — 44/44, 9 suites |
+| Web typecheck | `npm run typecheck` | **PASS** — exit 0 |
+| Web lint | `npm run lint` | **PASS** — no warnings or errors |
+| Voice service | `pytest ai/voice/test_main.py -q` | **PASS** — 6/6 in 1.66s |
+
+Docs-only commits since the last code change; no source was modified after this
+gate.
