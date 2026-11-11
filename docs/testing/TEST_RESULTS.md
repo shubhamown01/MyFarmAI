@@ -84,6 +84,17 @@ Headless Chromium against `https://myfarmai-web-zwpytbwu.onslate.in`.
 | Privacy | **FAIL → FIXED** — default profile rendered "Hello, Shubham" to every visitor; default is now `Farmer` |
 | Console | 4× `401` from `GET /farms` on the public home page — accepted by design (auth-aware data layer) |
 
+### Route and interaction sweep (Playwright, live + local build)
+
+| Check | Result |
+|---|---|
+| All 13 routes (`/`, `/assistant`, `/crops`, `/weather`, `/pest-disease`, `/knowledge`, `/community`, `/settings`, `/history`, `/onboarding`, `/landing`, `/legal/privacy`, `/legal/terms`) | **PASS** — 13/13 HTTP 200, one H1 each, `<main>` landmark, no horizontal overflow |
+| Page titles | **FAIL → FIXED** — `/settings`, `/history`, `/auth/login`, `/auth/register` used the generic site title; nested layouts added |
+| Mobile nav toggle state | **FAIL → FIXED** — no `aria-expanded`; now `false` → `true` → `false` across open/Escape |
+| Skip link | **PASS** — first Tab focuses it; Enter sets `#main-content`; next Tab lands inside `<main>` |
+| Client-side navigation | **PASS** — sidebar link click changes route without a reload (`window` marker survives) |
+| Mobile drawer | **PASS** — opens, nav links visible, Escape closes |
+
 Not run: voice image build/run under `appuser` (Docker root is on the SSD;
 HDD-first policy — runtime permissions remain a deployment-time check); ZAP
 dynamic scan; cloud AI chat (disabled by design).

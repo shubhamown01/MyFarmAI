@@ -36,6 +36,12 @@ Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`
   real status after mount (3 regression tests).
 - Web home page greeted every anonymous visitor with the developer's name
   (`DEFAULT_PROFILE.name = 'Shubham'`). Default is now neutral (`Farmer`).
+- Web page titles: `/settings`, `/history`, `/auth/login`, and `/auth/register`
+  fell back to the generic site title. Nested layouts now set "Settings",
+  "Question History", "Sign in", and "Create account" (WCAG 2.4.2).
+- Web mobile navigation toggle had no `aria-expanded`, so screen readers could
+  not tell whether the drawer was open (WCAG 4.1.2). `TopBar` now exposes the
+  drawer state; verified false → true → false.
 - Feedback FK bug: `user_id` random-uuid violates users.id consistency on Postgres — now `NULL` for anonymous feedback.
 - Migration chain: feedback migration was forked (2 heads) and missing its `id` PK column; re-chained, fixed, and applied to prod (`f4b2c3d4e5a7_fb_feedback1`).
 

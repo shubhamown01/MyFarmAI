@@ -15,7 +15,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-dvh bg-surface">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="min-h-dvh lg:pl-[280px]">
-        <TopBar onMenuClick={() => setSidebarOpen(true)} />
+        <TopBar onMenuClick={() => setSidebarOpen(true)} menuOpen={sidebarOpen} />
         <main id="main-content">{children}</main>
       </div>
     </div>

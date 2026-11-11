@@ -10,9 +10,11 @@ import { BrandMark } from '@/components/Icons/FarmIcons';
 
 export interface TopBarProps {
   onMenuClick?: () => void;
+  /** Whether the mobile navigation drawer is open (exposed as aria-expanded). */
+  menuOpen?: boolean;
 }
 
-export function TopBar({ onMenuClick }: TopBarProps) {
+export function TopBar({ onMenuClick, menuOpen = false }: TopBarProps) {
   const router = useRouter();
   const { profile } = useProfile();
   const [query, setQuery] = useState('');
@@ -93,6 +95,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           onClick={onMenuClick}
           className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-xl text-on-surface transition-colors hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
           aria-label="Open navigation menu"
+          aria-expanded={menuOpen}
         >
           <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
