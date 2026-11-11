@@ -17,6 +17,18 @@ signer `CN=MyFarmAI Release`, versionName `1.0.0`. The live download endpoint
 | 0c | Android version | 6.0+ (minSdk 23) |
 | 0d | Build-time `EXPO_PUBLIC_API_BASE_URL` | points at the live backend (not the `api.myfarmai.example.com` placeholder) |
 
+## Already verified statically (do not repeat)
+The release APK was audited with `apkanalyzer` on 2026-11-11; these need no
+device re-check:
+- `versionName 1.0.0`, `versionCode 1`, `minSdk 23`, `targetSdk 34`
+- not debuggable; cleartext HTTP blocked by default; OTA updates disabled
+- only `MainActivity` is exported; all providers/activities are `exported="false"`
+- shipped bundle contains the real backend URL (`…catalystappsail.in`), not the
+  `api.myfarmai.example.com` placeholder
+- auth tokens and conversations live in Keystore-backed `expo-secure-store`
+- `allowBackup="true"` and unused `myfarmai://` deep links are known hardening
+  items for v1.0.1 (MFAI-018/020) — not device blockers
+
 ## Installation
 | # | Step | Expected | Result |
 |---|---|---|---|
