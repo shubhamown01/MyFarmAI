@@ -2,6 +2,7 @@
 
 **Date:** 2026-11-11
 **Branch:** `phase-01-foundation`
+**Shipped commit:** `d8f00e7` (pushed to `origin/phase-01-foundation`)
 **Status:** **NOT PUBLICLY LAUNCHABLE** — code complete for the account lifecycle, deployment and credentials outstanding.
 
 This document records only what was verified with a command or a live probe. Anything inferred is marked as unverified. Historical audit findings were rechecked before being repeated.
@@ -15,6 +16,7 @@ This document records only what was verified with a command or a live probe. Any
 | Fact | Evidence |
 |---|---|
 | Branch and base commit at the start of this work | `git rev-parse --abbrev-ref HEAD` → `phase-01-foundation`; `git log --oneline -1` → `903a418` |
+| Final commit shipped this session | `git log --oneline -4` → `d8f00e7`, `d15e1b0`, `be2c6ed`, `ed33682`; pushed to `origin/phase-01-foundation` |
 | Working tree was clean and in sync | `git status --short` empty; `git rev-list --left-right --count origin/phase-01-foundation...HEAD` → `0 0` |
 | Backend suite before changes | `pytest tests/ -q` → **315 passed** |
 | Backend suite after changes | `pytest tests/ -q` → **343 passed** (98.00 s) |
@@ -87,8 +89,8 @@ These are recorded as unverified and must not be treated as passing:
 # Repository state
 cd /data/MyFarmAI
 git rev-parse --abbrev-ref HEAD          # phase-01-foundation
-git log --oneline -1                     # 903a418
-git status --short                       # (empty at start)
+git log --oneline -1                     # d8f00e7 (at start of work: 903a418)
+git status --short                       # empty
 
 # Backend
 cd backend && .venv/bin/python -m pytest tests/ -q
@@ -178,7 +180,7 @@ Browser verification of the CSP: 11 routes (`/`, `/landing`, `/download`, `/auth
 | Q | Support contact | **PARTIAL** | Documented as project owner | Confirm address | Users have no escalation path |
 | R | Production deployment | **FAIL** | Live build predates this work; `/download` 404; CSP absent | Deploy | All fixes are inactive until deployed |
 
-**Scoreboard: 8 PASS · 4 PARTIAL · 3 BLOCKED · 1 NOT TESTED · 1 FAIL**
+**Scoreboard (18 gates A–R): 8 PASS · 4 PARTIAL · 4 BLOCKED · 1 NOT TESTED · 1 FAIL**
 
 ---
 
@@ -187,3 +189,81 @@ Browser verification of the CSP: 11 routes (`/`, `/landing`, `/download`, `/auth
 The account-lifecycle code is complete and tested: a self-registered user is created pending, denied protected writes, approved by an administrator through an audited endpoint, and then permitted to complete onboarding. Email delivery is implemented but has never sent a real message.
 
 **The release is not launchable until the owner deploys the current tree, configures SMTP, and creates the first administrator.** Those three actions are the entire remaining critical path; everything else is verification work.
+
+---
+
+## 8. Owner deployment procedure (exact)
+
+Run this on a machine with the Catalyst CLI authenticated. Nothing here has been
+executed from the development host.
+
+**Step 0 — deploy `d8f00e7`.** Confirm the checkout:
+
+```bash
+git fetch origin && git checkout phase-01-foundation && git reset --hard d8f00e7
+git log --oneline -1        # d8f00e7
+```
+
+**Step 1 — configure SMTP before the backend deploy.** The API now refuses to start a
+production instance without it. In the AppSail console (Configuration → Environment
+Variables) set, with values from the secret manager only:
+
+```
+ENVIRONMENT=production
+EMAIL_DELIVERY_MODE=smtp
+SMTP_HOST=<relay host>
+SMTP_PORT=587
+SMTP_USER=<relay user>
+SMTP_PASSWORD=<relay password>
+SMTP_FROM=<verified sender>
+```
+
+Do not use port 465 (implicit TLS is not implemented). Do not paste values into a
+terminal, a file in the repo, or a chat.
+
+**Step 2 — deploy the backend**, then verify:
+
+```bash
+curl -s https://<api-host>/health/ready
+# {"status":"ok","database":"ok",...}
+curl -s https://<api-host>/ | head -c 120
+# version should be 1.0.0, not 0.1.0
+curl -s -o /dev/null -w '%{http_code}\n' https://<api-host>/docs   # 200
+```
+
+**Step 3 — create the first administrator**, against the production database:
+
+```bash
+cd backend
+.venv/bin/python scripts/create_admin.py --email <owner-email>
+# Password prompted twice; must be 8-128 characters.
+```
+
+**Step 4 — deploy the web build from the same commit**, then verify:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://<web-host>/download      # 200
+curl -sI https://<web-host>/ | grep -i content-security-policy            # header present
+curl -s -o /dev/null -w '%{http_code}\n' https://<web-host>/              # 200
+```
+
+Load `/`, `/settings`, and `/onboarding` in a browser and confirm zero console errors.
+
+**Step 5 — prove the account lifecycle end to end** (this is the only thing that closes
+gates H, I, J, and U):
+
+1. Register a new email on the live site.
+2. Receive the verification code in that mailbox. **If no email arrives, stop — email is
+   not operational and registration is not fixed.**
+3. Complete verification with a password; confirm the session opens.
+4. Sign in as the administrator, list pending users, approve the new account.
+5. Sign in as the new user and complete onboarding through the land step.
+6. Register a second account, approve it, and confirm neither account can read the
+   other's farms, plots, or conversations.
+
+**Step 6 — record the results** in `docs/testing/FINAL_RELEASE_TEST_RESULTS.md` and
+`docs/release/V1_0_0_FINAL_RELEASE_STATUS.md`, replacing the BLOCKED/PARTIAL rows with
+what was actually observed. Do not mark a gate PASS without a command or screenshot.
+
+**Step 7 — Gate F** (backup and restore) follows `docs/deployment/BACKUP_AND_RESTORE.md`.
+The gate closes only after a restore drill into a separate test database.
