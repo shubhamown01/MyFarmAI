@@ -4,6 +4,47 @@ All notable changes to MyFarmAI are documented here. Format is
 [Keep a Changelog](https://keepachangelog.com/) and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `docs/deployment/MYFARMAI_OWNER_READINESS_CHECKLIST.md` — owner-readiness pass
+  for the next deployment stage: verified local evidence (38 backend tests, frontend
+  typecheck/lint/build, production SMTP gate, masked secret scans), the four owner
+  decisions D1–D4 (Catalyst readings, Neon rotation, backup custody, release
+  commit), and the gate order. No production change; no blocker closed.
+- `docs/architecture/MYFARMAI_CLOUD_V1_LOCK.md` — the locked `MYFARMAI-CLOUD-V1`
+  architecture: fixed stack, provider responsibilities, restrictions, financial
+  policy, decision history and change-control rules. Records the open AppSail
+  quota conflict (B1) and resolves R2 (not adopted), production email (Brevo) and
+  production AI (Ollama/Qwen local only). No infrastructure was changed.
+- `docs/deployment/MYFARMAI_POST_AUDIT_STAGE_2.md` — read-only resolution of the
+  AppSail quota model (GB-minutes = memory × runtime), the deployed-image
+  fingerprint (`0a75e26` + pre-commit `f9c5eeb`), the 146–149 MiB memory
+  baseline, the SMTP gap (adapter on HEAD, absent from the deployed image), and
+  Neon/R2 backup facts. No change was executed.
+- `docs/deployment/MYFARMAI_PRODUCTION_BLOCKERS.md` — 13-item blocker register
+  with severity, evidence, owner action, acceptance test and a dependency-ordered
+  deployment gate.
+- `docs/deployment/MYFARMAI_CLOUD_PROVIDER_AUDIT.md` — read-only 2026-11-12
+  re-evaluation of AWS, Google Cloud, Cloudflare, Vercel, Render, Neon and
+  Catalyst against the ₹0/no-card policy, with evidence URLs, a compatibility
+  matrix, and the unresolved AppSail 2048 MB quota risk.
+- `docs/deployment/MYFARMAI_CLOUD_DEPLOYMENT_RUNBOOK.md` — proposed exact
+  resource list, env-var names, deploy/verify/rollback/backup procedure and
+  owner-action gate for the recommended Catalyst + Neon topology.
+- Cloudflare R2 free tier verified (10 GB-month, 1M Class A / 10M Class B ops,
+  free egress); Stage 2 found R2 requires an R2 subscription checkout, so it is
+  policy-blocked until the owner approves that billing surface.
+
+### Changed
+- Provider selection documentation superseded: `CLOUD_DEPLOYMENT_PLAN.md` and
+  `FREE_TIER_COMPARISON.md` remain as historical records; the new audit is the
+  current decision input. No deployment, resource, DNS, billing or data change
+  was made.
+- Corrected the prior audit's SMTP claim: the production startup gate exists on
+  `HEAD` but not in the deployed image, which still logs OTP codes and delivers
+  nothing (see `MYFARMAI_POST_AUDIT_STAGE_2.md`).
+
 ## [1.0.0] — 2026-11-10 — first stable public release
 
 Published 2026-11-10 with owner approval after all gates. Tag `v1.0.0` on `main`; official page: https://github.com/shubhamown01/MyFarmAI/releases/tag/v1.0.0

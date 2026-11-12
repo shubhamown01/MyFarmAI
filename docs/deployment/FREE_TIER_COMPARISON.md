@@ -5,6 +5,11 @@ logged-out (HTTP reads — no accounts touched, no signups). Facts under "verifi
 come straight from each provider's own page on the fetch date; anything else is
 marked UNKNOWN. Restrictions/payments never breached during this evaluation.
 
+> Re-checked 2026-11-12 in
+> [`MYFARMAI_CLOUD_PROVIDER_AUDIT.md`](MYFARMAI_CLOUD_PROVIDER_AUDIT.md); the Neon
+> and Cloudflare figures below still hold, AWS and GCP are now rejected, R2's free
+> tier is newly verified. This file remains the 2026-11-03 record.
+
 ## 1. Managed PostgreSQL providers
 
 | Criterion | **Neon** (neon.com/pricing) | **Supabase** (supabase.com/pricing) | **Prisma Postgres** (prisma.io/pricing) |

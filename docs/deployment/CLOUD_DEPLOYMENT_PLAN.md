@@ -1,5 +1,9 @@
 # Cloud Deployment Plan (provisional — PROPOSED, not owner-approved)
 
+> Superseded as the provider decision input on 2026-11-12 by
+> [`MYFARMAI_CLOUD_PROVIDER_AUDIT.md`](MYFARMAI_CLOUD_PROVIDER_AUDIT.md). This file
+> is retained as the historical 2026-11-03 record.
+
 Status: **PROPOSED**. Prepared 2026-11-03 from verified free-tier facts
 (see `FREE_TIER_COMPARISON.md` for sources and dates). No provider decision is
 final until the owner approves; section 6 lists the pending approvals.
