@@ -1,8 +1,9 @@
 # MyFarmAI — Owner Readiness Checklist & Production Gate
 
-Status: **PREPARED — awaiting owner answers. Nothing here has been executed.**
-Prepared 2026-11-12 by a read-only local pass. No commit, push, deploy, credential
-rotation, console change, email send, or cloud resource creation was performed.
+Status: **PARTIALLY EXECUTED — D4 (commit + push) completed 2026-11-12 under
+owner approval; D1, D2 and D3 still await owner data or action.** No deploy,
+credential rotation, console change, email send, or cloud resource creation was
+performed.
 
 Authority:
 [`../architecture/MYFARMAI_CLOUD_V1_LOCK.md`](../architecture/MYFARMAI_CLOUD_V1_LOCK.md).
@@ -24,12 +25,15 @@ lock and are not open here.
 |---|---|
 | Repository | `/data/MyFarmAI` |
 | Branch | `phase-01-foundation` |
-| HEAD | `6393c2b680bb13734a407b4f74f1bd9050e80e89` (`6393c2b`) |
-| HEAD date / subject | 2026-11-11 15:55 +05:30 — `docs(release): record shipped commit and exact owner deployment procedure` |
+| HEAD | `f0a5b63` — `docs(deploy): lock cloud v1 architecture and record readiness evidence` |
 | Upstream | `origin/phase-01-foundation`, **in sync** (0 ahead / 0 behind) |
-| Working tree | **dirty — intentional, preserved, not committed** |
+| Working tree | **clean** after the D4 commits |
 
-Changed (tracked):
+D4 was approved and executed after preparation: commit `52a8e88` (code + test),
+commit `f0a5b63` (documents), pushed to `origin/phase-01-foundation`. The tables
+below list what those commits contain.
+
+Commit 1 — `52a8e88` `fix(api): serve HEAD for APK downloads`:
 
 | File | Change |
 |---|---|
@@ -39,7 +43,7 @@ Changed (tracked):
 | `docs/deployment/CLOUD_DEPLOYMENT_PLAN.md` | +4 lines — superseded-by-audit note |
 | `docs/deployment/FREE_TIER_COMPARISON.md` | +5 lines — re-check note |
 
-Untracked (new):
+Commit 2 — `f0a5b63` `docs(deploy): lock cloud v1 architecture and record readiness evidence`:
 
 | File | Purpose |
 |---|---|
@@ -69,6 +73,12 @@ source** is ready; they do not change any production blocker status.
 | Build artifact | `web/.next/BUILD_ID` | `z291W15L99Xdg7mZI1VT9`, built 2026-11-12 13:19 +05:30 |
 | Chunk parity | shared chunk names | `255-b1e2483a7e02feee.js`, `4bd1b696-c023c6e3521b1417.js` — **identical to the recorded 2026-11-11 local build**, so source content is unchanged since that build |
 | Live backend origin (read-only GET) | `GET …/health/ready` | **HTTP 200**, 8.42 s (cold) |
+| AppSail state (read-only Catalyst MCP `Get_AppSail`) | memory, disk, deploy time, status | **2048 MB**, 256 MB, deploy 2026-11-10 23:58, **success** — confirms D1.3 only; usage, credits, amount due and instance count are still console-only |
+
+Read-only AppSail check: the API response returned `DATABASE_PATH` with the database
+password in clear text. **No value was copied into any file, commit, or this
+document.** This reconfirms blocker B5 and makes rotation (D2) more urgent. Do not
+call that endpoint again for evidence; it exposes the credential to the transcript.
 
 Non-blocking build warnings: `next lint` is deprecated in Next 16; Next inferred the
 workspace root from a second lockfile (`/data/MyFarmAI/package-lock.json`). Neither
@@ -182,34 +192,25 @@ Procedure and retention detail: `MYFARMAI_POST_AUDIT_STAGE_2.md` §5.3–§5.5.
 
 **Approval:** ☐ approved  ☐ declined  — date: ________  owner: ________
 
-## 6. D4 — Release commit approval (explicit approval required)
+## 6. D4 — Release commit approval — **EXECUTED 2026-11-12**
 
-**Nothing has been committed or pushed.** Current state:
+Owner directive: "all permission pre-approved and allowed" (chat, 2026-11-12).
+Executed exactly as scoped:
 
-- HEAD: `6393c2b680bb13734a407b4f74f1bd9050e80e89`, in sync with
-  `origin/phase-01-foundation`.
-- Working tree: 5 modified files, 6 untracked documents (see §1).
-- Diff summary: `5 files changed, 62 insertions(+), 1 deletion(-)` across tracked
-  files, plus the new documents; the only code change is the one-line `HEAD` route
-  in `downloads.py` with its test.
+- Commit `52a8e88` — `fix(api): serve HEAD for APK downloads` (code + test).
+- Commit `f0a5b63` — `docs(deploy): lock cloud v1 architecture and record
+  readiness evidence` (CHANGELOG, superseded notes, 5 new documents, checklist).
+- Pushed: `6393c2b..f0a5b63 phase-01-foundation -> phase-01-foundation`.
+
+Current HEAD is `f0a5b63`, in sync with `origin/phase-01-foundation`. The working
+tree is clean except for this post-commit record update.
+
+**Not executed:** retagging `v1.0.0`, force-push, deployment, or any GitHub
+release/settings change.
 
 **Evidence that the change is ready:** 38 backend tests passed, frontend
 typecheck/lint/build passed, production SMTP gate verified, secret scan clean
 (§2).
-
-**Proposed commit scope after approval (two commits, no push of anything else):**
-
-1. `fix(api): serve HEAD for APK downloads` — `downloads.py`,
-   `tests/test_downloads.py`.
-2. `docs(deploy): lock cloud v1 architecture and record readiness evidence` —
-   `CHANGELOG.md`, the 2 superseded-note edits, the 5 new deployment/architecture
-   documents, and this checklist.
-
-**What approval authorises:** `git add` of the listed files, the two commits, and
-`git push` to `origin/phase-01-foundation`. **Not** authorised: retagging
-`v1.0.0`, force-push, deployment, or any change to GitHub releases/settings.
-
-**Approval:** ☐ approved  ☐ declined  — date: ________  owner: ________
 
 ## 7. Production blockers (unchanged by this pass)
 
@@ -219,16 +220,16 @@ Local tests passing **closes nothing**. Status against the register:
 |---|---|
 | B1 AppSail quota / billing unknown | **OPEN** — needs D1 |
 | B2 Live backend logs OTP codes, delivers nothing | **OPEN** — needs backend redeploy |
-| B3 Deployed backend not HEAD | **OPEN** — fix is local and tested, not deployed |
+| B3 Deployed backend not HEAD | **OPEN** — fix committed at `52a8e88`, not deployed |
 | B4 Stale Slate bundle | **OPEN** — needs Slate deploy |
-| B5 Neon credential in AppSail config | **OPEN** — needs D2 |
+| B5 Neon credential in AppSail config | **OPEN** — needs D2; exposure re-confirmed 2026-11-12 (read-only AppSail API returns the password) |
 | B6 No off-site backup (6 h PITR) | **OPEN** — needs D3 |
 | B7 R2 subscription surface | **RESOLVED — not adopted** (architecture lock) |
 | B8 Public `/openapi.json` | **OPEN** — decision |
 | B9 AppSail outbound SMTP untested | **OPEN** — needs one real send after deploy |
 | B10 Proxy trust for rate limiting unmeasured | **OPEN** |
 | B11 AI disabled in production | **OPEN** — publish the limitation |
-| B12 Release tag vs deployed artifacts | **OPEN** — needs D4 + release decision |
+| B12 Release tag vs deployed artifacts | **OPEN** — tag still `v1.0.0` @ `84f34fc`; candidate release commit is HEAD `f0a5b63` |
 | B13 Selfie uploads on ephemeral disk | **OPEN** |
 | AppSail 900 GB-minutes vs 24/7 hosting | **OPEN** — owner must resolve explicitly after D1 |
 
@@ -236,12 +237,12 @@ Local tests passing **closes nothing**. Status against the register:
 
 1. **D1 answered** → memory decision from console data (B1).
 2. **D2 approved and executed** → rotation verified on `/health/ready`.
-3. **D4 approved** → commit + push.
+3. **D4 executed** — commits `52a8e88`, `f0a5b63` pushed.
 4. **D3 approved** → encrypted off-host backup + restore rehearsal.
 5. Only then: backend rebuild/redeploy from the approved commit (A3), one real OTP
    send (A4/B9), Slate deploy (A5/B4), hardening (B8, B10, B11, B13).
 
-Steps 1–3 are the minimum before any deploy. Each action remains separately gated;
+Steps 1–2 are the minimum before any deploy. Each action remains separately gated;
 approval of one item does not authorise the next.
 
 ## 9. Sign-off
@@ -251,4 +252,4 @@ approval of one item does not authorise the next.
 | D1 Catalyst readings + memory decision | | | |
 | D2 Neon rotation | | | |
 | D3 Backup destination + custody | | | |
-| D4 Commit and push | | | |
+| D4 Commit and push | **approved and executed** — `52a8e88`, `f0a5b63` pushed | 2026-11-12 | owner directive |

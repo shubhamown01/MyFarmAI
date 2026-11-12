@@ -19,14 +19,14 @@ operation.
 | **B2** | Live production backend logs full OTP codes and delivers nothing | **Critical (security)** | Deployed image predates `903a418`/`be2c6ed`; old `DevModeEmailDelivery` logs `code=%s`; `ENVIRONMENT=production` is baked in | Approve backend redeploy with SMTP; rotate anything sensitive in logs | Platform log shows no OTP code; a real code arrives by email and is accepted once |
 | **B3** | Deployed backend is not HEAD | **Critical** | Image built 2026-11-10 18:09Z from `0a75e26` + pre-commit `f9c5eeb`; live `/` reports 0.1.0; no `SmtpEmailDelivery`; `downloads.py` GET-only | Approve rebuild + redeploy from `6393c2b` | Image digest recorded; `/` reports 1.0.0; `HEAD` APK returns headers with no body; SMTP adapter present |
 | **B4** | Slate bundle is stale | **High** | `modified_time` 2026-11-08; live chunk hashes differ from local build `ZRPkfioLGrLtf5GbxRdQv` | Approve `zcatalyst-cli deploy slate` | `modified_time` updates; live chunk hashes match a fresh build; web fixes visible |
-| **B5** | Neon credential sits in plaintext in AppSail config | **High** | Only reference is `DATABASE_PATH`; repo/git/image/temp are clean (Stage 2 §2.1) | Rotate in Neon, update AppSail, restart | `/health/ready` 200 `database: ok`; old password invalid; repo pattern scan still 0 |
+| **B5** | Neon credential sits in plaintext in AppSail config | **High** | Only reference is `DATABASE_PATH`; repo/git/image/temp are clean (Stage 2 §2.1). Re-confirmed 2026-11-12: read-only `Get_AppSail` returns the password in clear text (value not recorded) | Rotate in Neon, update AppSail, restart | `/health/ready` 200 `database: ok`; old password invalid; repo pattern scan still 0 |
 | **B6** | No off-site backup; PITR only 6 h | **High** | Neon Free PITR = 6 h; `/data/MyFarmAI-backups` (191 MB) is on the app host | Approve destination, encryption key custody, restore rehearsal | Dump encrypted off-host, checksum recorded, restore into a branch passes health + row-count checks |
 | **B7** | R2 requires an R2 subscription checkout | Medium | Official R2 get-started requires completing checkout | **RESOLVED — not adopted** under `MYFARMAI-CLOUD-V1`; do not create an R2 resource | Decision recorded; no bucket created |
 | **B8** | `/openapi.json` is public (53 paths) | Low | 200, 82 KB; `/docs` and `/redoc` are 404 | Decide: keep public or disable `openapi_url` in production | Either an intentional decision or a 404 |
 | **B9** | AppSail outbound SMTP is untested | **High** | No credentials configured; no send attempted; Render equivalent blocks 587 | Approve one test send after deploy | OTP email arrives within 60 s from a real signup |
 | **B10** | Proxy trust for rate limiting is assumed, not measured | Medium | `TRUSTED_PROXY_CIDRS=10/8,172.16/12,192.168/16` baked into the image; no live XFF test this pass | Approve a controlled spoof test at low volume | Spoofed `X-Forwarded-For` does not create a fresh limiter bucket |
 | **B11** | AI disabled in production | Medium (product) | `/health/ready` → `ollama: disabled`; no cloud adapter exists | Decide Gemini free tier vs stay disabled | Either chat/research returns a real answer within quota, or the limitation is published |
-| **B12** | Release tag and deployed artifacts disagree | Medium | `v1.0.0` = `84f34fc`, **22 commits behind** HEAD; deployed image predates the tag's fixes | Decide the authoritative release commit; retag only with approval | Tag, image digest, Slate bundle and HEAD documented as one consistent set |
+| **B12** | Release tag and deployed artifacts disagree | Medium | `v1.0.0` = `84f34fc`, **24 commits behind** HEAD `f0a5b63`; deployed image predates the tag's fixes | Decide the authoritative release commit; retag only with approval | Tag, image digest, Slate bundle and HEAD documented as one consistent set |
 | **B13** | Selfie uploads land on ephemeral AppSail disk | Medium | `SELFIE_STORAGE_DIR=/data/myfarmai-selfies`, 256 MB disk, lost on redeploy | Decide: disable selfie flow, or move to approved object storage | Either the endpoint is disabled in prod, or uploads survive a redeploy |
 
 ## 2. Sequencing (dependency-correct)
@@ -68,7 +68,7 @@ Rules:
 | A5 | Redeploy Slate from the current local build | Custom domain |
 | A6 | Create an encrypted off-host backup + rehearse restore on a Neon branch | Production restore |
 | A7 | Enable R2 subscription (only if the owner accepts the billing surface) | Any paid storage tier |
-| A8 | Commit and publish the current working tree (HEAD fix + docs) | Release retag unless separately approved |
+| A8 | **EXECUTED 2026-11-12** — `52a8e88` (HEAD route) and `f0a5b63` (docs) pushed to `origin/phase-01-foundation` | Release retag unless separately approved |
 
 ## 4. Exact rollback for the backend deploy
 
@@ -99,7 +99,8 @@ Rules:
 4. **D4** — **RESOLVED**: production AI stays disabled; Ollama + Qwen are local and
    test only. Publishing the limitation (B11) remains open.
 5. **D5** — backup destination + encryption key custody; approve/reject R2.
-6. **D6** — authoritative release commit for the next deploy (B12).
+6. **D6** — authoritative release commit for the next deploy (B12); candidate is
+   HEAD `f0a5b63`.
 7. **D7** — publish the undeployed HEAD fix and Slate bundle (B3/B4/A8).
 
 Until D1–D3 are answered, the only safe next action is **read-only console
