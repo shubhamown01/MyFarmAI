@@ -202,8 +202,10 @@ Executed exactly as scoped:
   readiness evidence` (CHANGELOG, superseded notes, 5 new documents, checklist).
 - Pushed: `6393c2b..f0a5b63 phase-01-foundation -> phase-01-foundation`.
 
-Current HEAD is `f0a5b63`, in sync with `origin/phase-01-foundation`. The working
-tree is clean except for this post-commit record update.
+Current HEAD **after D4** is `f0a5b63`, in sync with
+`origin/phase-01-foundation`. Later documentation-only commits, including this
+record update, may advance HEAD without changing the deployed state. The working
+tree is clean apart from any environment-managed config file.
 
 **Not executed:** retagging `v1.0.0`, force-push, deployment, or any GitHub
 release/settings change.
