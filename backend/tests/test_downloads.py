@@ -39,6 +39,22 @@ class TestDownloads:
         assert b"PK\x03\x04" in resp.content
 
     @pytest.mark.asyncio
+    async def test_head_returns_headers_without_body(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("MYFARMAI_PUBLIC_DIR", str(tmp_path))
+        apk = tmp_path / "app-release.apk"
+        apk.write_bytes(b"PK\x03\x04fake")
+        app = _app_with_public_dir(tmp_path)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c:
+            resp = await c.head("/api/v1/downloads/app-release.apk")
+        assert resp.status_code == 200
+        assert resp.headers["content-length"] == str(apk.stat().st_size)
+        assert resp.content == b""
+
+    @pytest.mark.asyncio
     async def test_unknown_name_404(self, tmp_path: Path) -> None:
         app = _app_with_public_dir(tmp_path)
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c:

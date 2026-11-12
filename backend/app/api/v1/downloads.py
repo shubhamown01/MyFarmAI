@@ -33,7 +33,7 @@ def _resolve(settings: Settings, name: str) -> Path:
     return path
 
 
-@router.get("/downloads/{name}", include_in_schema=False)
+@router.api_route("/downloads/{name}", methods=["GET", "HEAD"], include_in_schema=False)
 async def download_public(
     name: str,
     settings: Settings = Depends(get_settings),
