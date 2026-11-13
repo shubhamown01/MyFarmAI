@@ -36,8 +36,9 @@ AppSail backend is down (`503`) and the free allowance cannot sustain 24/7.
 
 ## 4. Owner setup (≈15 min, no card)
 
-1. **Render** — sign in with GitHub → *New → Blueprint* → select `shubhamown01/MyFarmAI`.
-   Render reads `render.yaml`.
+1. **Render** — sign in with GitHub (`shubhamown01`) → *New → Blueprint* → select
+   `shubhamown01/MyFarmAI`, branch **`phase-01-foundation`**. Render reads
+   `render.yaml`.
 2. **Neon** — copy the pooled connection string (no `?sslmode` query) → Render env
    `DATABASE_PATH`.
 3. **Gemini** — <https://aistudio.google.com/app/apikey> → create key → Render env
@@ -72,8 +73,24 @@ curl -sS https://myfarmai-web-zwpytbwu.onslate.in/ | grep -o '<title>[^<]*'
 curl -sS https://myfarmai-web-zwpytbwu.onslate.in/api/v1/health/ready
 ```
 
-Then the real journey: request an OTP → receive it in the test mailbox → verify →
-upload the selfie challenge → approve in the admin queue → log in → create a farm.
+### 6.1 Create the first admin (one-time, required)
+
+There is no seeded admin, and only an admin can approve the selfie queue. From
+`backend/` with the Neon `DATABASE_PATH` exported:
+
+```bash
+DATABASE_PATH='postgresql://...' .venv/bin/python scripts/create_admin.py \
+  --email sb95146@gmail.com --full-name "Owner"
+```
+
+It prompts for a password (8–128 chars), creates or promotes the account, and
+sets it `active`. Log in with that account, then approve new users under
+`/api/v1/verification/admin/queue` (or the admin web page).
+
+### 6.2 Real journey
+
+Request an OTP → receive it in the test mailbox → verify → upload the selfie
+challenge → approve in the admin queue → log in → create a farm.
 
 ## 7. Known limits (state them publicly)
 
