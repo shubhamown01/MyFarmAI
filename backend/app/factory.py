@@ -13,6 +13,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
+from app.ai.gateway import build_gateway
 from app.api.v1.router import api_router
 from app.core.config import Settings
 from app.core.config import settings as default_settings
@@ -97,6 +98,13 @@ def create_app(custom_settings: Settings | None = None, *, test_mode: bool = Fal
     """
     app_settings = custom_settings or default_settings
 
+    # Resolve the AI adapter once per app. "auto" selects Gemini when a key is
+    # present and no local Ollama URL is configured (cloud), otherwise Ollama.
+    # Test apps keep their explicit settings (lifespan is skipped in test mode).
+    if not test_mode:
+        app_settings.apply_profile_defaults()
+    ai_gateway = build_gateway(app_settings)
+
     # Configure logging. Request-ID-aware formatter: middleware passes the id
     # via extra={}, which the default formatter drops — without this, request
     # IDs never appear in log lines and incidents can't be correlated.
@@ -180,6 +188,7 @@ def create_app(custom_settings: Settings | None = None, *, test_mode: bool = Fal
         yield
 
         logger.info("Application shutting down")
+        await ai_gateway.aclose()
         await ollama_client.close()
         await weather_client.close()
         await close_db_manager()
@@ -197,6 +206,7 @@ def create_app(custom_settings: Settings | None = None, *, test_mode: bool = Fal
 
     # Store settings in app state for dependency injection
     app.state.settings = app_settings
+    app.state.ai_gateway = ai_gateway
 
     # Trusted Host Middleware
     if app_settings.environment == "production":
@@ -306,37 +316,65 @@ def create_app(custom_settings: Settings | None = None, *, test_mode: bool = Fal
         }
 
     @app.get("/health/ready")
-    async def health_readiness() -> JSONResponse:
+    async def health_readiness(request: Request) -> JSONResponse:
         """Readiness probe with real dependency checks.
 
         Reports 503 with per-dependency status when any dependency is
-        unreachable; 200 only when the database and Ollama are both reachable.
-        Setting ``OLLAMA_BASE_URL=""`` disables the Ollama check for hosts
-        without a local model server (e.g. cloud staging).
+        unreachable; 200 only when the database and the selected AI provider
+        are reachable (or intentionally disabled).
         """
         from sqlalchemy import text
 
-        db_ok, ollama_ok = False, False
+        # Use the process-wide settings for provider selection: production runs
+        # with the default singleton, and the OLLAMA_BASE_URL="" disable switch
+        # is a process-level setting (cloud hosts without a local model server).
+        current_settings = default_settings
+        db_ok = False
         try:
             async with db_manager.session() as session:
                 await session.execute(text("SELECT 1"))
             db_ok = True
         except Exception:
             logger.warning("Readiness check: database unreachable")
-        ollama_disabled = not default_settings.ollama_base_url
-        if ollama_disabled:
-            ollama_ok = True
-        else:
-            try:
-                ollama_ok = await ollama_client.health_check()
-            except Exception:
-                logger.warning("Readiness check: ollama unreachable")
 
-        deps: dict[str, str] = {
-            "database": "ok" if db_ok else "unreachable",
-            "ollama": "disabled" if ollama_disabled else ("ok" if ollama_ok else "unreachable"),
-        }
-        status = "ok" if db_ok and ollama_ok else "degraded"
+        provider = str(getattr(current_settings, "ai_provider", "auto") or "auto").lower()
+        gemini_key = str(getattr(current_settings, "gemini_api_key", "") or "")
+        ollama_url = str(getattr(current_settings, "ollama_base_url", "") or "")
+        gemini_selected = provider == "gemini" or (
+            provider == "auto" and bool(gemini_key) and not ollama_url
+        )
+        gateway = getattr(request.app.state, "ai_gateway", None)
+
+        if gemini_selected:
+            ai_disabled = not gemini_key
+            ai_ok = True
+            if not ai_disabled:
+                try:
+                    ai_ok = await gateway.health_check() if gateway else False
+                except Exception:
+                    ai_ok = False
+                    logger.warning("Readiness check: AI provider unreachable")
+            deps: dict[str, str] = {
+                "database": "ok" if db_ok else "unreachable",
+                "ollama": "disabled",
+                "ai": "disabled" if ai_disabled else ("ok" if ai_ok else "unreachable"),
+            }
+        else:
+            ollama_disabled = not ollama_url
+            if ollama_disabled:
+                ai_ok = True
+            else:
+                try:
+                    ai_ok = await ollama_client.health_check()
+                except Exception:
+                    ai_ok = False
+                    logger.warning("Readiness check: ollama unreachable")
+            deps = {
+                "database": "ok" if db_ok else "unreachable",
+                "ollama": "disabled" if ollama_disabled else ("ok" if ai_ok else "unreachable"),
+            }
+
+        status = "ok" if db_ok and ai_ok else "degraded"
         return JSONResponse(
             status_code=200 if status == "ok" else 503,
             content={

@@ -18,6 +18,8 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
+import httpx
+
 if TYPE_CHECKING:
     from app.core.config import Settings
 
@@ -137,8 +139,65 @@ class SmtpEmailDelivery:
             raise EmailDeliveryError("email delivery failed") from exc
 
 
+class BrevoEmailDelivery:
+    """Real OTP delivery through the Brevo HTTP API (MFAI-027).
+
+    Used when the host blocks outbound SMTP (Render free blocks 25/465/587).
+    Credentials and the OTP never reach the logs: only the exception type name
+    is recorded.
+    """
+
+    API_URL = "https://api.brevo.com/v3/smtp/email"
+
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        sender: str,
+        timeout: float = 15.0,
+        client: httpx.AsyncClient | None = None,
+    ) -> None:
+        if not api_key.strip() or not sender.strip():
+            raise EmailDeliveryConfigError("brevo_api_key and brevo_sender are required")
+        self._api_key = api_key.strip()
+        self._sender = sender.strip()
+        self._timeout = timeout
+        self._client = client
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=httpx.Timeout(self._timeout))
+        return self._client
+
+    async def aclose(self) -> None:
+        if self._client is not None and not self._client.is_closed:
+            await self._client.aclose()
+            self._client = None
+
+    async def send_otp(self, destination: str, code: str) -> None:
+        payload = {
+            "sender": {"email": self._sender},
+            "to": [{"email": destination}],
+            "subject": "Your MyFarmAI verification code",
+            "textContent": (
+                f"Your MyFarmAI verification code is {code}.\n\n"
+                "It expires in 10 minutes. If you did not request it, ignore this email."
+            ),
+        }
+        headers = {"api-key": self._api_key, "content-type": "application/json"}
+        client = await self._get_client()
+        try:
+            response = await client.post(self.API_URL, json=payload, headers=headers)
+            if response.status_code >= 400:
+                raise EmailDeliveryError("email delivery failed")
+        except httpx.HTTPError as exc:
+            logger.error("Brevo OTP delivery failed (%s)", type(exc).__name__)
+            raise EmailDeliveryError("email delivery failed") from exc
+
+
 class SmsDelivery(Protocol):
     """Delivery adapter for SMS OTP codes (reserved for later stages)."""
+
     async def send_otp(self, destination: str, code: str) -> None:
         """Deliver ``code`` to ``destination``. Raises on delivery failure."""
         ...
@@ -178,6 +237,12 @@ def get_email_delivery(settings: "Settings") -> EmailDelivery:
             username=getattr(settings, "smtp_user", ""),
             password=getattr(settings, "smtp_password", ""),
             starttls=getattr(settings, "smtp_starttls", True),
+            timeout=getattr(settings, "smtp_timeout_seconds", 15.0),
+        )
+    if mode == "brevo":
+        return BrevoEmailDelivery(
+            api_key=getattr(settings, "brevo_api_key", ""),
+            sender=getattr(settings, "brevo_sender", ""),
             timeout=getattr(settings, "smtp_timeout_seconds", 15.0),
         )
     if mode != "dev":

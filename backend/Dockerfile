@@ -27,7 +27,8 @@ USER appuser
 
 EXPOSE 8000
 
+# Render (and most PaaS) inject PORT; default to 8000 for local/Compose runs.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=3)"]
+    CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\", \"8000\")}/health/live', timeout=3)"
 
-CMD ["/app/.venv/bin/uvicorn", "app.main:get_default_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "exec /app/.venv/bin/uvicorn app.main:get_default_app --factory --host 0.0.0.0 --port ${PORT:-8000}"]

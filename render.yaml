@@ -1,0 +1,62 @@
+# Render blueprint — free web service for the MyFarmAI FastAPI backend.
+#
+# Prerequisites (owner, one-time, no card):
+#   1. Push this repo to GitHub.
+#   2. Render → New → Blueprint → select the repo. Render reads this file.
+#   3. Fill the `sync: false` values in the Render dashboard:
+#        DATABASE_PATH   = Neon pooled connection string (no ?sslmode query)
+#        GEMINI_API_KEY  = https://aistudio.google.com/app/apikey (free)
+#        BREVO_API_KEY   = https://app.brevo.com/settings/keys/smtp (free)
+#        BREVO_SENDER    = an address verified in Brevo
+#      ALLOWED_HOSTS is preset to *.onrender.com (Starlette wildcard).
+#   4. Deploy. Render builds backend/Dockerfile and runs /health/live.
+#
+# Free-tier note: Render free web services sleep after ~15 min of inactivity;
+# the first request after idle takes ~30-60 s. This is the only free, no-card
+# host that runs the unchanged Docker image.
+
+services:
+  - type: web
+    name: myfarmai-backend
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    healthCheckPath: /health/live
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_PATH
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: "*.onrender.com"
+      - key: SELFIE_STORAGE_DIR
+        value: /tmp/myfarmai-selfies
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://myfarmai-web-zwpytbwu.onslate.in
+      - key: TRUSTED_PROXY_CIDRS
+        value: 10/8,172.16/12,192.168/16
+      - key: EMAIL_DELIVERY_MODE
+        value: brevo
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER
+        sync: false
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      - key: CLOUD_AI_ENABLED
+        value: "true"
+      - key: CLOUD_AI_QUOTA_LIMIT
+        value: "20"
+      - key: CLOUD_AI_QUOTA_WINDOW_HOURS
+        value: "10"
+      - key: OLLAMA_BASE_URL
+        value: ""

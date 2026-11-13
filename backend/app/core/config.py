@@ -171,6 +171,25 @@ class Settings(BaseSettings):
         ge=1,
     )
 
+    # AI provider selection. "auto" = Gemini when a key is present and no
+    # local Ollama URL is configured (cloud host); otherwise Ollama.
+    ai_provider: str = Field(
+        default="auto",
+        description="AI provider: auto | ollama | gemini",
+    )
+    gemini_api_key: str = Field(
+        default="",
+        description="Google AI Studio (Gemini) API key; empty disables the hosted path",
+    )
+    gemini_model: str = Field(
+        default="gemini-2.0-flash",
+        description="Gemini model name for chat completions",
+    )
+    gemini_base_url: str = Field(
+        default="https://generativelanguage.googleapis.com/v1beta/openai",
+        description="Gemini OpenAI-compatible API base URL",
+    )
+
     # Trusted proxy for rate limiting (comma-separated CIDR ranges)
     trusted_proxy_cidrs: str = Field(
         default="",
@@ -256,6 +275,18 @@ class Settings(BaseSettings):
     )
     smtp_timeout_seconds: float = Field(
         default=15.0, gt=0, le=120, description="SMTP connect/send timeout"
+    )
+
+    # Brevo HTTP API (MFAI-027). Used when outbound SMTP is blocked by the
+    # host (e.g. Render free), which otherwise makes every registration
+    # unable to receive its code.
+    brevo_api_key: str = Field(
+        default="",
+        description="Brevo v3 API key (secret); empty disables the Brevo adapter",
+    )
+    brevo_sender: str = Field(
+        default="",
+        description="Verified Brevo sender address for OTP email",
     )
 
     # Selfie verification (E3): policy version stamped on consent records and
@@ -410,14 +441,21 @@ class Settings(BaseSettings):
             # Email delivery: a production deployment that falls back to the
             # dev adapter cannot deliver a single verification code, so every
             # self-registration is dead on arrival (MFAI-026).
-            if self.email_delivery_mode != "smtp":
+            if self.email_delivery_mode == "smtp":
+                if not self.smtp_host.strip() or not self.smtp_from.strip():
+                    errors.append(
+                        "smtp_host and smtp_from must be set when email_delivery_mode='smtp'"
+                    )
+            elif self.email_delivery_mode == "brevo":
+                if not self.brevo_api_key.strip() or not self.brevo_sender.strip():
+                    errors.append(
+                        "brevo_api_key and brevo_sender must be set when "
+                        "email_delivery_mode='brevo'"
+                    )
+            else:
                 errors.append(
-                    "email_delivery_mode must be 'smtp' in production "
+                    "email_delivery_mode must be 'smtp' or 'brevo' in production "
                     "(the dev adapter never delivers mail)"
-                )
-            elif not self.smtp_host.strip() or not self.smtp_from.strip():
-                errors.append(
-                    "smtp_host and smtp_from must be set when email_delivery_mode='smtp'"
                 )
 
         return errors
