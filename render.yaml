@@ -5,10 +5,12 @@
 #   2. Render → New → Blueprint → select the repo. Render reads this file.
 #   3. Fill the `sync: false` values in the Render dashboard:
 #        DATABASE_PATH   = Neon pooled connection string (no ?sslmode query)
-#        GEMINI_API_KEY  = https://aistudio.google.com/app/apikey (free)
+#        GEMINI_API_KEY  = Groq API key from https://console.groq.com/keys (free)
 #        BREVO_API_KEY   = https://app.brevo.com/settings/keys/smtp (free)
 #        BREVO_SENDER    = an address verified in Brevo
 #      ALLOWED_HOSTS is preset to *.onrender.com (Starlette wildcard).
+#      GEMINI_BASE_URL/ MODEL point at Groq's OpenAI-compatible endpoint
+#      (Google AI Studio needs a Cloud project that this account does not have).
 #   4. Deploy. Render builds backend/Dockerfile and runs /health/live.
 #
 # Free-tier note: Render free web services sleep after ~15 min of inactivity;
@@ -50,8 +52,10 @@ services:
         value: gemini
       - key: GEMINI_API_KEY
         sync: false
+      - key: GEMINI_BASE_URL
+        value: https://api.groq.com/openai/v1
       - key: GEMINI_MODEL
-        value: gemini-2.0-flash
+        value: llama-3.3-70b-versatile
       - key: CLOUD_AI_ENABLED
         value: "true"
       - key: CLOUD_AI_QUOTA_LIMIT

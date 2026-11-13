@@ -22,7 +22,7 @@ AppSail backend is down (`503`) and the free allowance cannot sustain 24/7.
 | API | **Render Free** (Docker) | `backend/Dockerfile`, health `/health/live` |
 | DB | Neon Free | existing; copy the pooled connection string |
 | Email | **Brevo Free** HTTP API | 300 emails/day; SMTP ports are blocked on Render |
-| AI | **Gemini free tier** | OpenAI-compatible; key from AI Studio |
+| AI | **Groq free tier** | OpenAI-compatible; key from console.groq.com (no card) |
 | APK | GitHub Releases | unchanged |
 
 ## 3. Code changes in this branch
@@ -41,8 +41,9 @@ AppSail backend is down (`503`) and the free allowance cannot sustain 24/7.
    `render.yaml`.
 2. **Neon** — copy the pooled connection string (no `?sslmode` query) → Render env
    `DATABASE_PATH`.
-3. **Gemini** — <https://aistudio.google.com/app/apikey> → create key → Render env
-   `GEMINI_API_KEY`.
+3. **Groq** — sign in at <https://console.groq.com/keys> with Google/GitHub
+   (`sb95146@gmail.com`), *Create API Key*, copy the `gsk_...` value → Render env
+   `GEMINI_API_KEY` (the slot is OpenAI-compatible; base URL/model are preset to Groq).
 4. **Brevo** — <https://app.brevo.com> → create a free account → verify a sender
    (your email or domain) → *SMTP & API → API Keys* → v3 key → Render env
    `BREVO_API_KEY` and `BREVO_SENDER`.
@@ -99,7 +100,7 @@ challenge → approve in the admin queue → log in → create a farm.
   *pending* selfies. Approved users are in Neon and unaffected.
 - New accounts stay `pending_verification` until the owner approves them in the
   admin queue. This is the DPDP/biometric safeguard, not a bug.
-- Gemini free tier has per-minute/day limits; the existing per-user quota
+- Groq free tier has per-minute/day limits; the existing per-user quota
   (`CLOUD_AI_QUOTA_LIMIT=20 / 10 h`) is the cost brake.
 
 ## 8. Rollback
